@@ -65,13 +65,11 @@ source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 
 # 4. Executar a aplicação
-python -m src.main
+python main.py
 
 # 5. Rodar os testes
 pytest
 ```
-
-> Os comandos dos passos 3 e 4 assumem `requirements.txt` e `src/main.py`, que ainda serão criados. Ajuste-os quando existirem.
 
 ## Repositório
 
@@ -90,12 +88,13 @@ audita/
 ├── docs/
 │   ├── diagramas/               # Diagramas de casos de uso e de classes
 │   └── documento_de_requisitos_v1.pdf
-├── src/
-│   ├── fronteira/                # Telas de console
-│   ├── controle/                 # Regras de negócio e padrões
-│   ├── entidade/                  # Entidades de domínio
-│   └── persistencia/             # Repositórios (memória, arquivo, SQLite)
-└── tests/                        # Testes unitários e de integração
+├── fronteira/                   # Telas de console
+├── controle/                    # Regras de negócio e padrões
+├── entidade/                    # Entidades de domínio
+├── persistencia/                # Repositórios (memória, arquivo, SQLite)
+├── tests/                       # Testes unitários e de integração
+├── main.py                      # Ponto de entrada da aplicação
+└── requirements.txt             # Dependências
 ```
 
 ## Contribuição
