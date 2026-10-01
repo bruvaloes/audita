@@ -35,7 +35,7 @@ class UsuarioFronteira:
 
         try:
             usuario = self._controller.adicionar(nome, cpf, email, senha, perfil_str)
-            print(f"\n✅ Usuário cadastrado com sucesso!")
+            print(f"\nUsuário cadastrado com sucesso!")
             print(f"   {usuario}")
         except ValueError as e:
-            print(f"\n❌ Erro ao cadastrar: {e}")
+            print(f"\nErro ao cadastrar: {e}")

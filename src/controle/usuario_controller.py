@@ -27,6 +27,9 @@ class UsuarioController:
         )
         return self._repositorio.salvar(usuario)
 
+    def listar_todos(self) -> list[Usuario]:
+        return self._repositorio.listar_todos()
+
     def _validar_campos_obrigatorios(self, nome: str, cpf: str, email: str,
                                      senha: str, perfil_str: str) -> None:
         if not all([nome.strip(), cpf.strip(), email.strip(),
