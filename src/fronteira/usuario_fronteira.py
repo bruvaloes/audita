@@ -30,6 +30,7 @@ class UsuarioFronteira:
         nome = input("Nome: ").strip()
         cpf = input("CPF (11 dígitos): ").strip()
         email = input("E-mail: ").strip()
+        login = input("Login: ").strip()
         senha = input("Senha: ").strip()
 
         perfis_disponiveis = ", ".join(p.value for p in Perfil)
@@ -37,7 +38,9 @@ class UsuarioFronteira:
         perfil_str = input("Perfil: ").strip()
 
         try:
-            usuario = self._controller.adicionar(nome, cpf, email, senha, perfil_str)
+            usuario = self._controller.adicionar(
+                nome, cpf, email, login, senha, perfil_str
+            )
             print(f"\nUsuário cadastrado com sucesso!")
             print(f"   {usuario}")
         except ValueError as e:

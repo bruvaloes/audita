@@ -8,9 +8,10 @@ class UsuarioController:
     def __init__(self, repositorio: UsuarioRepositorio):
         self._repositorio = repositorio
 
-    def adicionar(self, nome: str, cpf: str, email: str,
+    def adicionar(self, nome: str, cpf: str, email: str, login: str,
                   senha: str, perfil_str: str) -> Usuario:
-        self._validar_campos_obrigatorios(nome, cpf, email, senha, perfil_str)
+        self._validar_campos_obrigatorios(nome, cpf, email, login, senha,
+                                          perfil_str)
         self._validar_cpf(cpf)
         self._validar_email(email)
         self._validar_unicidade_cpf(cpf)
@@ -22,6 +23,7 @@ class UsuarioController:
             nome=nome,
             cpf=cpf,
             email=email,
+            login=login,
             senha=senha,
             perfil=perfil,
         )
@@ -31,8 +33,9 @@ class UsuarioController:
         return self._repositorio.listar_todos()
 
     def _validar_campos_obrigatorios(self, nome: str, cpf: str, email: str,
-                                     senha: str, perfil_str: str) -> None:
-        if not all([nome.strip(), cpf.strip(), email.strip(),
+                                     login: str, senha: str,
+                                     perfil_str: str) -> None:
+        if not all([nome.strip(), cpf.strip(), email.strip(), login.strip(),
                     senha.strip(), perfil_str.strip()]):
             raise ValueError("Todos os campos são obrigatórios.")
 

@@ -7,6 +7,7 @@ class Usuario:
     nome: str
     cpf: str
     email: str
+    login: str
     senha: str
     perfil: Perfil
     ativo: bool = True
@@ -17,7 +18,7 @@ class Usuario:
         de segurança.
         """
         return (f"Usuario(id={self.id}, nome='{self.nome}', cpf='{self.cpf}', "
-                f"email='{self.email}', perfil={self.perfil.name}, ativo={self.ativo})")
+                f"email='{self.email}', login='{self.login}', perfil={self.perfil.name}, ativo={self.ativo})")
 
     def __str__(self) -> str:
         """
