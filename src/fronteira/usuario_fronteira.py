@@ -1,5 +1,6 @@
 from controle.usuario_controller import UsuarioController
 from entidade.perfil import Perfil
+from excecao.login_invalido_error import LoginInvalidoError
 
 
 class UsuarioFronteira:
@@ -43,6 +44,8 @@ class UsuarioFronteira:
             )
             print(f"\nUsuário cadastrado com sucesso!")
             print(f"   {usuario}")
+        except LoginInvalidoError as e:
+            print(f"\nLogin inválido: {e}")
         except ValueError as e:
             print(f"\nErro ao cadastrar: {e}")
 

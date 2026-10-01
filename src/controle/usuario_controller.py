@@ -1,6 +1,14 @@
 from entidade.perfil import Perfil
+from excecao.login_invalido_error import (
+    LoginComNumerosError,
+    LoginMuitoLongoError,
+    LoginVazioError,
+)
 from entidade.usuario import Usuario
 from persistencia.usuario_repositorio import UsuarioRepositorio
+
+
+TAMANHO_MAXIMO_LOGIN = 12
 
 
 class UsuarioController:
@@ -10,8 +18,8 @@ class UsuarioController:
 
     def adicionar(self, nome: str, cpf: str, email: str, login: str,
                   senha: str, perfil_str: str) -> Usuario:
-        self._validar_campos_obrigatorios(nome, cpf, email, login, senha,
-                                          perfil_str)
+        self._validar_campos_obrigatorios(nome, cpf, email, senha, perfil_str)
+        self._validar_login(login)
         self._validar_cpf(cpf)
         self._validar_email(email)
         self._validar_unicidade_cpf(cpf)
@@ -33,11 +41,18 @@ class UsuarioController:
         return self._repositorio.listar_todos()
 
     def _validar_campos_obrigatorios(self, nome: str, cpf: str, email: str,
-                                     login: str, senha: str,
-                                     perfil_str: str) -> None:
-        if not all([nome.strip(), cpf.strip(), email.strip(), login.strip(),
+                                     senha: str, perfil_str: str) -> None:
+        if not all([nome.strip(), cpf.strip(), email.strip(),
                     senha.strip(), perfil_str.strip()]):
             raise ValueError("Todos os campos são obrigatórios.")
+
+    def _validar_login(self, login: str) -> None:
+        if not login.strip():
+            raise LoginVazioError()
+        if len(login) > TAMANHO_MAXIMO_LOGIN:
+            raise LoginMuitoLongoError(TAMANHO_MAXIMO_LOGIN)
+        if any(caractere.isdigit() for caractere in login):
+            raise LoginComNumerosError()
 
     def _validar_cpf(self, cpf: str) -> None:
         digitos = cpf.replace(".", "").replace("-", "")
