@@ -19,6 +19,7 @@ class UsuarioController:
     def adicionar(self, nome: str, cpf: str, email: str, login: str,
                   senha: str, perfil_str: str) -> Usuario:
         self._validar_campos_obrigatorios(nome, cpf, email, senha, perfil_str)
+        login = login.strip()
         self._validar_login(login)
         self._validar_cpf(cpf)
         self._validar_email(email)

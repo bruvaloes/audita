@@ -1,9 +1,4 @@
-import sys
-from pathlib import Path
-
 import pytest
-
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
 from controle.usuario_controller import UsuarioController
 from entidade.perfil import Perfil
@@ -31,6 +26,10 @@ def adicionar(controller, login):
 @pytest.mark.parametrize("login", ["maria", "a", "abcdefghijkl"])
 def test_deve_aceitar_login_valido(controller, login):
     assert adicionar(controller, login).login == login
+
+
+def test_deve_remover_espacos_nas_pontas_do_login(controller):
+    assert adicionar(controller, "  maria  ").login == "maria"
 
 
 @pytest.mark.parametrize("login", ["", "   "])
