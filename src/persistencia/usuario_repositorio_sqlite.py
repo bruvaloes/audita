@@ -2,7 +2,11 @@ import sqlite3
 from entidade.usuario import Usuario
 from entidade.perfil import Perfil
 from persistencia.usuario_repositorio import UsuarioRepositorio
-from excecao.persistencia_error import PersistenciaError
+from excecao.persistencia_error import (
+    ConexaoPersistenciaError,
+    EscritaPersistenciaError,
+    LeituraPersistenciaError,
+)
 
 
 class UsuarioRepositorioSQLite(UsuarioRepositorio):
@@ -16,7 +20,7 @@ class UsuarioRepositorioSQLite(UsuarioRepositorio):
         try:
             return sqlite3.connect(self.db_name)
         except sqlite3.Error as e:
-            raise PersistenciaError(f"Erro ao conectar ao banco de dados: {e}") from e
+            raise ConexaoPersistenciaError(f"Erro ao conectar ao banco de dados: {e}") from e
 
     def _criar_tabela(self) -> None:
         query = """
@@ -35,7 +39,7 @@ class UsuarioRepositorioSQLite(UsuarioRepositorio):
             with self._conectar() as conn:
                 conn.execute(query)
         except sqlite3.Error as e:
-            raise PersistenciaError(f"Erro ao criar tabela no banco: {e}") from e
+            raise ConexaoPersistenciaError(f"Erro ao criar tabela no banco: {e}") from e
 
     def salvar(self, usuario: Usuario) -> Usuario:
         query = """
@@ -56,7 +60,7 @@ class UsuarioRepositorioSQLite(UsuarioRepositorio):
                 usuario.id = cursor.lastrowid
                 return usuario
         except sqlite3.Error as e:
-            raise PersistenciaError(f"Erro ao salvar usuário no banco: {e}") from e
+            raise EscritaPersistenciaError(f"Erro ao salvar usuário no banco: {e}") from e
 
     def listar_todos(self) -> list[Usuario]:
         query = "SELECT id, nome, cpf, email, login, senha, perfil, ativo FROM usuarios"
@@ -67,7 +71,7 @@ class UsuarioRepositorioSQLite(UsuarioRepositorio):
                 for row in cursor.fetchall():
                     usuarios.append(self._montar_usuario(row))
         except sqlite3.Error as e:
-            raise PersistenciaError(f"Erro ao listar usuários: {e}") from e
+            raise LeituraPersistenciaError(f"Erro ao listar usuários: {e}") from e
         return usuarios
 
     def buscar_por_cpf(self, cpf: str) -> Usuario | None:
@@ -80,7 +84,7 @@ class UsuarioRepositorioSQLite(UsuarioRepositorio):
                     return self._montar_usuario(row)
                 return None
         except sqlite3.Error as e:
-            raise PersistenciaError(f"Erro ao buscar usuário por CPF: {e}") from e
+            raise LeituraPersistenciaError(f"Erro ao buscar usuário por CPF: {e}") from e
 
     def buscar_por_email(self, email: str) -> Usuario | None:
         query = "SELECT id, nome, cpf, email, login, senha, perfil, ativo FROM usuarios WHERE email = ?"
@@ -92,7 +96,7 @@ class UsuarioRepositorioSQLite(UsuarioRepositorio):
                     return self._montar_usuario(row)
                 return None
         except sqlite3.Error as e:
-            raise PersistenciaError(f"Erro ao buscar usuário por E-mail: {e}") from e
+            raise LeituraPersistenciaError(f"Erro ao buscar usuário por E-mail: {e}") from e
 
     def _montar_usuario(self, row: tuple) -> Usuario:
         return Usuario(
