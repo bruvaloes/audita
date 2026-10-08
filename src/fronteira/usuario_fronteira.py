@@ -1,6 +1,7 @@
 from controle.usuario_controller import UsuarioController
 from entidade.perfil import Perfil
 from excecao.login_invalido_error import LoginInvalidoError
+from excecao.persistencia_error import PersistenciaError
 from excecao.senha_invalida_error import SenhaInvalidaError
 
 class UsuarioFronteira:
@@ -50,9 +51,15 @@ class UsuarioFronteira:
             print(f"\nSenha inválida: {e}")
         except ValueError as e:
             print(f"\nErro ao cadastrar: {e}")
+        except PersistenciaError as e:
+            print(f"\nErro de armazenamento: {e}")
 
     def listar_usuarios(self) -> None:
-        usuarios = self._controller.listar_todos()
+        try:
+            usuarios = self._controller.listar_todos()
+        except PersistenciaError as e:
+            print(f"\nErro de armazenamento: {e}")
+            return
 
         if not usuarios:
             print("\nNenhum usuário cadastrado.")

@@ -2,6 +2,7 @@ from persistencia.usuario_repositorio import UsuarioRepositorioMemoria
 from persistencia.usuario_repositorio_sqlite import UsuarioRepositorioSQLite
 from controle.usuario_controller import UsuarioController
 from fronteira.usuario_fronteira import UsuarioFronteira
+from excecao.persistencia_error import PersistenciaError
 
 
 def escolher_repositorio():
@@ -12,8 +13,13 @@ def escolher_repositorio():
     while True:
         opcao = input("Escolha o mecanismo de armazenamento: ").strip()
         if opcao == "1":
+            try:
+                repositorio = UsuarioRepositorioSQLite()
+            except PersistenciaError as e:
+                print(f"\n{e}\nEscolha outro mecanismo de armazenamento.")
+                continue
             print("Usando banco de dados (SQLite)\n")
-            return UsuarioRepositorioSQLite()
+            return repositorio
         elif opcao == "2":
             print("Usando memória\n")
             return UsuarioRepositorioMemoria()
