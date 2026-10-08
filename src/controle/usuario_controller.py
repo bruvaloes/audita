@@ -1,14 +1,26 @@
+import string
 from entidade.perfil import Perfil
 from excecao.login_invalido_error import (
     LoginComNumerosError,
     LoginMuitoLongoError,
     LoginVazioError,
 )
+from excecao.senha_invalida_error import (
+    SenhaMuitoCurtaError,
+    SenhaMuitoLongaError,
+    SenhaSemMaiusculaError,
+    SenhaSemMinusculaError,
+    SenhaSemNumeroError,
+    SenhaSemCaractereEspecialError
+)
 from entidade.usuario import Usuario
 from persistencia.usuario_repositorio import UsuarioRepositorio
 
 
 TAMANHO_MAXIMO_LOGIN = 12
+TAMANHO_MINIMO_SENHA = 8
+TAMANHO_MAXIMO_SENHA = 128
+CARACTERES_ESPECIAIS_SENHA = "!@#$%^&*()_+-=[]{}|'"
 
 
 class UsuarioController:
@@ -21,6 +33,7 @@ class UsuarioController:
         self._validar_campos_obrigatorios(nome, cpf, email, senha, perfil_str)
         login = login.strip()
         self._validar_login(login)
+        self._validar_senha(senha)
         self._validar_cpf(cpf)
         self._validar_email(email)
         self._validar_unicidade_cpf(cpf)
@@ -55,6 +68,20 @@ class UsuarioController:
         if any(caractere.isdigit() for caractere in login):
             raise LoginComNumerosError()
 
+    def _validar_senha(self, senha: str) -> None:
+        if len(senha) < TAMANHO_MINIMO_SENHA:
+            raise SenhaMuitoCurtaError(TAMANHO_MINIMO_SENHA)
+        if len(senha) > TAMANHO_MAXIMO_SENHA:
+            raise SenhaMuitoLongaError(TAMANHO_MAXIMO_SENHA)
+        if not self._contem_algum_de(senha, string.ascii_uppercase):
+            raise SenhaSemMaiusculaError()
+        if not self._contem_algum_de(senha, string.ascii_lowercase):
+            raise SenhaSemMinusculaError()
+        if not self._contem_algum_de(senha, string.digits):
+            raise SenhaSemNumeroError()
+        if not self._contem_algum_de(senha, CARACTERES_ESPECIAIS_SENHA):
+            raise SenhaSemCaractereEspecialError(CARACTERES_ESPECIAIS_SENHA)
+        
     def _validar_cpf(self, cpf: str) -> None:
         digitos = cpf.replace(".", "").replace("-", "")
         if not digitos.isdigit() or len(digitos) != 11:
@@ -81,3 +108,8 @@ class UsuarioController:
                 f"Perfil inválido: '{perfil_str}'. "
                 f"Valores aceitos: {nomes_validos}."
             )
+
+    # Função auxiliar para uso na função que valida as senhas.
+    @staticmethod
+    def _contem_algum_de(texto: str, caracteres: str) -> bool:
+        return any(caractere in caracteres for caractere in texto)
