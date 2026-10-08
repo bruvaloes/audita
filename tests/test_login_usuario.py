@@ -18,7 +18,7 @@ def controller():
 
 def adicionar(controller, login):
     return controller.adicionar(
-        "Maria", "12345678900", "maria@email.com", login, "senha",
+        "Maria", "12345678900", "maria@email.com", login, "Senha@123",
         next(iter(Perfil)).value
     )
 
