@@ -11,7 +11,7 @@ from excecao.senha_invalida_error import (
     SenhaSemMinusculaError,
     SenhaSemNumeroError,
 )
-from persistencia.usuario_repositorio import UsuarioRepositorio
+from persistencia.usuario_repositorio import UsuarioRepositorioMemoria
 
 TAMANHO_MINIMO_SENHA = 8
 TAMANHO_MAXIMO_SENHA = 128
@@ -19,7 +19,7 @@ CARACTERES_ESPECIAIS_SENHA = "!@#$%^&*()_+-=[]{}|'"
 
 @pytest.fixture
 def controller():
-    return UsuarioController(UsuarioRepositorio())
+    return UsuarioController(UsuarioRepositorioMemoria())
 
 
 def adicionar(controller, senha):

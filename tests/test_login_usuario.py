@@ -8,12 +8,12 @@ from excecao.login_invalido_error import (
     LoginMuitoLongoError,
     LoginVazioError,
 )
-from persistencia.usuario_repositorio import UsuarioRepositorio
+from persistencia.usuario_repositorio import UsuarioRepositorioMemoria
 
 
 @pytest.fixture
 def controller():
-    return UsuarioController(UsuarioRepositorio())
+    return UsuarioController(UsuarioRepositorioMemoria())
 
 
 def adicionar(controller, login):

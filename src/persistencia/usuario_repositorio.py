@@ -1,7 +1,27 @@
+from abc import ABC, abstractmethod
 from entidade.usuario import Usuario
 
 
-class UsuarioRepositorio:
+class UsuarioRepositorio(ABC):
+
+    @abstractmethod
+    def salvar(self, usuario: Usuario) -> Usuario:
+        pass
+
+    @abstractmethod
+    def listar_todos(self) -> list[Usuario]:
+        pass
+
+    @abstractmethod
+    def buscar_por_cpf(self, cpf: str) -> Usuario | None:
+        pass
+
+    @abstractmethod
+    def buscar_por_email(self, email: str) -> Usuario | None:
+        pass
+
+
+class UsuarioRepositorioMemoria(UsuarioRepositorio):
 
     def __init__(self):
         self._usuarios: dict[int, Usuario] = {}

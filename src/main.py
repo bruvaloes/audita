@@ -1,10 +1,10 @@
-from persistencia.usuario_repositorio import UsuarioRepositorio
+from persistencia.usuario_repositorio import UsuarioRepositorioMemoria
 from controle.usuario_controller import UsuarioController
 from fronteira.usuario_fronteira import UsuarioFronteira
 
 
 def main():
-    repositorio = UsuarioRepositorio()
+    repositorio = UsuarioRepositorioMemoria()
     controller = UsuarioController(repositorio)
     fronteira = UsuarioFronteira(controller)
     fronteira.menu()
