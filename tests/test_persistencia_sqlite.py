@@ -2,7 +2,11 @@ import sqlite3
 
 import pytest
 
+from controle.dados_cadastro_usuario import DadosCadastroUsuario
 from controle.usuario_controller import UsuarioController
+from controle.validacao.validador_cadastro_usuario import (
+    ValidadorCadastroUsuario,
+)
 from excecao.persistencia_error import (
     ConexaoPersistenciaError,
     EscritaPersistenciaError,
@@ -14,18 +18,19 @@ from persistencia.usuario_repositorio_sqlite import UsuarioRepositorioSQLite
 
 @pytest.fixture
 def controller(tmp_path):
-    return UsuarioController(UsuarioRepositorioSQLite(str(tmp_path / "teste.db")))
+    repositorio = UsuarioRepositorioSQLite(str(tmp_path / "teste.db"))
+    return UsuarioController(repositorio, ValidadorCadastroUsuario(repositorio))
 
 
 def adicionar(controller, cpf, email, login):
-    return controller.adicionar(
+    return controller.adicionar(DadosCadastroUsuario(
         nome="Fulano",
         cpf=cpf,
         email=email,
         login=login,
         senha="SenhaValida1!",
-        perfil_str="GESTOR",
-    )
+        perfil="GESTOR",
+    ))
 
 
 def test_login_duplicado_lanca_escrita_persistencia_error(controller):
