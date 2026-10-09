@@ -1,29 +1,33 @@
+from abc import ABC, abstractmethod
+
 from entidade.usuario import Usuario
 
 
-class UsuarioRepositorio:
+class ConsultaUsuarios(ABC):
+    """Operações somente de leitura sobre usuários."""
 
-    def __init__(self):
-        self._usuarios: dict[int, Usuario] = {}
-        self._proximo_id: int = 1
-
-    def salvar(self, usuario: Usuario) -> Usuario:
-        usuario.id = self._proximo_id
-        self._usuarios[usuario.id] = usuario
-        self._proximo_id += 1
-        return usuario
-
+    @abstractmethod
     def listar_todos(self) -> list[Usuario]:
-        return list(self._usuarios.values())
+        """Retorna todos os usuários, na ordem em que foram salvos."""
 
+    @abstractmethod
     def buscar_por_cpf(self, cpf: str) -> Usuario | None:
-        for usuario in self._usuarios.values():
-            if usuario.cpf == cpf:
-                return usuario
-        return None
+        """Retorna o usuário com o CPF informado, ou None se não existir."""
 
+    @abstractmethod
     def buscar_por_email(self, email: str) -> Usuario | None:
-        for usuario in self._usuarios.values():
-            if usuario.email == email:
-                return usuario
-        return None
+        """Retorna o usuário com o e-mail informado, ou None se não existir."""
+
+
+class PersistenciaUsuarios(ABC):
+    """Operações de escrita sobre usuários."""
+
+    @abstractmethod
+    def salvar(self, usuario: Usuario) -> Usuario:
+        """Persiste o usuário, atribui um id único e o retorna."""
+
+
+class UsuarioRepositorio(ConsultaUsuarios, PersistenciaUsuarios, ABC):
+    """Contrato completo de repositório; qualquer mecanismo de persistência
+    (memória, arquivo, banco) deve poder substituí-lo sem alterar o
+    comportamento descrito acima."""

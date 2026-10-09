@@ -1,0 +1,108 @@
+import sqlite3
+from entidade.usuario import Usuario
+from entidade.perfil import Perfil
+from persistencia.usuario_repositorio import UsuarioRepositorio
+from excecao.persistencia_error import (
+    ConexaoPersistenciaError,
+    EscritaPersistenciaError,
+    LeituraPersistenciaError,
+)
+
+COLUNAS_USUARIO = "id, nome, cpf, email, login, senha, perfil, ativo"
+
+
+class UsuarioRepositorioSQLite(UsuarioRepositorio):
+    """Implementação do repositório de usuários utilizando SQLite."""
+
+    def __init__(self, db_name: str = "usuarios.db"):
+        self.db_name = db_name
+        self._criar_tabela()
+
+    def _conectar(self) -> sqlite3.Connection:
+        try:
+            return sqlite3.connect(self.db_name)
+        except sqlite3.Error as e:
+            raise ConexaoPersistenciaError(f"Erro ao conectar ao banco de dados: {e}") from e
+
+    def _criar_tabela(self) -> None:
+        query = """
+        CREATE TABLE IF NOT EXISTS usuarios (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nome TEXT NOT NULL,
+            cpf TEXT UNIQUE NOT NULL,
+            email TEXT UNIQUE NOT NULL,
+            login TEXT UNIQUE NOT NULL,
+            senha TEXT NOT NULL,
+            perfil TEXT NOT NULL,
+            ativo BOOLEAN NOT NULL DEFAULT 1
+        )
+        """
+        try:
+            with self._conectar() as conn:
+                conn.execute(query)
+        except sqlite3.Error as e:
+            raise ConexaoPersistenciaError(f"Erro ao criar tabela no banco: {e}") from e
+
+    def salvar(self, usuario: Usuario) -> Usuario:
+        query = """
+        INSERT INTO usuarios (nome, cpf, email, login, senha, perfil, ativo)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+        """
+        try:
+            with self._conectar() as conn:
+                cursor = conn.execute(query, (
+                    usuario.nome,
+                    usuario.cpf,
+                    usuario.email,
+                    usuario.login,
+                    usuario.senha,
+                    usuario.perfil.value,
+                    usuario.ativo
+                ))
+                usuario.id = cursor.lastrowid
+                return usuario
+        except sqlite3.Error as e:
+            raise EscritaPersistenciaError(f"Erro ao salvar usuário no banco: {e}") from e
+
+    def listar_todos(self) -> list[Usuario]:
+        query = f"SELECT {COLUNAS_USUARIO} FROM usuarios"
+        usuarios = []
+        try:
+            with self._conectar() as conn:
+                cursor = conn.execute(query)
+                for row in cursor.fetchall():
+                    usuarios.append(self._montar_usuario(row))
+        except sqlite3.Error as e:
+            raise LeituraPersistenciaError(f"Erro ao listar usuários: {e}") from e
+        return usuarios
+
+    def buscar_por_cpf(self, cpf: str) -> Usuario | None:
+        return self._buscar_um("cpf", cpf, "CPF")
+
+    def buscar_por_email(self, email: str) -> Usuario | None:
+        return self._buscar_um("email", email, "E-mail")
+
+    def _buscar_um(self, coluna: str, valor: str,
+                   descricao: str) -> Usuario | None:
+        # `coluna` vem sempre de código interno, nunca de entrada do usuário.
+        query = f"SELECT {COLUNAS_USUARIO} FROM usuarios WHERE {coluna} = ?"
+        try:
+            with self._conectar() as conn:
+                row = conn.execute(query, (valor,)).fetchone()
+        except sqlite3.Error as e:
+            raise LeituraPersistenciaError(
+                f"Erro ao buscar usuário por {descricao}: {e}"
+            ) from e
+        return self._montar_usuario(row) if row else None
+
+    def _montar_usuario(self, row: tuple) -> Usuario:
+        return Usuario(
+            id=row[0],
+            nome=row[1],
+            cpf=row[2],
+            email=row[3],
+            login=row[4],
+            senha=row[5],
+            perfil=Perfil(row[6]),
+            ativo=bool(row[7])
+        )
