@@ -8,6 +8,8 @@ from excecao.persistencia_error import (
     LeituraPersistenciaError,
 )
 
+COLUNAS_USUARIO = "id, nome, cpf, email, login, senha, perfil, ativo"
+
 
 class UsuarioRepositorioSQLite(UsuarioRepositorio):
     """Implementação do repositório de usuários utilizando SQLite."""
@@ -63,7 +65,7 @@ class UsuarioRepositorioSQLite(UsuarioRepositorio):
             raise EscritaPersistenciaError(f"Erro ao salvar usuário no banco: {e}") from e
 
     def listar_todos(self) -> list[Usuario]:
-        query = "SELECT id, nome, cpf, email, login, senha, perfil, ativo FROM usuarios"
+        query = f"SELECT {COLUNAS_USUARIO} FROM usuarios"
         usuarios = []
         try:
             with self._conectar() as conn:
@@ -75,28 +77,23 @@ class UsuarioRepositorioSQLite(UsuarioRepositorio):
         return usuarios
 
     def buscar_por_cpf(self, cpf: str) -> Usuario | None:
-        query = "SELECT id, nome, cpf, email, login, senha, perfil, ativo FROM usuarios WHERE cpf = ?"
-        try:
-            with self._conectar() as conn:
-                cursor = conn.execute(query, (cpf,))
-                row = cursor.fetchone()
-                if row:
-                    return self._montar_usuario(row)
-                return None
-        except sqlite3.Error as e:
-            raise LeituraPersistenciaError(f"Erro ao buscar usuário por CPF: {e}") from e
+        return self._buscar_um("cpf", cpf, "CPF")
 
     def buscar_por_email(self, email: str) -> Usuario | None:
-        query = "SELECT id, nome, cpf, email, login, senha, perfil, ativo FROM usuarios WHERE email = ?"
+        return self._buscar_um("email", email, "E-mail")
+
+    def _buscar_um(self, coluna: str, valor: str,
+                   descricao: str) -> Usuario | None:
+        # `coluna` vem sempre de código interno, nunca de entrada do usuário.
+        query = f"SELECT {COLUNAS_USUARIO} FROM usuarios WHERE {coluna} = ?"
         try:
             with self._conectar() as conn:
-                cursor = conn.execute(query, (email,))
-                row = cursor.fetchone()
-                if row:
-                    return self._montar_usuario(row)
-                return None
+                row = conn.execute(query, (valor,)).fetchone()
         except sqlite3.Error as e:
-            raise LeituraPersistenciaError(f"Erro ao buscar usuário por E-mail: {e}") from e
+            raise LeituraPersistenciaError(
+                f"Erro ao buscar usuário por {descricao}: {e}"
+            ) from e
+        return self._montar_usuario(row) if row else None
 
     def _montar_usuario(self, row: tuple) -> Usuario:
         return Usuario(

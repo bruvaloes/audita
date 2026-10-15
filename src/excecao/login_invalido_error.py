@@ -1,4 +1,7 @@
-class LoginInvalidoError(Exception):
+from excecao.validacao_error import ValidacaoError
+
+
+class LoginInvalidoError(ValidacaoError):
     """Base para todos os erros de validação de login."""
 
 
