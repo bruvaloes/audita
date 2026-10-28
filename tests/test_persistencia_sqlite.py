@@ -39,9 +39,9 @@ def adicionar(controller, cpf, email, login):
 
 
 def test_login_duplicado_lanca_escrita_persistencia_error(controller):
-    adicionar(controller, "12345678901", "a@x.com", "fulano")
+    adicionar(controller, "52998224725", "a@x.com", "fulano")
     with pytest.raises(EscritaPersistenciaError):
-        adicionar(controller, "12345678902", "b@x.com", "fulano")
+        adicionar(controller, "11144477735", "b@x.com", "fulano")
 
 
 def test_banco_inacessivel_lanca_conexao_persistencia_error(tmp_path):
