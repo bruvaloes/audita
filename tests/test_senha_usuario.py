@@ -2,70 +2,81 @@ from dataclasses import replace
 
 import pytest
 
+from controle.validacao.validador_senha import (
+    DESCRICAO_POLITICA,
+    TAMANHO_MAXIMO_SENHA,
+    TAMANHO_MINIMO_SENHA,
+)
 from excecao.senha_invalida_error import (
+    SenhaComPoucosTiposError,
     SenhaInvalidaError,
     SenhaMuitoCurtaError,
     SenhaMuitoLongaError,
-    SenhaSemCaractereEspecialError,
-    SenhaSemMaiusculaError,
-    SenhaSemMinusculaError,
-    SenhaSemNumeroError,
 )
-from controle.validacao.validador_senha import TAMANHO_MAXIMO_SENHA
+
+MENSAGEM_POLITICA = (
+    "Senha: use 8 a 128 caracteres e 3 destes tipos: maiúscula, minúscula, "
+    "número, especial"
+)
 
 
 @pytest.fixture
 def adicionar(controller, dados_validos):
     def _adicionar(senha):
-        return controller.adicionar(replace(dados_validos, senha=senha))
+        return controller.adicionar(
+            replace(dados_validos, senha=senha))
     return _adicionar
 
 
-@pytest.mark.parametrize("senha", ["Senha@123", "P4ssw0rd!", "A1#bcdefgh", "Senh4_F0rt3("])
-def test_deve_aceitar_senha_valida(adicionar, senha):
-    assert adicionar(senha).senha == senha
+@pytest.mark.parametrize("senha", [
+    "Senha@123",      # 4 tipos
+    "P4ssw0rd!",
+    "Abcdefg1",       # 3 tipos: maiúscula, minúscula e número
+    "abcdef1!",       # 3 tipos: minúscula, número e especial
+    "ABCDEF1!",       # 3 tipos: maiúscula, número e especial
+    "Abcdefg!",       # 3 tipos: maiúscula, minúscula e especial
+])
+def test_deve_aceitar_senha_com_3_ou_4_tipos(adicionar, senha):
+    assert adicionar(senha).id == 1
 
 
-@pytest.mark.parametrize("senha", ["1@Abcde", "S@1abcd"])  # 7 caracteres
+@pytest.mark.parametrize("senha", ["abcdefgh1", "ABCDEFGH!", "12345678", "abcdefgh"])
+def test_deve_lancar_erro_quando_senha_tem_menos_de_3_tipos(adicionar, senha):
+    with pytest.raises(SenhaComPoucosTiposError):
+        adicionar(senha)
+
+
+def test_deve_aceitar_senha_no_tamanho_minimo(adicionar):
+    assert adicionar("Aa1!" + "b" * (TAMANHO_MINIMO_SENHA - 4)).id == 1
+
+
+@pytest.mark.parametrize("senha", ["Aa1!bcd", "1@Abcde"])  # 7 caracteres
 def test_deve_lancar_erro_quando_senha_muito_curta(adicionar, senha):
     with pytest.raises(SenhaMuitoCurtaError):
         adicionar(senha)
 
 
+def test_deve_aceitar_senha_no_tamanho_maximo(adicionar):
+    assert adicionar("Aa1!" + "b" * (TAMANHO_MAXIMO_SENHA - 4)).id == 1
+
+
 def test_deve_lancar_erro_quando_senha_muito_longa(adicionar):
     with pytest.raises(SenhaMuitoLongaError):
-        # Cria uma senha com 129 caracteres (1 caractere a mais que o máximo permitido)
-        senha_longa = "S@1a" + ("b" * (TAMANHO_MAXIMO_SENHA - 3))
-        adicionar(senha_longa)
+        adicionar("Aa1!" + "b" * (TAMANHO_MAXIMO_SENHA - 3))  # 129 caracteres
 
 
-@pytest.mark.parametrize("senha", ["senha@1234", "minha_senha1"])
-def test_deve_lancar_erro_quando_senha_sem_maiuscula(adicionar, senha):
-    with pytest.raises(SenhaSemMaiusculaError):
+@pytest.mark.parametrize("senha", ["Aa1!bcd", "abcdefgh1", "Aa1!" + "b" * 125])
+def test_mensagem_deve_resumir_a_politica_completa(adicionar, senha):
+    with pytest.raises(SenhaInvalidaError) as erro:
         adicionar(senha)
+    assert str(erro.value) == MENSAGEM_POLITICA
+    assert len(str(erro.value)) <= 120
 
 
-@pytest.mark.parametrize("senha", ["SENHA@1234", "MINHA_SENHA1"])
-def test_deve_lancar_erro_quando_senha_sem_minuscula(adicionar, senha):
-    with pytest.raises(SenhaSemMinusculaError):
-        adicionar(senha)
+def test_descricao_da_politica_deve_citar_os_limites():
+    assert "8 a 128" in DESCRICAO_POLITICA
+    assert "3 destes tipos" in DESCRICAO_POLITICA
 
-
-@pytest.mark.parametrize("senha", ["Senha@Forte", "Outra$Senha"])
-def test_deve_lancar_erro_quando_senha_sem_numero(adicionar, senha):
-    with pytest.raises(SenhaSemNumeroError):
-        adicionar(senha)
-
-
-@pytest.mark.parametrize("senha", ["Senha12345", "S3nhaForte"])
-def test_deve_lancar_erro_quando_senha_sem_caractere_especial(adicionar, senha):
-    with pytest.raises(SenhaSemCaractereEspecialError):
-        adicionar(senha)
-
-
-def test_erros_de_senha_herdam_de_senha_invalida_error(adicionar):
-    with pytest.raises(SenhaInvalidaError):
-        adicionar("fraca")
 
 def test_nao_deve_salvar_usuario_quando_senha_invalida(adicionar, controller):
     with pytest.raises(SenhaInvalidaError):
