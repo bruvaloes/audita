@@ -8,11 +8,8 @@ class CampoObrigatorioError(ValidacaoError):
 
 
 class CpfInvalidoError(ValidacaoError):
-    def __init__(self, quantidade_digitos: int):
-        super().__init__(
-            f"CPF deve conter exatamente {quantidade_digitos} "
-            f"dígitos numéricos."
-        )
+    def __init__(self):
+        super().__init__("CPF inválido")
 
 
 class EmailInvalidoError(ValidacaoError):
@@ -29,4 +26,4 @@ class PerfilInvalidoError(ValidacaoError):
 
 class UsuarioDuplicadoError(ValidacaoError):
     def __init__(self, campo: str):
-        super().__init__(f"Já existe um usuário com este {campo}.")
+        super().__init__(f"{campo} já cadastrado")

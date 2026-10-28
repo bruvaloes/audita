@@ -28,4 +28,4 @@ class ValidadorUnicidade(Validador):
 
     @classmethod
     def para_email(cls, consulta: ConsultaUsuarios) -> "ValidadorUnicidade":
-        return cls("e-mail", consulta.buscar_por_email)
+        return cls("E-mail", consulta.buscar_por_email)

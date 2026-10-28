@@ -31,7 +31,7 @@ def controller(repositorio, hash_senha):
 def dados_validos():
     return DadosCadastroUsuario(
         nome="Maria",
-        cpf="12345678900",
+        cpf="52998224725",
         email="maria@email.com",
         login="maria",
         senha="Senha@123",

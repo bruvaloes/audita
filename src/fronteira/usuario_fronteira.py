@@ -69,7 +69,7 @@ class UsuarioFronteira:
 
     def _ler_dados_cadastro(self) -> DadosCadastroUsuario:
         nome = input("Nome: ").strip()
-        cpf = input("CPF (11 dígitos): ").strip()
+        cpf = input("CPF (11 dígitos, com ou sem pontuação): ").strip()
         email = input("E-mail: ").strip()
         login = input("Login: ").strip()
         senha = input("Senha: ").strip()

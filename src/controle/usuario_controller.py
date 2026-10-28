@@ -3,6 +3,7 @@ from controle.seguranca.hash_senha import HashSenha
 from controle.validacao.validador_cadastro_usuario import (
     ValidadorCadastroUsuario,
 )
+from entidade.cpf import normalizar_cpf
 from entidade.perfil import Perfil
 from entidade.usuario import Usuario
 from persistencia.usuario_repositorio import UsuarioRepositorio
@@ -38,7 +39,7 @@ class UsuarioController:
     def _normalizar(self, dados: DadosCadastroUsuario) -> DadosCadastroUsuario:
         return DadosCadastroUsuario(
             nome=dados.nome,
-            cpf=dados.cpf,
+            cpf=normalizar_cpf(dados.cpf),
             email=dados.email,
             login=dados.login.strip(),
             senha=dados.senha,
