@@ -1,7 +1,9 @@
 import pytest
 
 from controle.validacao.validador_cpf import ValidadorCpf
-from entidade.cpf import cpf_valido, normalizar_cpf
+from entidade.cpf import cpf_valido, mascarar_cpf, normalizar_cpf
+from entidade.perfil import Perfil
+from entidade.usuario import Usuario
 from excecao.validacao_error import CpfInvalidoError
 
 CPF_VALIDO = "52998224725"
@@ -52,3 +54,22 @@ def test_mensagem_de_cpf_invalido():
     with pytest.raises(CpfInvalidoError) as erro:
         ValidadorCpf().validar("123")
     assert str(erro.value) == "CPF inválido"
+
+
+@pytest.mark.parametrize("cpf", [CPF_VALIDO, CPF_FORMATADO])
+def test_mascarar_cpf_deve_ocultar_primeiros_3_e_ultimos_2_digitos(cpf):
+    assert mascarar_cpf(cpf) == "XXX.982.247-XX"
+
+
+@pytest.mark.parametrize("cpf", ["", "123", "abc"])
+def test_mascarar_cpf_malformado_nao_deve_vazar_nada(cpf):
+    assert mascarar_cpf(cpf) == "XXX.XXX.XXX-XX"
+
+
+def test_representacoes_do_usuario_nao_devem_conter_o_cpf_completo():
+    usuario = Usuario(1, "Maria", CPF_VALIDO, "m@x.com", "maria", "hash",
+                      Perfil.GESTOR)
+    for texto in (repr(usuario), str(usuario)):
+        assert CPF_VALIDO not in texto
+        assert CPF_FORMATADO not in texto
+    assert "XXX.982.247-XX" in repr(usuario)
