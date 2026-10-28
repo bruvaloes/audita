@@ -25,3 +25,8 @@ class SenhaMuitoLongaError(SenhaForaDaPoliticaError):
 
 class SenhaComPoucosTiposError(SenhaForaDaPoliticaError):
     pass
+
+
+class SenhasDiferentesError(SenhaInvalidaError):
+    def __init__(self):
+        super().__init__("As senhas não coincidem")

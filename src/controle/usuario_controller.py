@@ -39,5 +39,6 @@ class UsuarioController:
             email=dados.email,
             login=dados.login.strip(),
             senha=dados.senha,
+            confirmacao_senha=dados.confirmacao_senha,
             perfil=dados.perfil,
         )

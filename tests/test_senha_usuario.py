@@ -12,6 +12,7 @@ from excecao.senha_invalida_error import (
     SenhaInvalidaError,
     SenhaMuitoCurtaError,
     SenhaMuitoLongaError,
+    SenhasDiferentesError,
 )
 
 MENSAGEM_POLITICA = (
@@ -24,7 +25,7 @@ MENSAGEM_POLITICA = (
 def adicionar(controller, dados_validos):
     def _adicionar(senha):
         return controller.adicionar(
-            replace(dados_validos, senha=senha))
+            replace(dados_validos, senha=senha, confirmacao_senha=senha))
     return _adicionar
 
 
@@ -82,3 +83,17 @@ def test_nao_deve_salvar_usuario_quando_senha_invalida(adicionar, controller):
     with pytest.raises(SenhaInvalidaError):
         adicionar("fraca")
     assert controller.listar_todos() == []
+
+
+def test_deve_lancar_erro_quando_confirmacao_difere_da_senha(controller, dados_validos):
+    dados = replace(dados_validos, confirmacao_senha="Senha@124")
+    with pytest.raises(SenhasDiferentesError) as erro:
+        controller.adicionar(dados)
+    assert str(erro.value) == "As senhas não coincidem"
+    assert controller.listar_todos() == []
+
+
+def test_deve_validar_politica_antes_da_confirmacao(controller, dados_validos):
+    dados = replace(dados_validos, senha="fraca", confirmacao_senha="outra")
+    with pytest.raises(SenhaMuitoCurtaError):
+        controller.adicionar(dados)

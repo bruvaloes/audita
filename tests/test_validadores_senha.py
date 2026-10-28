@@ -1,6 +1,10 @@
 """Testes unitários dos validadores de senha, isolados do controller."""
 import pytest
 
+from controle.dados_cadastro_usuario import DadosCadastroUsuario
+from controle.validacao.validador_confirmacao_senha import (
+    ValidadorConfirmacaoSenha,
+)
 from controle.validacao.validador_senha import (
     TAMANHO_MAXIMO_SENHA,
     TAMANHO_MINIMO_SENHA,
@@ -10,7 +14,15 @@ from excecao.senha_invalida_error import (
     SenhaComPoucosTiposError,
     SenhaMuitoCurtaError,
     SenhaMuitoLongaError,
+    SenhasDiferentesError,
 )
+
+
+def cadastro(login="maria", senha="Senha@123", confirmacao="Senha@123"):
+    return DadosCadastroUsuario(
+        nome="Maria", cpf="12345678900", email="maria@email.com",
+        login=login, senha=senha, confirmacao_senha=confirmacao,
+        perfil="GESTOR")
 
 
 class TestValidadorSenha:
@@ -42,3 +54,15 @@ class TestValidadorSenha:
     def test_letra_acentuada_e_espaco_nao_contam_como_tipo(self):
         with pytest.raises(SenhaComPoucosTiposError):
             ValidadorSenha().validar("áéíóú 12")
+
+
+class TestValidadorConfirmacaoSenha:
+
+    def test_deve_aceitar_confirmacao_igual(self):
+        ValidadorConfirmacaoSenha().validar(cadastro())
+
+    @pytest.mark.parametrize("confirmacao", ["", "senha@123", "Senha@1234"])
+    def test_deve_rejeitar_confirmacao_diferente(self, confirmacao):
+        with pytest.raises(SenhasDiferentesError):
+            ValidadorConfirmacaoSenha().validar(
+                cadastro(confirmacao=confirmacao))

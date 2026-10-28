@@ -26,5 +26,6 @@ def dados_validos():
         email="maria@email.com",
         login="maria",
         senha="Senha@123",
+        confirmacao_senha="Senha@123",
         perfil="GESTOR",
     )

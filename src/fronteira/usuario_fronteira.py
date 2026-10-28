@@ -73,11 +73,13 @@ class UsuarioFronteira:
         email = input("E-mail: ").strip()
         login = input("Login: ").strip()
         senha = input("Senha: ").strip()
+        confirmacao_senha = input("Confirme a senha: ").strip()
 
         print(f"Perfis disponíveis: {Perfil.nomes_validos()}")
         perfil = input("Perfil: ").strip()
 
-        return DadosCadastroUsuario(nome, cpf, email, login, senha, perfil)
+        return DadosCadastroUsuario(
+            nome, cpf, email, login, senha, confirmacao_senha, perfil)
 
     def _exibir_tabela(self, usuarios: list[Usuario]) -> None:
         print("\n--- Lista de Usuários ---")
