@@ -8,6 +8,9 @@ from entidade.resultado_acesso import ResultadoAcesso
 from entidade.usuario import Usuario
 from excecao.credenciais_invalidas_error import CredenciaisInvalidasError
 from excecao.persistencia_error import EscritaPersistenciaError
+from fronteira.autenticacao_fronteira import AutenticacaoFronteira
+from fronteira.painel_fronteira import PainelFronteira
+from fronteira.usuario_fronteira import UsuarioFronteira
 from persistencia.acesso_repositorio import AcessoRepositorio
 
 SENHA = "Senha@123"
@@ -182,3 +185,74 @@ def test_nao_deve_conceder_login_quando_o_registro_do_acesso_falha(
 
     with pytest.raises(EscritaPersistenciaError):
         autenticacao.autenticar("maria", SENHA, "GESTOR")
+
+
+# --- Fronteira: opção de login no menu e painel após a autenticação ---
+
+def abrir_menu_e_entrar(controller, autenticacao, monkeypatch, senha,
+                        *entradas):
+    """Escolhe a opção 4 do menu e responde ao login; `entradas` vêm depois
+    do menu (identificador, perfil e o que mais a tela pedir)."""
+    fila = iter(("4", *entradas))
+    monkeypatch.setattr("builtins.input", lambda _: next(fila))
+    fronteira = UsuarioFronteira(controller, AutenticacaoFronteira(
+        autenticacao, PainelFronteira(), ler_senha=lambda _: senha))
+    fronteira.menu()
+
+
+def test_menu_deve_oferecer_a_opcao_de_login(
+        controller, autenticacao, monkeypatch, capsys):
+    monkeypatch.setattr("builtins.input", lambda _: "0")
+    UsuarioFronteira(controller, AutenticacaoFronteira(
+        autenticacao, PainelFronteira())).menu()
+
+    assert "4 - Entrar (login)" in capsys.readouterr().out
+
+
+def test_c1_deve_abrir_o_painel_do_gestor_apos_autenticar(
+        controller, autenticacao, maria, monkeypatch, capsys):
+    # login, perfil, "0" (sair do painel) e "0" (sair do menu)
+    abrir_menu_e_entrar(controller, autenticacao, monkeypatch, SENHA,
+                        "maria", "GESTOR", "0", "0")
+
+    saida = capsys.readouterr().out
+    assert "PAINEL DO GESTOR" in saida
+    assert "Credenciais inválidas" not in saida
+
+
+def test_c3_tela_deve_mostrar_credenciais_invalidas_e_nao_abrir_painel(
+        controller, autenticacao, maria, monkeypatch, capsys):
+    abrir_menu_e_entrar(controller, autenticacao, monkeypatch, "Outra@123",
+                        "maria", "GESTOR", "0")
+
+    saida = capsys.readouterr().out
+    assert "Credenciais inválidas" in saida
+    assert "PAINEL" not in saida
+
+
+def test_tela_deve_informar_erro_de_armazenamento_sem_abrir_painel(
+        controller, repositorio, hash_senha, maria, monkeypatch, capsys):
+    autenticacao = AutenticacaoController(
+        repositorio, AcessosComFalhaNaEscrita(), hash_senha)
+
+    abrir_menu_e_entrar(controller, autenticacao, monkeypatch, SENHA,
+                        "maria", "GESTOR", "0")
+
+    saida = capsys.readouterr().out
+    assert "Erro de armazenamento: disco cheio" in saida
+    assert "PAINEL" not in saida
+
+
+@pytest.mark.parametrize("perfil, titulo", [
+    (Perfil.GESTOR, "PAINEL DO GESTOR"),
+    (Perfil.FISCAL, "PAINEL DO FISCAL"),
+    (Perfil.FUNCIONARIO, "PAINEL DO FUNCIONÁRIO"),
+])
+def test_painel_deve_ser_o_do_perfil_do_usuario(
+        monkeypatch, capsys, perfil, titulo):
+    monkeypatch.setattr("builtins.input", lambda _: "0")
+    usuario = Usuario(1, "Ana", CPF_MARIA, EMAIL_MARIA, "ana", "hash", perfil)
+
+    PainelFronteira().abrir(usuario)
+
+    assert titulo in capsys.readouterr().out

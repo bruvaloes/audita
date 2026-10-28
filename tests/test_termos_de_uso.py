@@ -7,6 +7,8 @@ from fronteira.textos_legais import (
     RESUMO_ANTES_DO_ACEITE,
     TERMOS_DE_USO,
 )
+from fronteira.autenticacao_fronteira import AutenticacaoFronteira
+from fronteira.painel_fronteira import PainelFronteira
 from fronteira.usuario_fronteira import UsuarioFronteira
 
 RESPOSTAS_DO_CADASTRO = [
@@ -16,8 +18,9 @@ RESPOSTAS_DO_CADASTRO = [
 
 
 @pytest.fixture
-def fronteira(controller):
-    return UsuarioFronteira(controller)
+def fronteira(controller, autenticacao):
+    return UsuarioFronteira(
+        controller, AutenticacaoFronteira(autenticacao, PainelFronteira()))
 
 
 def simular_entradas(monkeypatch, *entradas):
