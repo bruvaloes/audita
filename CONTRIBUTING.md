@@ -22,7 +22,7 @@ feat/x   fix/y     refactor/z   ← branches de trabalho (curta duração)
 ### `main`
 
 - Representa o estado **atual de produção/entrega**
-- Todo commit em `main` é uma versão estável, correspondente a um marco do projeto
+- Todo commit em `main` é uma versão estável, correspondente a um marco do projeto (cada entrega recebe uma tag; veja a seção 6)
 - Só recebe merges vindos de `dev` (via release) ou de `hotfix/*`
 - Protegida: exige PR com pelo menos 1 aprovação e conversas resolvidas
 
@@ -220,7 +220,38 @@ Não é refactoring massivo — é renomear uma variável confusa, extrair um bl
 
 ---
 
-## 6. Para Agentes IA
+## 6. Tags de entrega
+
+Cada entrega de sprint recebe uma tag **anotada** no commit de merge que a leva para `main` (o merge do PR `dev` → `main`). A tag marca o estado de produção descrito na seção 1.
+
+**Padrão de nome:** `sprint-<N>`, com o número da sprint sem zero à esquerda (`sprint-1`, `sprint-2`, `sprint-3`...).
+
+**Mensagem:** `Entrega da Sprint <N> (PR #<número>)`, com o número do PR que entregou a sprint.
+
+| Tag | Commit na `main` | PR |
+|-----|------------------|----|
+| `sprint-1` | `3d1bfa3` (release: entrega da Sprint 1) | [#41](https://github.com/bruvaloes/audita/pull/41) |
+| `sprint-2` | `4805481` (docs(sprint2): persistência e exceções) | [#47](https://github.com/bruvaloes/audita/pull/47) |
+
+**Como criar**, logo após o merge do PR de entrega:
+
+```
+git checkout main && git pull
+git tag -a sprint-3 -m "Entrega da Sprint 3 (PR #99)"   # tag no commit de merge (HEAD da main)
+git push origin sprint-3
+```
+
+Para marcar um commit anterior, informe o hash ao final: `git tag -a sprint-1 3d1bfa3 -m "..."`.
+
+**Regras:**
+- Tags são sempre anotadas (`-a`); tags leves não são usadas
+- Tags só existem em commits da `main`
+- Uma tag publicada nunca é movida nem apagada; se estiver errada, crie uma nova e registre o motivo no PR
+- `git push` não envia tags: use `git push origin <tag>` (ou `git push --tags`)
+
+---
+
+## 7. Para Agentes IA
 
 Ao atuar neste repositório, siga adicionalmente:
 
