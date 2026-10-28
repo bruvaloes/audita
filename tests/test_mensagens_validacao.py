@@ -22,6 +22,7 @@ CENARIOS = [
     ({"login": "a" * 13}, "Login"),
     ({"login": "ana2"}, "Login"),
     ({"perfil": "ADMIN"}, "Perfil"),
+    ({"aceite_termos": "n"}, "Termos de Uso"),
 ]
 
 
@@ -47,6 +48,8 @@ def test_mensagem_de_perfil_nao_deve_repetir_o_texto_digitado(
 @pytest.mark.parametrize("campos, esperada", [
     ({"login": "ana2"}, "Login: use até 12 caracteres, sem números"),
     ({"email": "x"}, "E-mail: use o formato nome@dominio, com até 100 caracteres"),
+    ({"aceite_termos": ""}, "Termos de Uso: aceite os Termos e a Política de "
+                            "Privacidade para concluir o cadastro"),
     ({"perfil": "ADMIN"}, "Perfil: use um destes valores: GESTOR, FISCAL, "
                           "FUNCIONARIO"),
 ])

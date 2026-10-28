@@ -33,3 +33,11 @@ class PerfilInvalidoError(ValidacaoError):
 class UsuarioDuplicadoError(ValidacaoError):
     def __init__(self, campo: str):
         super().__init__(f"{campo} já cadastrado")
+
+
+class TermosNaoAceitosError(ValidacaoError):
+    def __init__(self):
+        super().__init__(
+            "Termos de Uso: aceite os Termos e a Política de Privacidade "
+            "para concluir o cadastro"
+        )

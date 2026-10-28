@@ -1,3 +1,6 @@
+from datetime import datetime
+from typing import Callable
+
 from controle.dados_cadastro_usuario import DadosCadastroUsuario
 from controle.seguranca.hash_senha import HashSenha
 from controle.validacao.validador_cadastro_usuario import (
@@ -13,10 +16,12 @@ class UsuarioController:
 
     def __init__(self, repositorio: UsuarioRepositorio,
                  validador: ValidadorCadastroUsuario,
-                 hash_senha: HashSenha):
+                 hash_senha: HashSenha,
+                 relogio: Callable[[], datetime] = datetime.now):
         self._repositorio = repositorio
         self._validador = validador
         self._hash_senha = hash_senha
+        self._relogio = relogio
 
     def adicionar(self, dados: DadosCadastroUsuario) -> Usuario:
         dados = self._normalizar(dados)
@@ -30,6 +35,7 @@ class UsuarioController:
             login=dados.login,
             senha_hash=self._hash_senha.gerar(dados.senha),
             perfil=Perfil.de_texto(dados.perfil),
+            aceite_termos_em=self._relogio(),
         )
         return self._repositorio.salvar(usuario)
 
@@ -45,4 +51,5 @@ class UsuarioController:
             senha=dados.senha,
             confirmacao_senha=dados.confirmacao_senha,
             perfil=dados.perfil,
+            aceite_termos=dados.aceite_termos,
         )

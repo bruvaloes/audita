@@ -1,7 +1,12 @@
 from dataclasses import replace
+from datetime import datetime
 
 import pytest
 
+from controle.usuario_controller import UsuarioController
+from controle.validacao.validador_cadastro_usuario import (
+    ValidadorCadastroUsuario,
+)
 from entidade.perfil import Perfil
 from excecao.validacao_error import (
     CampoObrigatorioError,
@@ -9,6 +14,7 @@ from excecao.validacao_error import (
     EmailInvalidoError,
     NomeMuitoLongoError,
     PerfilInvalidoError,
+    TermosNaoAceitosError,
     UsuarioDuplicadoError,
     ValidacaoError,
 )
@@ -90,6 +96,31 @@ def test_deve_lancar_erro_quando_login_ja_cadastrado(
         controller.adicionar(outro)
     assert str(erro.value) == "Login já cadastrado"
     assert len(controller.listar_todos()) == 1
+
+
+@pytest.mark.parametrize("resposta", ["s", "S", "sim", " Sim "])
+def test_deve_aceitar_resposta_afirmativa_aos_termos(
+        controller, dados_validos, resposta):
+    usuario = controller.adicionar(replace(dados_validos, aceite_termos=resposta))
+    assert usuario.id == 1
+
+
+@pytest.mark.parametrize("resposta", ["", "n", "nao", "talvez"])
+def test_nao_deve_cadastrar_quando_termos_nao_aceitos(
+        controller, dados_validos, resposta):
+    with pytest.raises(TermosNaoAceitosError):
+        controller.adicionar(replace(dados_validos, aceite_termos=resposta))
+    assert controller.listar_todos() == []
+
+
+def test_deve_gravar_data_e_hora_do_aceite(
+        repositorio, hash_senha, dados_validos):
+    momento = datetime(2026, 10, 28, 14, 30, 5)
+    controller = UsuarioController(
+        repositorio, ValidadorCadastroUsuario(repositorio), hash_senha,
+        relogio=lambda: momento)
+    usuario = controller.adicionar(dados_validos)
+    assert usuario.aceite_termos_em == momento
 
 
 def test_deve_lancar_erro_quando_nome_passa_do_limite(

@@ -3,6 +3,8 @@
 Toda implementação deve passar nestes testes (Liskov): para cobrir uma nova,
 basta incluí-la na fixture `repositorio_implementacao`.
 """
+from datetime import datetime
+
 import pytest
 
 from entidade.perfil import Perfil
@@ -57,3 +59,10 @@ def test_deve_buscar_por_login(repositorio_implementacao):
     assert repositorio_implementacao.buscar_por_login("maria") == salvo
     assert repositorio_implementacao.buscar_por_login("joao") is None
 
+
+def test_deve_preservar_a_data_do_aceite_dos_termos(repositorio_implementacao):
+    momento = datetime(2026, 10, 28, 14, 30, 5)
+    usuario = novo_usuario()
+    usuario.aceite_termos_em = momento
+    repositorio_implementacao.salvar(usuario)
+    assert repositorio_implementacao.listar_todos()[0].aceite_termos_em == momento

@@ -38,6 +38,7 @@ def adicionar(controller, cpf, email, login):
         senha="SenhaValida1!",
         confirmacao_senha="SenhaValida1!",
         perfil="GESTOR",
+        aceite_termos="s",
     ))
 
 

@@ -3,6 +3,7 @@ from operator import attrgetter
 from controle.dados_cadastro_usuario import DadosCadastroUsuario
 from controle.validacao.regra_cadastro import RegraCadastro
 from controle.validacao.validador import Validador
+from controle.validacao.validador_aceite_termos import ValidadorAceiteTermos
 from controle.validacao.validador_campo_obrigatorio import (
     ValidadorCampoObrigatorio,
 )
@@ -43,6 +44,7 @@ class ValidadorCadastroUsuario:
             ("cpf", ValidadorCpf()),
             ("email", ValidadorEmail()),
             ("perfil", ValidadorPerfil()),
+            ("aceite_termos", ValidadorAceiteTermos()),
             ("login", ValidadorUnicidade.para_login(consulta)),
             ("cpf", ValidadorUnicidade.para_cpf(consulta)),
             ("email", ValidadorUnicidade.para_email(consulta)),

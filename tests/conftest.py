@@ -37,4 +37,5 @@ def dados_validos():
         senha="Senha@123",
         confirmacao_senha="Senha@123",
         perfil="GESTOR",
+        aceite_termos="s",
     )

@@ -1,6 +1,7 @@
 """Testes unitários dos validadores do cadastro, isolados do controller."""
 import pytest
 
+from controle.validacao.validador_aceite_termos import ValidadorAceiteTermos
 from controle.validacao.validador_campo_obrigatorio import (
     ValidadorCampoObrigatorio,
 )
@@ -21,6 +22,7 @@ from excecao.validacao_error import (
     EmailInvalidoError,
     NomeMuitoLongoError,
     PerfilInvalidoError,
+    TermosNaoAceitosError,
     UsuarioDuplicadoError,
 )
 from persistencia.usuario_repositorio_memoria import UsuarioRepositorioMemoria
@@ -99,6 +101,18 @@ class TestPerfil:
     def test_deve_rejeitar_perfil_desconhecido(self):
         with pytest.raises(PerfilInvalidoError):
             ValidadorPerfil().validar("ADMIN")
+
+
+class TestAceiteTermos:
+
+    @pytest.mark.parametrize("resposta", ["s", "S", "sim", " SIM "])
+    def test_deve_aceitar_resposta_afirmativa(self, resposta):
+        ValidadorAceiteTermos().validar(resposta)
+
+    @pytest.mark.parametrize("resposta", ["", "n", "nao", "talvez", "ss"])
+    def test_deve_rejeitar_qualquer_outra_resposta(self, resposta):
+        with pytest.raises(TermosNaoAceitosError):
+            ValidadorAceiteTermos().validar(resposta)
 
 
 class TestUnicidade:
