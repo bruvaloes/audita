@@ -13,13 +13,17 @@ from excecao.persistencia_error import (
     LeituraPersistenciaError,
     PersistenciaError,
 )
+from controle.seguranca.hash_senha_argon2 import HashSenhaArgon2
 from persistencia.usuario_repositorio_sqlite import UsuarioRepositorioSQLite
 
 
 @pytest.fixture
 def controller(tmp_path):
     repositorio = UsuarioRepositorioSQLite(str(tmp_path / "teste.db"))
-    return UsuarioController(repositorio, ValidadorCadastroUsuario(repositorio))
+    hash_senha = HashSenhaArgon2(custo_tempo=1, custo_memoria_kib=8,
+                                 paralelismo=1)
+    return UsuarioController(
+        repositorio, ValidadorCadastroUsuario(repositorio), hash_senha)
 
 
 def adicionar(controller, cpf, email, login):

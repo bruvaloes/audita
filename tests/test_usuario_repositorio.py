@@ -21,7 +21,7 @@ def repositorio_implementacao(request, tmp_path) -> UsuarioRepositorio:
 
 def novo_usuario(cpf="12345678900", email="maria@email.com",
                  login="maria") -> Usuario:
-    return Usuario(0, "Maria", cpf, email, login, "senha", Perfil.GESTOR)
+    return Usuario(0, "Maria", cpf, email, login, "hash", Perfil.GESTOR)
 
 
 def test_deve_atribuir_ids_sequenciais_ao_salvar(repositorio_implementacao):

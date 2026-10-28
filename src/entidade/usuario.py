@@ -10,7 +10,7 @@ class Usuario:
     cpf: str
     email: str
     login: str
-    senha: str
+    senha_hash: str
     perfil: Perfil
     ativo: bool = True
 

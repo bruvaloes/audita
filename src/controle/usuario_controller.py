@@ -1,4 +1,5 @@
 from controle.dados_cadastro_usuario import DadosCadastroUsuario
+from controle.seguranca.hash_senha import HashSenha
 from controle.validacao.validador_cadastro_usuario import (
     ValidadorCadastroUsuario,
 )
@@ -10,9 +11,11 @@ from persistencia.usuario_repositorio import UsuarioRepositorio
 class UsuarioController:
 
     def __init__(self, repositorio: UsuarioRepositorio,
-                 validador: ValidadorCadastroUsuario):
+                 validador: ValidadorCadastroUsuario,
+                 hash_senha: HashSenha):
         self._repositorio = repositorio
         self._validador = validador
+        self._hash_senha = hash_senha
 
     def adicionar(self, dados: DadosCadastroUsuario) -> Usuario:
         dados = self._normalizar(dados)
@@ -24,7 +27,7 @@ class UsuarioController:
             cpf=dados.cpf,
             email=dados.email,
             login=dados.login,
-            senha=dados.senha,
+            senha_hash=self._hash_senha.gerar(dados.senha),
             perfil=Perfil.de_texto(dados.perfil),
         )
         return self._repositorio.salvar(usuario)
