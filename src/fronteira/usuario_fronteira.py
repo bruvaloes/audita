@@ -4,6 +4,11 @@ from entidade.perfil import Perfil
 from entidade.usuario import Usuario
 from excecao.persistencia_error import PersistenciaError
 from excecao.validacao_error import ValidacaoError
+from fronteira.textos_legais import (
+    POLITICA_DE_PRIVACIDADE,
+    RESUMO_ANTES_DO_ACEITE,
+    TERMOS_DE_USO,
+)
 
 LARGURA_TABELA = 75
 
@@ -15,6 +20,7 @@ class UsuarioFronteira:
         self._opcoes_menu = {
             "1": self.cadastrar_usuario,
             "2": self.listar_usuarios,
+            "3": self.exibir_termos,
         }
 
     def menu(self) -> None:
@@ -61,10 +67,14 @@ class UsuarioFronteira:
 
         self._exibir_tabela(usuarios)
 
+    def exibir_termos(self) -> None:
+        print(f"\n{TERMOS_DE_USO}\n\n{POLITICA_DE_PRIVACIDADE}")
+
     def _exibir_menu(self) -> None:
         print("\n===== GERENCIAMENTO DE USUÁRIOS =====")
         print("1 - Cadastrar usuário")
         print("2 - Listar usuários")
+        print("3 - Ver Termos de Uso e Política de Privacidade")
         print("0 - Sair")
 
     def _ler_dados_cadastro(self) -> DadosCadastroUsuario:
@@ -77,6 +87,7 @@ class UsuarioFronteira:
 
         print(f"Perfis disponíveis: {Perfil.nomes_validos()}")
         perfil = input("Perfil: ").strip()
+        print(f"\n{RESUMO_ANTES_DO_ACEITE}")
         aceite = input(
             "Aceita os Termos de Uso e a Política de Privacidade? (s/n): "
         ).strip()
