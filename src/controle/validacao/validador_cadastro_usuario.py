@@ -12,6 +12,7 @@ from controle.validacao.validador_confirmacao_senha import (
 from controle.validacao.validador_cpf import ValidadorCpf
 from controle.validacao.validador_email import ValidadorEmail
 from controle.validacao.validador_login import ValidadorLogin
+from controle.validacao.validador_nome import ValidadorNome
 from controle.validacao.validador_perfil import ValidadorPerfil
 from controle.validacao.validador_senha import ValidadorSenha
 from controle.validacao.validador_senha_diferente_do_login import (
@@ -36,11 +37,13 @@ class ValidadorCadastroUsuario:
             ("email", ValidadorCampoObrigatorio("e-mail")),
             ("senha", ValidadorCampoObrigatorio("senha")),
             ("perfil", ValidadorCampoObrigatorio("perfil")),
+            ("nome", ValidadorNome()),
             ("login", ValidadorLogin()),
             ("senha", ValidadorSenha()),
             ("cpf", ValidadorCpf()),
             ("email", ValidadorEmail()),
             ("perfil", ValidadorPerfil()),
+            ("login", ValidadorUnicidade.para_login(consulta)),
             ("cpf", ValidadorUnicidade.para_cpf(consulta)),
             ("email", ValidadorUnicidade.para_email(consulta)),
         ]

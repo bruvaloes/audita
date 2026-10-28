@@ -50,3 +50,10 @@ def test_deve_buscar_por_cpf_e_por_email(repositorio_implementacao):
 def test_deve_retornar_none_quando_nao_encontrar(repositorio_implementacao):
     assert repositorio_implementacao.buscar_por_cpf("00000000000") is None
     assert repositorio_implementacao.buscar_por_email("x@y.com") is None
+
+
+def test_deve_buscar_por_login(repositorio_implementacao):
+    salvo = repositorio_implementacao.salvar(novo_usuario())
+    assert repositorio_implementacao.buscar_por_login("maria") == salvo
+    assert repositorio_implementacao.buscar_por_login("joao") is None
+

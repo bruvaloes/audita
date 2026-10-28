@@ -79,6 +79,9 @@ class UsuarioRepositorioSQLite(UsuarioRepositorio):
     def buscar_por_cpf(self, cpf: str) -> Usuario | None:
         return self._buscar_um("cpf", cpf, "CPF")
 
+    def buscar_por_login(self, login: str) -> Usuario | None:
+        return self._buscar_um("login", login, "login")
+
     def buscar_por_email(self, email: str) -> Usuario | None:
         return self._buscar_um("email", email, "E-mail")
 

@@ -12,16 +12,22 @@ class CpfInvalidoError(ValidacaoError):
         super().__init__("CPF inválido")
 
 
+class NomeMuitoLongoError(ValidacaoError):
+    def __init__(self, tamanho_maximo: int):
+        super().__init__(f"Nome: use até {tamanho_maximo} caracteres")
+
+
 class EmailInvalidoError(ValidacaoError):
-    def __init__(self):
-        super().__init__("E-mail deve conter '@'.")
+    def __init__(self, tamanho_maximo: int):
+        super().__init__(
+            f"E-mail: use o formato nome@dominio, com até "
+            f"{tamanho_maximo} caracteres"
+        )
 
 
 class PerfilInvalidoError(ValidacaoError):
-    def __init__(self, perfil: str, valores_aceitos: str):
-        super().__init__(
-            f"Perfil inválido: '{perfil}'. Valores aceitos: {valores_aceitos}."
-        )
+    def __init__(self, valores_aceitos: str):
+        super().__init__(f"Perfil: use um destes valores: {valores_aceitos}")
 
 
 class UsuarioDuplicadoError(ValidacaoError):

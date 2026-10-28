@@ -12,8 +12,8 @@ class ValidadorLogin(Validador):
 
     def validar(self, valor: str) -> None:
         if not valor.strip():
-            raise LoginVazioError()
+            raise LoginVazioError(TAMANHO_MAXIMO_LOGIN)
         if len(valor) > TAMANHO_MAXIMO_LOGIN:
             raise LoginMuitoLongoError(TAMANHO_MAXIMO_LOGIN)
         if any(caractere.isdigit() for caractere in valor):
-            raise LoginComNumerosError()
+            raise LoginComNumerosError(TAMANHO_MAXIMO_LOGIN)
