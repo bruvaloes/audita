@@ -4,6 +4,7 @@ from entidade.perfil import Perfil
 from entidade.usuario import Usuario
 from excecao.persistencia_error import PersistenciaError
 from excecao.validacao_error import ValidacaoError
+from fronteira.autenticacao_fronteira import AutenticacaoFronteira
 from fronteira.textos_legais import (
     POLITICA_DE_PRIVACIDADE,
     RESUMO_ANTES_DO_ACEITE,
@@ -15,12 +16,14 @@ LARGURA_TABELA = 75
 
 class UsuarioFronteira:
 
-    def __init__(self, controller: UsuarioController):
+    def __init__(self, controller: UsuarioController,
+                 autenticacao_fronteira: AutenticacaoFronteira):
         self._controller = controller
         self._opcoes_menu = {
             "1": self.cadastrar_usuario,
             "2": self.listar_usuarios,
             "3": self.exibir_termos,
+            "4": autenticacao_fronteira.entrar,
         }
 
     def menu(self) -> None:
@@ -75,6 +78,7 @@ class UsuarioFronteira:
         print("1 - Cadastrar usuário")
         print("2 - Listar usuários")
         print("3 - Ver Termos de Uso e Política de Privacidade")
+        print("4 - Entrar (login)")
         print("0 - Sair")
 
     def _ler_dados_cadastro(self) -> DadosCadastroUsuario:

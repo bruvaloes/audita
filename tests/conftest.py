@@ -1,11 +1,15 @@
+from datetime import datetime
+
 import pytest
 
+from controle.autenticacao_controller import AutenticacaoController
 from controle.dados_cadastro_usuario import DadosCadastroUsuario
 from controle.usuario_controller import UsuarioController
 from controle.validacao.validador_cadastro_usuario import (
     ValidadorCadastroUsuario,
 )
 from controle.seguranca.hash_senha_argon2 import HashSenhaArgon2
+from persistencia.acesso_repositorio_memoria import AcessoRepositorioMemoria
 from persistencia.usuario_repositorio_memoria import UsuarioRepositorioMemoria
 
 
@@ -25,6 +29,22 @@ def hash_senha():
 def controller(repositorio, hash_senha):
     return UsuarioController(
         repositorio, ValidadorCadastroUsuario(repositorio), hash_senha)
+
+
+@pytest.fixture
+def acessos():
+    return AcessoRepositorioMemoria()
+
+
+@pytest.fixture
+def momento():
+    return datetime(2026, 10, 28, 14, 30, 5)
+
+
+@pytest.fixture
+def autenticacao(repositorio, acessos, hash_senha, momento):
+    return AutenticacaoController(
+        repositorio, acessos, hash_senha, relogio=lambda: momento)
 
 
 @pytest.fixture
