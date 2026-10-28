@@ -20,6 +20,7 @@ Aplicação para registro e gestão de vistorias de serviços terceirizados.
   - [Tecnologias](#tecnologias)
   - [Como rodar](#como-rodar)
   - [Regras de validação](#regras-de-validação)
+  - [Autenticação](#autenticação)
   - [Persistência](#persistência)
   - [Repositório](#repositório)
   - [Documentação](#documentação)
@@ -45,10 +46,11 @@ Nesta etapa do projeto, o Audita permite:
 - Cadastro e listagem de usuários pelo console, com seleção de perfil.
 - Validação de login, senha, CPF e e-mail, com mensagem específica para cada regra violada.
 - Persistência de usuários em memória.
+- Login por login, CPF ou e-mail, com senha e perfil, e registro de cada tentativa de acesso (veja [Autenticação](#autenticação)).
 
 **Planejado**
 
-- Login e controle de acesso por perfil.
+- Bloqueio após tentativas de login falhas, expiração de sessão e relatório de acessos.
 - Contratos, registro fotográfico de tarefas e validação das evidências.
 - Persistência em SQLite e escolha do mecanismo de persistência (veja [Persistência](#persistência)).
 
@@ -114,6 +116,21 @@ Letras acentuadas não contam como maiúscula ou minúscula, e espaço não cont
 
 As demais validações (campos obrigatórios, CPF, e-mail, unicidade e perfil) ainda lançam `ValueError`.
 
+## Autenticação
+
+A opção **4 - Entrar (login)** do menu pede o identificador, a senha e o perfil.
+
+| Regra | Comportamento |
+|-------|---------------|
+| RN02.1 | O identificador é o login, o CPF (**só números**, sem pontuação) ou o e-mail (qualquer texto com `@`). A senha é sempre exigida e conferida pelo hash. |
+| RN02.2 | O perfil informado deve ser o do cadastro. |
+| RN02.3 | Qualquer falha mostra apenas `Credenciais inválidas` (`CredenciaisInvalidasError`), sem revelar o motivo. |
+| RN02.6 | Usuário inativo não autentica. |
+
+Em caso de sucesso, abre o painel do perfil (por enquanto só se identifica e permite sair).
+
+**Registro de acessos.** Toda tentativa, com sucesso ou falha, grava exatamente um `Acesso` (`AcessoRepositorio`, em memória ou SQLite, tabela `acessos`) com o usuário, o perfil informado, a data e hora e o `ResultadoAcesso` (`SUCESSO`, `CREDENCIAIS_INVALIDAS` ou `BLOQUEADO`; este último só será gerado quando o bloqueio por tentativas for implementado). Quando nenhum usuário é identificado, o usuário fica vazio. O texto digitado como identificador não é guardado. Se o registro falhar, o login não é concedido.
+
 ## Persistência
 
 Hoje, `UsuarioRepositorio` guarda os usuários em memória. O [diagrama de classes](docs/diagramas/classes-analise-usuarios.png) descreve a evolução prevista, ainda **não implementada**:
@@ -143,10 +160,10 @@ audita/
 │   └── documento_de_requisitos_v1.pdf
 ├── src/
 │   ├── fronteira/               # Telas de console
-│   ├── controle/                # Regras de negócio e validações
+│   ├── controle/                # Regras de negócio, validações e autenticação
 │   ├── entidade/                # Entidades de domínio
-│   ├── excecao/                 # Exceções de validação (login e senha)
-│   ├── persistencia/            # Repositórios (memória hoje; SQLite planejado)
+│   ├── excecao/                 # Exceções de validação, de autenticação e de persistência
+│   ├── persistencia/            # Repositórios de usuários e de acessos (memória e SQLite)
 │   └── main.py                  # Ponto de entrada da aplicação
 ├── tests/                       # Testes unitários e de integração
 └── requirements.txt             # Dependências
