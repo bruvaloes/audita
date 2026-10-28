@@ -20,12 +20,12 @@ from excecao.validacao_error import (
 )
 
 
-def test_deve_cadastrar_usuario_com_dados_validos(controller, dados_validos):
+def test_deve_cadastrar_usuario_com_dados_validos(controller, dados_validos, repositorio):
     usuario = controller.adicionar(dados_validos)
 
     assert usuario.id == 1
     assert usuario.perfil == Perfil.GESTOR
-    assert controller.listar_todos() == [usuario]
+    assert repositorio.listar_todos() == [usuario]
 
 
 def test_deve_aceitar_perfil_em_minusculas(controller, dados_validos):
@@ -70,13 +70,13 @@ def test_deve_lancar_erro_quando_cpf_ja_cadastrado(controller, dados_validos):
 
 
 def test_deve_detectar_cpf_duplicado_em_formato_diferente(
-        controller, dados_validos):
+        controller, dados_validos, repositorio):
     controller.adicionar(dados_validos)
     outro = replace(dados_validos, cpf="529.982.247-25",
                     email="outro@email.com")
     with pytest.raises(UsuarioDuplicadoError):
         controller.adicionar(outro)
-    assert len(controller.listar_todos()) == 1
+    assert len(repositorio.listar_todos()) == 1
 
 
 def test_deve_lancar_erro_quando_email_ja_cadastrado(
@@ -89,13 +89,13 @@ def test_deve_lancar_erro_quando_email_ja_cadastrado(
 
 
 def test_deve_lancar_erro_quando_login_ja_cadastrado(
-        controller, dados_validos):
+        controller, dados_validos, repositorio):
     controller.adicionar(dados_validos)
     outro = replace(dados_validos, cpf="98765432100", email="outro@email.com")
     with pytest.raises(UsuarioDuplicadoError) as erro:
         controller.adicionar(outro)
     assert str(erro.value) == "Login já cadastrado"
-    assert len(controller.listar_todos()) == 1
+    assert len(repositorio.listar_todos()) == 1
 
 
 @pytest.mark.parametrize("resposta", ["s", "S", "sim", " Sim "])
@@ -107,18 +107,18 @@ def test_deve_aceitar_resposta_afirmativa_aos_termos(
 
 @pytest.mark.parametrize("resposta", ["", "n", "nao", "talvez"])
 def test_nao_deve_cadastrar_quando_termos_nao_aceitos(
-        controller, dados_validos, resposta):
+        controller, dados_validos, resposta, repositorio):
     with pytest.raises(TermosNaoAceitosError):
         controller.adicionar(replace(dados_validos, aceite_termos=resposta))
-    assert controller.listar_todos() == []
+    assert repositorio.listar_todos() == []
 
 
 def test_deve_gravar_data_e_hora_do_aceite(
-        repositorio, hash_senha, dados_validos):
+        repositorio, hash_senha, controle_acesso, dados_validos):
     momento = datetime(2026, 10, 28, 14, 30, 5)
     controller = UsuarioController(
         repositorio, ValidadorCadastroUsuario(repositorio), hash_senha,
-        relogio=lambda: momento)
+        controle_acesso, relogio=lambda: momento)
     usuario = controller.adicionar(dados_validos)
     assert usuario.aceite_termos_em == momento
 

@@ -28,5 +28,5 @@ sua instituição (SSG); o atendimento é gratuito e a resposta sai em até
 RESUMO_ANTES_DO_ACEITE = (
     "Seus dados (nome, CPF, e-mail, login e senha) são usados para identificar "
     "quem acessa o Audita\ne para a fiscalização dos contratos. Os textos "
-    "completos estão na opção 3 do menu principal."
+    "completos estão na opção 2 do menu principal."
 )
