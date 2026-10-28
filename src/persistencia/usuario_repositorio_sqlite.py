@@ -55,7 +55,7 @@ class UsuarioRepositorioSQLite(UsuarioRepositorio):
                     usuario.cpf,
                     usuario.email,
                     usuario.login,
-                    usuario.senha,
+                    usuario.senha_hash,
                     usuario.perfil.value,
                     usuario.ativo
                 ))
@@ -102,7 +102,7 @@ class UsuarioRepositorioSQLite(UsuarioRepositorio):
             cpf=row[2],
             email=row[3],
             login=row[4],
-            senha=row[5],
+            senha_hash=row[5],
             perfil=Perfil(row[6]),
             ativo=bool(row[7])
         )

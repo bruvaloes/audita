@@ -1,3 +1,4 @@
+from controle.seguranca.hash_senha_argon2 import HashSenhaArgon2
 from controle.usuario_controller import UsuarioController
 from controle.validacao.validador_cadastro_usuario import (
     ValidadorCadastroUsuario,
@@ -41,7 +42,7 @@ def main():
     """Raiz de composição: único lugar que escolhe as implementações."""
     repositorio = escolher_repositorio()
     validador = ValidadorCadastroUsuario(repositorio)
-    controller = UsuarioController(repositorio, validador)
+    controller = UsuarioController(repositorio, validador, HashSenhaArgon2())
     fronteira = UsuarioFronteira(controller)
     fronteira.menu()
 
