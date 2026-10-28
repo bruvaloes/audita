@@ -27,6 +27,11 @@ class SenhaComPoucosTiposError(SenhaForaDaPoliticaError):
     pass
 
 
+class SenhaIgualLoginError(SenhaInvalidaError):
+    def __init__(self):
+        super().__init__("Senha: não pode ser igual ao login")
+
+
 class SenhasDiferentesError(SenhaInvalidaError):
     def __init__(self):
         super().__init__("As senhas não coincidem")

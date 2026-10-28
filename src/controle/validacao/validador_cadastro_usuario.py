@@ -14,6 +14,9 @@ from controle.validacao.validador_email import ValidadorEmail
 from controle.validacao.validador_login import ValidadorLogin
 from controle.validacao.validador_perfil import ValidadorPerfil
 from controle.validacao.validador_senha import ValidadorSenha
+from controle.validacao.validador_senha_diferente_do_login import (
+    ValidadorSenhaDiferenteDoLogin,
+)
 from controle.validacao.validador_unicidade import ValidadorUnicidade
 from persistencia.usuario_repositorio import ConsultaUsuarios
 
@@ -43,6 +46,7 @@ class ValidadorCadastroUsuario:
         ]
         self._regras_do_cadastro: list[RegraCadastro] = [
             ValidadorConfirmacaoSenha(),
+            ValidadorSenhaDiferenteDoLogin(),
         ]
 
     def validar(self, dados: DadosCadastroUsuario) -> None:

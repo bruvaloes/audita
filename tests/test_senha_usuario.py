@@ -9,6 +9,7 @@ from controle.validacao.validador_senha import (
 )
 from excecao.senha_invalida_error import (
     SenhaComPoucosTiposError,
+    SenhaIgualLoginError,
     SenhaInvalidaError,
     SenhaMuitoCurtaError,
     SenhaMuitoLongaError,
@@ -90,6 +91,15 @@ def test_deve_lancar_erro_quando_confirmacao_difere_da_senha(controller, dados_v
     with pytest.raises(SenhasDiferentesError) as erro:
         controller.adicionar(dados)
     assert str(erro.value) == "As senhas não coincidem"
+    assert controller.listar_todos() == []
+
+
+def test_deve_lancar_erro_quando_senha_igual_ao_login(controller, dados_validos):
+    dados = replace(dados_validos, login="Senha@Forte",
+                    senha="Senha@Forte", confirmacao_senha="Senha@Forte")
+    with pytest.raises(SenhaIgualLoginError) as erro:
+        controller.adicionar(dados)
+    assert str(erro.value) == "Senha: não pode ser igual ao login"
     assert controller.listar_todos() == []
 
 

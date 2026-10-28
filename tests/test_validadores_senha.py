@@ -10,8 +10,12 @@ from controle.validacao.validador_senha import (
     TAMANHO_MINIMO_SENHA,
     ValidadorSenha,
 )
+from controle.validacao.validador_senha_diferente_do_login import (
+    ValidadorSenhaDiferenteDoLogin,
+)
 from excecao.senha_invalida_error import (
     SenhaComPoucosTiposError,
+    SenhaIgualLoginError,
     SenhaMuitoCurtaError,
     SenhaMuitoLongaError,
     SenhasDiferentesError,
@@ -54,6 +58,21 @@ class TestValidadorSenha:
     def test_letra_acentuada_e_espaco_nao_contam_como_tipo(self):
         with pytest.raises(SenhaComPoucosTiposError):
             ValidadorSenha().validar("áéíóú 12")
+
+
+class TestValidadorSenhaDiferenteDoLogin:
+
+    def test_deve_aceitar_senha_diferente_do_login(self):
+        ValidadorSenhaDiferenteDoLogin().validar(cadastro())
+
+    def test_deve_rejeitar_senha_igual_ao_login(self):
+        with pytest.raises(SenhaIgualLoginError):
+            ValidadorSenhaDiferenteDoLogin().validar(
+                cadastro(login="Senha@Forte", senha="Senha@Forte"))
+
+    def test_deve_diferenciar_maiusculas_de_minusculas(self):
+        ValidadorSenhaDiferenteDoLogin().validar(
+            cadastro(login="senha@forte", senha="Senha@Forte"))
 
 
 class TestValidadorConfirmacaoSenha:
