@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import datetime
 
 from entidade.cpf import mascarar_cpf
 from entidade.perfil import Perfil
@@ -14,6 +15,7 @@ class Usuario:
     senha_hash: str
     perfil: Perfil
     ativo: bool = True
+    aceite_termos_em: datetime | None = None
 
     @property
     def situacao(self) -> str:

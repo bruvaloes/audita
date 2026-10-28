@@ -2,21 +2,24 @@ from excecao.validacao_error import ValidacaoError
 
 
 class LoginInvalidoError(ValidacaoError):
-    """Base para todos os erros de validação de login."""
+    """Base para todos os erros de validação de login.
 
+    Todos exibem a mesma mensagem, que resume a regra completa do login.
+    """
 
-class LoginVazioError(LoginInvalidoError):
-    def __init__(self):
-        super().__init__("O login não pode ser vazio.")
-
-
-class LoginMuitoLongoError(LoginInvalidoError):
     def __init__(self, tamanho_maximo: int):
         super().__init__(
-            f"O login deve ter no máximo {tamanho_maximo} caracteres."
+            f"Login: use até {tamanho_maximo} caracteres, sem números"
         )
 
 
+class LoginVazioError(LoginInvalidoError):
+    pass
+
+
+class LoginMuitoLongoError(LoginInvalidoError):
+    pass
+
+
 class LoginComNumerosError(LoginInvalidoError):
-    def __init__(self):
-        super().__init__("O login não pode conter números.")
+    pass

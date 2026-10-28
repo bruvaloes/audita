@@ -26,7 +26,7 @@ def cadastro(login="maria", senha="Senha@123", confirmacao="Senha@123"):
     return DadosCadastroUsuario(
         nome="Maria", cpf="12345678900", email="maria@email.com",
         login=login, senha=senha, confirmacao_senha=confirmacao,
-        perfil="GESTOR")
+        perfil="GESTOR", aceite_termos="s")
 
 
 class TestValidadorSenha:

@@ -77,9 +77,13 @@ class UsuarioFronteira:
 
         print(f"Perfis disponíveis: {Perfil.nomes_validos()}")
         perfil = input("Perfil: ").strip()
+        aceite = input(
+            "Aceita os Termos de Uso e a Política de Privacidade? (s/n): "
+        ).strip()
 
         return DadosCadastroUsuario(
-            nome, cpf, email, login, senha, confirmacao_senha, perfil)
+            nome, cpf, email, login, senha, confirmacao_senha, perfil,
+            aceite)
 
     def _exibir_tabela(self, usuarios: list[Usuario]) -> None:
         print("\n--- Lista de Usuários ---")

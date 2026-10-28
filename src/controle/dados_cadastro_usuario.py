@@ -11,3 +11,4 @@ class DadosCadastroUsuario:
     senha: str
     confirmacao_senha: str
     perfil: str
+    aceite_termos: str

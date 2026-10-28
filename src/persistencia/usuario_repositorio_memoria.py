@@ -20,6 +20,9 @@ class UsuarioRepositorioMemoria(UsuarioRepositorio):
     def buscar_por_cpf(self, cpf: str) -> Usuario | None:
         return self._buscar(lambda usuario: usuario.cpf == cpf)
 
+    def buscar_por_login(self, login: str) -> Usuario | None:
+        return self._buscar(lambda usuario: usuario.login == login)
+
     def buscar_por_email(self, email: str) -> Usuario | None:
         return self._buscar(lambda usuario: usuario.email == email)
 

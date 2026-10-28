@@ -1,4 +1,6 @@
 import sqlite3
+from datetime import datetime
+
 from entidade.usuario import Usuario
 from entidade.perfil import Perfil
 from persistencia.usuario_repositorio import UsuarioRepositorio
@@ -8,7 +10,7 @@ from excecao.persistencia_error import (
     LeituraPersistenciaError,
 )
 
-COLUNAS_USUARIO = "id, nome, cpf, email, login, senha, perfil, ativo"
+COLUNAS_USUARIO = "id, nome, cpf, email, login, senha, perfil, ativo, aceite_termos_em"
 
 
 class UsuarioRepositorioSQLite(UsuarioRepositorio):
@@ -34,7 +36,8 @@ class UsuarioRepositorioSQLite(UsuarioRepositorio):
             login TEXT UNIQUE NOT NULL,
             senha TEXT NOT NULL,
             perfil TEXT NOT NULL,
-            ativo BOOLEAN NOT NULL DEFAULT 1
+            ativo BOOLEAN NOT NULL DEFAULT 1,
+            aceite_termos_em TEXT
         )
         """
         try:
@@ -45,8 +48,9 @@ class UsuarioRepositorioSQLite(UsuarioRepositorio):
 
     def salvar(self, usuario: Usuario) -> Usuario:
         query = """
-        INSERT INTO usuarios (nome, cpf, email, login, senha, perfil, ativo)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO usuarios (nome, cpf, email, login, senha, perfil, ativo,
+                              aceite_termos_em)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """
         try:
             with self._conectar() as conn:
@@ -57,7 +61,8 @@ class UsuarioRepositorioSQLite(UsuarioRepositorio):
                     usuario.login,
                     usuario.senha_hash,
                     usuario.perfil.value,
-                    usuario.ativo
+                    usuario.ativo,
+                    self._formatar_data(usuario.aceite_termos_em)
                 ))
                 usuario.id = cursor.lastrowid
                 return usuario
@@ -78,6 +83,9 @@ class UsuarioRepositorioSQLite(UsuarioRepositorio):
 
     def buscar_por_cpf(self, cpf: str) -> Usuario | None:
         return self._buscar_um("cpf", cpf, "CPF")
+
+    def buscar_por_login(self, login: str) -> Usuario | None:
+        return self._buscar_um("login", login, "login")
 
     def buscar_por_email(self, email: str) -> Usuario | None:
         return self._buscar_um("email", email, "E-mail")
@@ -104,5 +112,14 @@ class UsuarioRepositorioSQLite(UsuarioRepositorio):
             login=row[4],
             senha_hash=row[5],
             perfil=Perfil(row[6]),
-            ativo=bool(row[7])
+            ativo=bool(row[7]),
+            aceite_termos_em=self._ler_data(row[8])
         )
+
+    @staticmethod
+    def _formatar_data(data: datetime | None) -> str | None:
+        return data.isoformat() if data else None
+
+    @staticmethod
+    def _ler_data(texto: str | None) -> datetime | None:
+        return datetime.fromisoformat(texto) if texto else None

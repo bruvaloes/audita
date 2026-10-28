@@ -1,13 +1,20 @@
 from dataclasses import replace
+from datetime import datetime
 
 import pytest
 
+from controle.usuario_controller import UsuarioController
+from controle.validacao.validador_cadastro_usuario import (
+    ValidadorCadastroUsuario,
+)
 from entidade.perfil import Perfil
 from excecao.validacao_error import (
     CampoObrigatorioError,
     CpfInvalidoError,
     EmailInvalidoError,
+    NomeMuitoLongoError,
     PerfilInvalidoError,
+    TermosNaoAceitosError,
     UsuarioDuplicadoError,
     ValidacaoError,
 )
@@ -49,11 +56,6 @@ def test_deve_aceitar_cpf_formatado_e_salvar_so_os_numeros(
     assert usuario.cpf == "52998224725"
 
 
-def test_deve_lancar_erro_quando_email_sem_arroba(controller, dados_validos):
-    with pytest.raises(EmailInvalidoError):
-        controller.adicionar(replace(dados_validos, email="maria.email.com"))
-
-
 def test_deve_lancar_erro_quando_perfil_invalido(controller, dados_validos):
     with pytest.raises(PerfilInvalidoError):
         controller.adicionar(replace(dados_validos, perfil="ADMIN"))
@@ -61,7 +63,7 @@ def test_deve_lancar_erro_quando_perfil_invalido(controller, dados_validos):
 
 def test_deve_lancar_erro_quando_cpf_ja_cadastrado(controller, dados_validos):
     controller.adicionar(dados_validos)
-    outro = replace(dados_validos, email="outro@email.com")
+    outro = replace(dados_validos, email="outro@email.com", login="outro")
     with pytest.raises(UsuarioDuplicadoError) as erro:
         controller.adicionar(outro)
     assert str(erro.value) == "CPF já cadastrado"
@@ -80,9 +82,70 @@ def test_deve_detectar_cpf_duplicado_em_formato_diferente(
 def test_deve_lancar_erro_quando_email_ja_cadastrado(
         controller, dados_validos):
     controller.adicionar(dados_validos)
-    outro = replace(dados_validos, cpf="98765432100")
-    with pytest.raises(UsuarioDuplicadoError, match="E-mail"):
+    outro = replace(dados_validos, cpf="98765432100", login="outro")
+    with pytest.raises(UsuarioDuplicadoError) as erro:
         controller.adicionar(outro)
+    assert str(erro.value) == "E-mail já cadastrado"
+
+
+def test_deve_lancar_erro_quando_login_ja_cadastrado(
+        controller, dados_validos):
+    controller.adicionar(dados_validos)
+    outro = replace(dados_validos, cpf="98765432100", email="outro@email.com")
+    with pytest.raises(UsuarioDuplicadoError) as erro:
+        controller.adicionar(outro)
+    assert str(erro.value) == "Login já cadastrado"
+    assert len(controller.listar_todos()) == 1
+
+
+@pytest.mark.parametrize("resposta", ["s", "S", "sim", " Sim "])
+def test_deve_aceitar_resposta_afirmativa_aos_termos(
+        controller, dados_validos, resposta):
+    usuario = controller.adicionar(replace(dados_validos, aceite_termos=resposta))
+    assert usuario.id == 1
+
+
+@pytest.mark.parametrize("resposta", ["", "n", "nao", "talvez"])
+def test_nao_deve_cadastrar_quando_termos_nao_aceitos(
+        controller, dados_validos, resposta):
+    with pytest.raises(TermosNaoAceitosError):
+        controller.adicionar(replace(dados_validos, aceite_termos=resposta))
+    assert controller.listar_todos() == []
+
+
+def test_deve_gravar_data_e_hora_do_aceite(
+        repositorio, hash_senha, dados_validos):
+    momento = datetime(2026, 10, 28, 14, 30, 5)
+    controller = UsuarioController(
+        repositorio, ValidadorCadastroUsuario(repositorio), hash_senha,
+        relogio=lambda: momento)
+    usuario = controller.adicionar(dados_validos)
+    assert usuario.aceite_termos_em == momento
+
+
+def test_deve_lancar_erro_quando_nome_passa_do_limite(
+        controller, dados_validos):
+    with pytest.raises(NomeMuitoLongoError):
+        controller.adicionar(replace(dados_validos, nome="a" * 101))
+
+
+def test_deve_aceitar_nome_no_limite(controller, dados_validos):
+    assert controller.adicionar(replace(dados_validos, nome="a" * 100)).id == 1
+
+
+def test_deve_aceitar_email_no_limite(controller, dados_validos):
+    email = "a" * 90 + "@email.com"  # 100 caracteres
+    assert controller.adicionar(replace(dados_validos, email=email)).id == 1
+
+
+@pytest.mark.parametrize("email", [
+    "maria.email.com", "@email.com", "maria@", "a@@b.com", "ma ria@email.com",
+    "a" * 91 + "@email.com",  # 101 caracteres
+])
+def test_deve_lancar_erro_quando_email_invalido(
+        controller, dados_validos, email):
+    with pytest.raises(EmailInvalidoError):
+        controller.adicionar(replace(dados_validos, email=email))
 
 
 def test_todos_os_erros_de_cadastro_herdam_de_validacao_error():
