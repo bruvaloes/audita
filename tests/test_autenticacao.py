@@ -189,30 +189,31 @@ def test_nao_deve_conceder_login_quando_o_registro_do_acesso_falha(
 
 # --- Fronteira: opção de login no menu e painel após a autenticação ---
 
-def abrir_menu_e_entrar(controller, autenticacao, monkeypatch, senha,
-                        *entradas):
-    """Escolhe a opção 4 do menu e responde ao login; `entradas` vêm depois
+def abrir_menu_e_entrar(controller, autenticacao, painel, sessao,
+                        monkeypatch, senha, *entradas):
+    """Escolhe a opção 3 do menu e responde ao login; `entradas` vêm depois
     do menu (identificador, perfil e o que mais a tela pedir)."""
-    fila = iter(("4", *entradas))
+    fila = iter(("3", *entradas))
     monkeypatch.setattr("builtins.input", lambda _: next(fila))
     fronteira = UsuarioFronteira(controller, AutenticacaoFronteira(
-        autenticacao, PainelFronteira(), ler_senha=lambda _: senha))
+        autenticacao, painel, ler_senha=lambda _: senha), sessao)
     fronteira.menu()
 
 
 def test_menu_deve_oferecer_a_opcao_de_login(
-        controller, autenticacao, monkeypatch, capsys):
+        controller, autenticacao, painel, sessao, monkeypatch, capsys):
     monkeypatch.setattr("builtins.input", lambda _: "0")
     UsuarioFronteira(controller, AutenticacaoFronteira(
-        autenticacao, PainelFronteira())).menu()
+        autenticacao, painel), sessao).menu()
 
-    assert "4 - Entrar (login)" in capsys.readouterr().out
+    assert "3 - Entrar (login)" in capsys.readouterr().out
 
 
 def test_c1_deve_abrir_o_painel_do_gestor_apos_autenticar(
-        controller, autenticacao, maria, monkeypatch, capsys):
+        controller, autenticacao, maria, painel, sessao, monkeypatch, capsys):
     # login, perfil, "0" (sair do painel) e "0" (sair do menu)
-    abrir_menu_e_entrar(controller, autenticacao, monkeypatch, SENHA,
+    abrir_menu_e_entrar(controller, autenticacao, painel, sessao,
+                        monkeypatch, SENHA,
                         "maria", "GESTOR", "0", "0")
 
     saida = capsys.readouterr().out
@@ -221,8 +222,9 @@ def test_c1_deve_abrir_o_painel_do_gestor_apos_autenticar(
 
 
 def test_c3_tela_deve_mostrar_credenciais_invalidas_e_nao_abrir_painel(
-        controller, autenticacao, maria, monkeypatch, capsys):
-    abrir_menu_e_entrar(controller, autenticacao, monkeypatch, "Outra@123",
+        controller, autenticacao, maria, painel, sessao, monkeypatch, capsys):
+    abrir_menu_e_entrar(controller, autenticacao, painel, sessao,
+                        monkeypatch, "Outra@123",
                         "maria", "GESTOR", "0")
 
     saida = capsys.readouterr().out
@@ -231,11 +233,12 @@ def test_c3_tela_deve_mostrar_credenciais_invalidas_e_nao_abrir_painel(
 
 
 def test_tela_deve_informar_erro_de_armazenamento_sem_abrir_painel(
-        controller, repositorio, hash_senha, maria, monkeypatch, capsys):
+        controller, repositorio, hash_senha, maria, painel, sessao, monkeypatch, capsys):
     autenticacao = AutenticacaoController(
         repositorio, AcessosComFalhaNaEscrita(), hash_senha)
 
-    abrir_menu_e_entrar(controller, autenticacao, monkeypatch, SENHA,
+    abrir_menu_e_entrar(controller, autenticacao, painel, sessao,
+                        monkeypatch, SENHA,
                         "maria", "GESTOR", "0")
 
     saida = capsys.readouterr().out
@@ -249,10 +252,10 @@ def test_tela_deve_informar_erro_de_armazenamento_sem_abrir_painel(
     (Perfil.FUNCIONARIO, "PAINEL DO FUNCIONÁRIO"),
 ])
 def test_painel_deve_ser_o_do_perfil_do_usuario(
-        monkeypatch, capsys, perfil, titulo):
+        painel, monkeypatch, capsys, perfil, titulo):
     monkeypatch.setattr("builtins.input", lambda _: "0")
     usuario = Usuario(1, "Ana", CPF_MARIA, EMAIL_MARIA, "ana", "hash", perfil)
 
-    PainelFronteira().abrir(usuario)
+    painel.abrir(usuario)
 
     assert titulo in capsys.readouterr().out

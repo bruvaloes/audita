@@ -2,6 +2,7 @@ from datetime import datetime
 
 import pytest
 
+from controle.acesso.controle_acesso import ControleAcesso
 from controle.autenticacao_controller import AutenticacaoController
 from controle.dados_cadastro_usuario import DadosCadastroUsuario
 from controle.usuario_controller import UsuarioController
@@ -9,6 +10,8 @@ from controle.validacao.validador_cadastro_usuario import (
     ValidadorCadastroUsuario,
 )
 from controle.seguranca.hash_senha_argon2 import HashSenhaArgon2
+from controle.sessao import Sessao
+from fronteira.painel_fronteira import PainelFronteira
 from persistencia.acesso_repositorio_memoria import AcessoRepositorioMemoria
 from persistencia.usuario_repositorio_memoria import UsuarioRepositorioMemoria
 
@@ -26,9 +29,25 @@ def hash_senha():
 
 
 @pytest.fixture
-def controller(repositorio, hash_senha):
+def controle_acesso():
+    return ControleAcesso()
+
+
+@pytest.fixture
+def sessao():
+    return Sessao()
+
+
+@pytest.fixture
+def painel(sessao, controle_acesso):
+    return PainelFronteira(sessao, controle_acesso)
+
+
+@pytest.fixture
+def controller(repositorio, hash_senha, controle_acesso):
     return UsuarioController(
-        repositorio, ValidadorCadastroUsuario(repositorio), hash_senha)
+        repositorio, ValidadorCadastroUsuario(repositorio), hash_senha,
+        controle_acesso)
 
 
 @pytest.fixture

@@ -1,12 +1,15 @@
+from controle.acesso.controle_acesso import ControleAcesso
+from controle.acesso.operacao import Operacao
 from controle.autenticacao_controller import AutenticacaoController
 from controle.seguranca.hash_senha_argon2 import HashSenhaArgon2
+from controle.sessao import Sessao
 from controle.usuario_controller import UsuarioController
 from controle.validacao.validador_cadastro_usuario import (
     ValidadorCadastroUsuario,
 )
 from excecao.persistencia_error import PersistenciaError
 from fronteira.autenticacao_fronteira import AutenticacaoFronteira
-from fronteira.painel_fronteira import PainelFronteira
+from fronteira.painel_fronteira import AcaoDoPainel, PainelFronteira
 from fronteira.usuario_fronteira import UsuarioFronteira
 from persistencia.acesso_repositorio import AcessoRepositorio
 from persistencia.acesso_repositorio_memoria import AcessoRepositorioMemoria
@@ -52,12 +55,17 @@ def main():
     repositorio, acessos = escolher_repositorios()
     hash_senha = HashSenhaArgon2()
     validador = ValidadorCadastroUsuario(repositorio)
-    controller = UsuarioController(repositorio, validador, hash_senha)
+    controle_acesso = ControleAcesso()
+    sessao = Sessao()
+    controller = UsuarioController(
+        repositorio, validador, hash_senha, controle_acesso)
     autenticacao = AutenticacaoController(repositorio, acessos, hash_senha)
+    painel = PainelFronteira(sessao, controle_acesso)
     fronteira = UsuarioFronteira(
-        controller,
-        AutenticacaoFronteira(autenticacao, PainelFronteira()),
-    )
+        controller, AutenticacaoFronteira(autenticacao, painel), sessao)
+    painel.registrar(AcaoDoPainel(
+        Operacao.LISTAR_USUARIOS, "Listar usuários",
+        fronteira.listar_usuarios))
     fronteira.menu()
 
 
