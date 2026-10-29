@@ -11,6 +11,9 @@ from controle.validacao.validador_cadastro_usuario import (
 from entidade.cpf import normalizar_cpf
 from entidade.perfil import Perfil
 from entidade.usuario import Usuario
+from log.log_auditoria import LogAuditoria
+from log.operacao_log import OperacaoLog
+from log.registro_log import RegistroLog
 from persistencia.usuario_repositorio import UsuarioRepositorio
 
 
@@ -19,6 +22,8 @@ class UsuarioController:
     def __init__(self, repositorio: UsuarioRepositorio,
                  validador: ValidadorCadastroUsuario,
                  hash_senha: HashSenha,
+                 relogio: Callable[[], datetime] = datetime.now,
+                 log: LogAuditoria | None = None):
                  controle_acesso: ControleAcesso,
                  relogio: Callable[[], datetime] = datetime.now):
         self._repositorio = repositorio
@@ -26,6 +31,7 @@ class UsuarioController:
         self._hash_senha = hash_senha
         self._controle_acesso = controle_acesso
         self._relogio = relogio
+        self._log = log
 
     def adicionar(self, dados: DadosCadastroUsuario) -> Usuario:
         dados = self._normalizar(dados)
@@ -41,7 +47,17 @@ class UsuarioController:
             perfil=Perfil.de_texto(dados.perfil),
             aceite_termos_em=self._relogio(),
         )
-        return self._repositorio.salvar(usuario)
+        salvo = self._repositorio.salvar(usuario)
+        if self._log:
+            self._log.registrar(
+                RegistroLog(
+                    usuario=salvo.login,
+                    operacao=OperacaoLog.CADASTRO,
+                    data_hora=self._relogio(),
+                    detalhes=f"Cadastro de usuario: {salvo.login} ({salvo.perfil.value})",
+                )
+            )
+        return salvo
 
     def listar_todos(self, solicitante: Usuario | None) -> list[Usuario]:
         """Lista os usuários; levanta AcessoNegadoError se o solicitante
