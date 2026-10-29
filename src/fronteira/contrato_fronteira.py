@@ -1,4 +1,6 @@
 """Fronteira CLI para gerenciamento de contratos (RF 04 a RF 08)."""
+from typing import TYPE_CHECKING
+
 from controle.contrato_controller import ContratoController
 from controle.dados_cadastro_contrato import DadosCadastroContrato
 from controle.utils.datas import formatar_data
@@ -6,13 +8,16 @@ from entidade.usuario import Usuario
 from excecao.persistencia_error import PersistenciaError
 from excecao.validacao_error import ValidacaoError
 
+if TYPE_CHECKING:
+    from controle.facade_singleton_controller import FacadeSingletonController
+
 LARGURA_TABELA = 85
 
 
 class ContratoFronteira:
     """Interface de usuário no terminal para operações de contrato."""
 
-    def __init__(self, controller: ContratoController):
+    def __init__(self, controller: "FacadeSingletonController | ContratoController"):
         self._controller = controller
 
     def menu(self, usuario_logado: Usuario | None = None) -> None:

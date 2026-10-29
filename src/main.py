@@ -1,5 +1,6 @@
 from controle.autenticacao_controller import AutenticacaoController
 from controle.contrato_controller import ContratoController
+from controle.facade_singleton_controller import FacadeSingletonController
 from controle.seguranca.hash_senha_argon2 import HashSenhaArgon2
 from controle.usuario_controller import UsuarioController
 from controle.validacao.validador_cadastro_usuario import (
@@ -113,12 +114,20 @@ def main():
         usuario_repositorio=usuario_repo,
         log=log_auditoria,
     )
-    contrato_fronteira = ContratoFronteira(contrato_controller)
+
+    fachada = FacadeSingletonController(
+        usuario_controller=controller_usuario,
+        autenticacao_controller=autenticacao,
+        contrato_controller=contrato_controller,
+        evidencia_repositorio=evidencia_repo,
+    )
+
+    contrato_fronteira = ContratoFronteira(fachada)
     painel_fronteira = PainelFronteira(contrato_fronteira=contrato_fronteira)
 
     fronteira = UsuarioFronteira(
-        controller_usuario,
-        AutenticacaoFronteira(autenticacao, painel_fronteira),
+        fachada,
+        AutenticacaoFronteira(fachada, painel_fronteira),
     )
     fronteira.menu()
 

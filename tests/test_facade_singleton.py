@@ -352,3 +352,123 @@ def test_contar_entidades_sem_evidencia_repositorio_retorna_soma(
     )
 
     assert fachada.contar_entidades() == 3
+
+
+# =============================================================================
+# Testes de Integração com as Fronteiras (Issue #19 - Etapa 2)
+# =============================================================================
+
+from fronteira.autenticacao_fronteira import AutenticacaoFronteira
+from fronteira.contrato_fronteira import ContratoFronteira
+from fronteira.painel_fronteira import PainelFronteira
+from fronteira.usuario_fronteira import UsuarioFronteira
+from persistencia.acesso_repositorio_memoria import AcessoRepositorioMemoria
+from persistencia.contrato_repositorio_memoria import ContratoRepositorioMemoria
+from persistencia.evidencia_repositorio_memoria import EvidenciaRepositorioMemoria
+from persistencia.usuario_repositorio_memoria import UsuarioRepositorioMemoria
+from controle.validacao.validador_cadastro_usuario import ValidadorCadastroUsuario
+from controle.seguranca.hash_senha_argon2 import HashSenhaArgon2
+from entidade.evidencia import Evidencia
+from entidade.origem_evidencia import OrigemEvidencia
+from datetime import datetime
+
+
+def test_fronteiras_recebem_apenas_facade_singleton_controller(fachada):
+    """Verifica que as fronteiras aceitam FacadeSingletonController como controller único."""
+    contrato_fronteira = ContratoFronteira(fachada)
+    painel_fronteira = PainelFronteira(contrato_fronteira=contrato_fronteira)
+    autenticacao_fronteira = AutenticacaoFronteira(fachada, painel_fronteira)
+    usuario_fronteira = UsuarioFronteira(fachada, autenticacao_fronteira)
+
+    assert contrato_fronteira._controller is fachada
+    assert autenticacao_fronteira._controller is fachada
+    assert usuario_fronteira._controller is fachada
+
+
+def test_fluxo_integracao_completo_via_fachada():
+    """Fluxo de ponta a ponta com repositórios em memória via fachada."""
+    usuario_repo = UsuarioRepositorioMemoria()
+    acesso_repo = AcessoRepositorioMemoria()
+    contrato_repo = ContratoRepositorioMemoria()
+    evidencia_repo = EvidenciaRepositorioMemoria()
+
+    hash_senha = HashSenhaArgon2()
+    validador_usuario = ValidadorCadastroUsuario(usuario_repo)
+    controller_usuario = UsuarioController(usuario_repo, validador_usuario, hash_senha)
+    autenticacao = AutenticacaoController(usuario_repo, acesso_repo, hash_senha)
+    contrato_controller = ContratoController(
+        repositorio=contrato_repo,
+        evidencia_repositorio=evidencia_repo,
+        usuario_repositorio=usuario_repo,
+    )
+
+    fachada = FacadeSingletonController(
+        usuario_controller=controller_usuario,
+        autenticacao_controller=autenticacao,
+        contrato_controller=contrato_controller,
+        evidencia_repositorio=evidencia_repo,
+    )
+
+    # 1. Contagem inicial vazia
+    assert fachada.contar_entidades() == 0
+
+    # 2. Cadastro de usuário via fachada
+    dados_usuario = DadosCadastroUsuario(
+        nome="Gestor do Sistema",
+        cpf="11144477735",
+        email="gestor@audita.gov.br",
+        login="gestor",
+        senha="Gestor@123456",
+        confirmacao_senha="Gestor@123456",
+        perfil="GESTOR",
+        aceite_termos="s",
+    )
+    usuario_criado = fachada.adicionar_usuario(dados_usuario)
+    assert usuario_criado.id > 0
+    assert fachada.contar_entidades() == 1
+
+    # 3. Autenticação via fachada
+    usuario_autenticado = fachada.autenticar(
+        identificador="gestor",
+        senha="Gestor@123456",
+        perfil="GESTOR",
+    )
+    assert usuario_autenticado.id == usuario_criado.id
+
+    # 4. Cadastro e listagem de contrato via fachada
+    dados_contrato = DadosCadastroContrato(
+        numero="001/2026",
+        empresa_contratada="Empresa Alpha Ltda",
+        vigencia_inicio="01/01/2026",
+        vigencia_fim="31/12/2026",
+    )
+    contrato_criado = fachada.adicionar_contrato(dados_contrato, usuario_logado=usuario_autenticado.login)
+    assert contrato_criado.numero == "001/2026"
+    assert fachada.contar_entidades() == 2
+
+    # 5. Adição de evidência no repositório e contagem total
+    from entidade.situacao_validacao import SituacaoValidacao
+
+    evidencia = Evidencia(
+        id=0,
+        caminho_imagem="comprovante.jpg",
+        enviada_em=datetime.now(),
+        geolocalizacao=None,
+        origem=OrigemEvidencia.CAMERA,
+        situacao=SituacaoValidacao.PENDENTE,
+        id_funcionario=usuario_criado.id,
+        numero_contrato="001/2026",
+        nome_tarefa="Limpeza de vidros",
+    )
+    evidencia_repo.salvar(evidencia)
+
+    # Agora deve somar 1 usuário + 1 contrato + 1 evidência = 3
+    assert fachada.contar_entidades() == 3
+    detalhes = fachada.contar_entidades_detalhado()
+    assert detalhes == {
+        "usuarios": 1,
+        "contratos": 1,
+        "evidencias": 1,
+        "total": 3,
+    }
+

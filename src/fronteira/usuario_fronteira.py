@@ -1,3 +1,5 @@
+from typing import TYPE_CHECKING
+
 from controle.dados_cadastro_usuario import DadosCadastroUsuario
 from controle.usuario_controller import UsuarioController
 from entidade.perfil import Perfil
@@ -11,12 +13,15 @@ from fronteira.textos_legais import (
     TERMOS_DE_USO,
 )
 
+if TYPE_CHECKING:
+    from controle.facade_singleton_controller import FacadeSingletonController
+
 LARGURA_TABELA = 75
 
 
 class UsuarioFronteira:
 
-    def __init__(self, controller: UsuarioController,
+    def __init__(self, controller: "FacadeSingletonController | UsuarioController",
                  autenticacao_fronteira: AutenticacaoFronteira):
         self._controller = controller
         self._opcoes_menu = {
