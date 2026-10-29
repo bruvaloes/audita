@@ -100,8 +100,11 @@ Ao cadastrar um usuário, a aplicação valida os campos e informa qual regra fo
 | Login | Obrigatório, com no máximo 12 caracteres e sem números |
 | Senha | De 8 a 128 caracteres, com ao menos 3 dos 4 tipos (maiúscula A-Z, minúscula a-z, número 0-9 e caractere especial), diferente do login |
 | Confirmação da senha | Deve ser igual à senha |
-| CPF | Exatamente 11 dígitos numéricos e único entre os usuários |
-| E-mail | Deve conter `@` e ser único entre os usuários |
+| Nome | Obrigatório, com até 100 caracteres |
+| CPF | Com ou sem pontuação, 11 dígitos com dígitos verificadores válidos (sequências como `111.111.111-11` são recusadas) e único entre os usuários. É guardado só com números e exibido mascarado (`XXX.456.789-XX`) |
+| E-mail | Formato `nome@dominio`, sem espaços e com até 100 caracteres, único entre os usuários |
+| Perfil | Um dos perfis disponíveis (`GESTOR`, `FISCAL` ou `FUNCIONARIO`) |
+| Termos de Uso | O aceite da Política de Privacidade é obrigatório e a data e hora do aceite ficam registradas |
 
 **Política de senhas.** As regras da senha tomam como referência a [política de senhas da AWS IAM](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_passwords_account-policy.html), exigindo pelo menos 3 dos 4 tipos de caractere e senha diferente do login. Os caracteres especiais aceitos são:
 
@@ -113,12 +116,15 @@ Letras acentuadas não contam como maiúscula ou minúscula, e espaço não cont
 
 > **Bancos antigos.** Um `usuarios.db` criado antes do hash guarda as senhas em texto aberto e essas senhas não passam na verificação do hash. Apague o arquivo e cadastre os usuários de novo (o `.db` fica fora do Git).
 
-**Exceções.** Os erros de login e de senha usam exceções próprias, definidas em `src/excecao/`, e a tela de cadastro exibe a mensagem correspondente sem encerrar o programa:
+**Exceções.** Todas as regras do cadastro usam exceções próprias, definidas em `src/excecao/`, e a tela de cadastro exibe a mensagem correspondente sem encerrar o programa:
 
+- `ValidacaoError` é a base de todas as regras do cadastro. Também derivam dela `CampoObrigatorioError`, `CpfInvalidoError`, `NomeMuitoLongoError`, `EmailInvalidoError`, `PerfilInvalidoError`, `UsuarioDuplicadoError` e `TermosNaoAceitosError`.
 - `LoginInvalidoError`: `LoginVazioError`, `LoginMuitoLongoError` e `LoginComNumerosError`.
 - `SenhaInvalidaError`: `SenhaMuitoCurtaError`, `SenhaMuitoLongaError`, `SenhaComPoucosTiposError`, `SenhaIgualLoginError` e `SenhasDiferentesError`.
 
-As demais validações (campos obrigatórios, CPF, e-mail, unicidade e perfil) ainda lançam `ValueError`.
+Cada regra é um validador próprio em `src/controle/validacao/`, e as regras que cruzam campos (confirmação da senha, senha diferente do login) ficam em `RegraCadastro`.
+
+**Termos de Uso e Política de Privacidade.** O cadastro exibe um resumo antes de pedir o aceite, e o texto completo está na opção **2** do menu (`src/fronteira/textos_legais.py`).
 
 ## Autenticação
 
