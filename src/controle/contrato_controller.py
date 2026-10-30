@@ -329,6 +329,7 @@ class ContratoController:
         if id_usuario not in contrato.usuarios_vinculados:
             contrato.usuarios_vinculados.append(id_usuario)
             self._repositorio.atualizar(contrato)
+            self._registrar_vinculo(solicitante, "vinculado ao", numero, id_usuario)
 
     def desvincular(
         self,
@@ -368,6 +369,7 @@ class ContratoController:
 
         contrato.usuarios_vinculados.remove(id_usuario)
         self._repositorio.atualizar(contrato)
+        self._registrar_vinculo(solicitante, "desvinculado do", numero, id_usuario)
 
     def _exigir_sem_evidencias(self, numero: str, *mensagem: str) -> None:
         """As evidências apontam para o número do contrato; com elas, o
@@ -376,3 +378,15 @@ class ContratoController:
             return
         if self._evidencia_repositorio.listar(numero_contrato=numero):
             raise ContratoComEvidenciasError(*mensagem)
+
+    def _registrar_vinculo(self, solicitante: Usuario, acao: str,
+                           numero: str, id_usuario: int) -> None:
+        if self._log:
+            self._log.registrar(
+                RegistroLog(
+                    usuario=solicitante.login,
+                    operacao=OperacaoLog.EDICAO,
+                    data_hora=self._relogio(),
+                    detalhes=f"Usuário {id_usuario} {acao} contrato {numero}",
+                )
+            )
