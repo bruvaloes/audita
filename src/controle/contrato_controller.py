@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime
 import math
 from typing import Callable
@@ -180,6 +180,9 @@ class ContratoController:
         if novo_numero != numero_atual:
             if self._repositorio.buscar_por_numero(novo_numero) is not None:
                 raise ContratoNumeroJaCadastradoError()
+            self._exigir_sem_evidencias(
+                numero_atual,
+                "Contrato com evidências não pode ter o número alterado")
 
         anterior = (
             f"numero={contrato.numero}, empresa={contrato.empresa_contratada}, "
@@ -199,9 +202,12 @@ class ContratoController:
                 contrato.situacao = nova_situacao
 
         if novo_numero != numero_atual:
+            # Grava o novo antes de apagar o antigo: se a gravação falhar, o
+            # contrato continua existindo com o número anterior.
+            renomeado = replace(contrato, numero=novo_numero)
+            self._repositorio.salvar(renomeado)
             self._repositorio.remover(numero_atual)
-            contrato.numero = novo_numero
-            self._repositorio.salvar(contrato)
+            contrato = renomeado
         else:
             self._repositorio.atualizar(contrato)
 
@@ -273,10 +279,7 @@ class ContratoController:
             return False
 
         # RN07.2: Contrato com ao menos uma evidência não pode ser removido
-        if self._evidencia_repositorio is not None:
-            evidencias = self._evidencia_repositorio.listar(numero_contrato=numero)
-            if len(evidencias) > 0:
-                raise ContratoComEvidenciasError()
+        self._exigir_sem_evidencias(numero)
 
         # RN07.3: Remove e desfaz vínculos
         self._repositorio.remover(numero)
@@ -365,3 +368,11 @@ class ContratoController:
 
         contrato.usuarios_vinculados.remove(id_usuario)
         self._repositorio.atualizar(contrato)
+
+    def _exigir_sem_evidencias(self, numero: str, *mensagem: str) -> None:
+        """As evidências apontam para o número do contrato; com elas, o
+        contrato não pode ser removido nem renumerado."""
+        if self._evidencia_repositorio is None:
+            return
+        if self._evidencia_repositorio.listar(numero_contrato=numero):
+            raise ContratoComEvidenciasError(*mensagem)
