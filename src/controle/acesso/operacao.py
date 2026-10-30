@@ -1,0 +1,19 @@
+from enum import Enum
+
+
+class Operacao(Enum):
+    """Funcionalidades que dependem do perfil do usuário autenticado.
+
+    Cadastrar-se, ver os termos e entrar no sistema são públicos e ficam de
+    fora da lista.
+    """
+    LISTAR_USUARIOS = "LISTAR_USUARIOS"
+    CADASTRAR_CONTRATO = "CADASTRAR_CONTRATO"
+    LISTAR_CONTRATOS = "LISTAR_CONTRATOS"
+    EDITAR_CONTRATO = "EDITAR_CONTRATO"
+    REMOVER_CONTRATO = "REMOVER_CONTRATO"
+    VINCULAR_USUARIO_CONTRATO = "VINCULAR_USUARIO_CONTRATO"
+    REGISTRAR_EVIDENCIA = "REGISTRAR_EVIDENCIA"
+    CONSULTAR_PROPRIOS_ENVIOS = "CONSULTAR_PROPRIOS_ENVIOS"
+    LISTAR_EVIDENCIAS = "LISTAR_EVIDENCIAS"
+    VALIDAR_EVIDENCIA = "VALIDAR_EVIDENCIA"

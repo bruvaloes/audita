@@ -11,6 +11,7 @@ Cobre os cenários de aceite C1 a C5 e auditoria RN04.5:
 from datetime import datetime
 import pytest
 
+from controle.acesso.controle_acesso import ControleAcesso
 from controle.contrato_controller import ContratoController
 from controle.dados_cadastro_contrato import DadosCadastroContrato
 from entidade.situacao_contrato import SituacaoContrato
@@ -39,6 +40,7 @@ def log():
 def controller(repo, log):
     return ContratoController(
         repositorio=repo,
+        controle_acesso=ControleAcesso(),
         relogio=lambda: datetime(2026, 10, 28, 14, 0, 0),
         log=log,
     )
@@ -55,8 +57,8 @@ def dados_validos():
     )
 
 
-def test_c1_cadastro_valido(controller, repo, log, dados_validos):
-    contrato = controller.adicionar(dados_validos, usuario_logado="gestor1")
+def test_c1_cadastro_valido(controller, repo, log, dados_validos, gestor):
+    contrato = controller.adicionar(gestor, dados_validos)
 
     assert contrato.id > 0
     assert contrato.numero == "CT-2026-001"
@@ -64,7 +66,7 @@ def test_c1_cadastro_valido(controller, repo, log, dados_validos):
     assert contrato.situacao == SituacaoContrato.ATIVO
 
     # Aparece na listagem
-    itens, total_paginas = controller.listar()
+    itens, total_paginas = controller.listar(gestor)
     assert len(itens) == 1
     assert itens[0].numero == "CT-2026-001"
 
@@ -76,8 +78,8 @@ def test_c1_cadastro_valido(controller, repo, log, dados_validos):
     assert "CT-2026-001" in registros[0].detalhes
 
 
-def test_c2_numero_duplicado(controller, dados_validos):
-    controller.adicionar(dados_validos)
+def test_c2_numero_duplicado(controller, dados_validos, gestor):
+    controller.adicionar(gestor, dados_validos)
 
     dados_duplicado = DadosCadastroContrato(
         numero="CT-2026-001",
@@ -87,32 +89,32 @@ def test_c2_numero_duplicado(controller, dados_validos):
     )
 
     with pytest.raises(ContratoNumeroJaCadastradoError) as exc_info:
-        controller.adicionar(dados_duplicado)
+        controller.adicionar(gestor, dados_duplicado)
 
     assert "Número de contrato já cadastrado" in str(exc_info.value)
 
 
-def test_c3_vigencia_invalida_fim_anterior_ao_inicio(controller, dados_validos):
+def test_c3_vigencia_invalida_fim_anterior_ao_inicio(controller, dados_validos, gestor):
     dados_validos.vigencia_inicio = "31/12/2026"
     dados_validos.vigencia_fim = "01/01/2026"
 
     with pytest.raises(VigenciaInvalidaError) as exc_info:
-        controller.adicionar(dados_validos)
+        controller.adicionar(gestor, dados_validos)
 
     assert "A data de fim deve ser igual ou posterior à data de início" in str(exc_info.value)
 
 
-def test_c4_arquivo_invalido_extensao_exe(controller, dados_validos):
+def test_c4_arquivo_invalido_extensao_exe(controller, dados_validos, gestor):
     dados_validos.arquivo = "programa.exe"
 
     with pytest.raises(ArquivoInvalidoError) as exc_info:
-        controller.adicionar(dados_validos)
+        controller.adicionar(gestor, dados_validos)
 
     msg = str(exc_info.value).lower()
     assert "pdf" in msg or "docx" in msg or "30 mb" in msg
 
 
-def test_c4_arquivo_invalido_tamanho_acima_de_30mb(controller, dados_validos, tmp_path):
+def test_c4_arquivo_invalido_tamanho_acima_de_30mb(controller, dados_validos, tmp_path, gestor):
     arquivo_gigante = tmp_path / "contrato.pdf"
     # Cria arquivo esparso simulando > 30 MB
     with open(arquivo_gigante, "wb") as f:
@@ -122,15 +124,15 @@ def test_c4_arquivo_invalido_tamanho_acima_de_30mb(controller, dados_validos, tm
     dados_validos.arquivo = str(arquivo_gigante)
 
     with pytest.raises(ArquivoInvalidoError) as exc_info:
-        controller.adicionar(dados_validos)
+        controller.adicionar(gestor, dados_validos)
 
     assert "30 mb" in str(exc_info.value).lower()
 
 
-def test_c5_empresa_contratada_vazia(controller, dados_validos):
+def test_c5_empresa_contratada_vazia(controller, dados_validos, gestor):
     dados_validos.empresa_contratada = "   "
 
     with pytest.raises(CampoObrigatorioError) as exc_info:
-        controller.adicionar(dados_validos)
+        controller.adicionar(gestor, dados_validos)
 
     assert "Empresa contratada" in str(exc_info.value)

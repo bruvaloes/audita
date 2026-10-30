@@ -1,8 +1,10 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime
 import math
 from typing import Callable
 
+from controle.acesso.controle_acesso import ControleAcesso
+from controle.acesso.operacao import Operacao
 from controle.dados_cadastro_contrato import DadosCadastroContrato
 from controle.utils.datas import formatar_data
 from controle.validacao.validador_cadastro_contrato import ValidadorCadastroContrato
@@ -10,6 +12,7 @@ from controle.validacao.validador_vigencia import ValidadorVigencia
 from entidade.contrato import Contrato
 from entidade.perfil import Perfil
 from entidade.situacao_contrato import SituacaoContrato
+from entidade.usuario import Usuario
 from excecao.validacao_error import (
     ContratoComEvidenciasError,
     ContratoNaoEncontradoError,
@@ -50,12 +53,14 @@ class ContratoController:
     def __init__(
         self,
         repositorio: ContratoRepositorio,
+        controle_acesso: ControleAcesso,
         evidencia_repositorio: EvidenciaRepositorio | None = None,
         usuario_repositorio: UsuarioRepositorio | None = None,
         relogio: Callable[[], datetime] = datetime.now,
         log: LogAuditoria | None = None,
     ):
         self._repositorio = repositorio
+        self._controle_acesso = controle_acesso
         self._evidencia_repositorio = evidencia_repositorio
         self._usuario_repositorio = usuario_repositorio
         self._relogio = relogio
@@ -63,10 +68,12 @@ class ContratoController:
 
     def adicionar(
         self,
+        solicitante: Usuario | None,
         dados: DadosCadastroContrato,
-        usuario_logado: str | None = None,
     ) -> Contrato:
         """Cadastra um novo contrato ativo após validações (RF 04)."""
+        self._controle_acesso.verificar(
+            solicitante, Operacao.CADASTRAR_CONTRATO)
         validador = ValidadorCadastroContrato(consulta=self._repositorio)
         inicio, fim = validador.validar(dados)
 
@@ -85,7 +92,7 @@ class ContratoController:
         if self._log:
             self._log.registrar(
                 RegistroLog(
-                    usuario=usuario_logado,
+                    usuario=solicitante.login,
                     operacao=OperacaoLog.CADASTRO,
                     data_hora=self._relogio(),
                     detalhes=f"Cadastro de contrato: {salvo.numero} ({salvo.empresa_contratada})",
@@ -95,6 +102,7 @@ class ContratoController:
 
     def listar(
         self,
+        solicitante: Usuario | None,
         busca: str | None = None,
         situacao: str | SituacaoContrato | None = None,
         pagina: int = 1,
@@ -102,6 +110,7 @@ class ContratoController:
         id_usuario: int | None = None,
     ) -> ResultadoPaginado:
         """Lista contratos com ordenação, busca, filtro por situação, perfil e paginação (RF 05 e RF 08)."""
+        self._controle_acesso.verificar(solicitante, Operacao.LISTAR_CONTRATOS)
         contratos = self._repositorio.listar()
 
         # RN05.2: Ordenação padrão pela vigência início decrescente (mais recente primeiro)
@@ -142,18 +151,22 @@ class ContratoController:
             total_itens=total_itens,
         )
 
-    def buscar_por_numero(self, numero: str) -> Contrato | None:
+    def buscar_por_numero(
+        self, solicitante: Usuario | None, numero: str
+    ) -> Contrato | None:
         """Consulta um contrato pelo número."""
+        self._controle_acesso.verificar(solicitante, Operacao.LISTAR_CONTRATOS)
         return self._repositorio.buscar_por_numero(numero)
 
     def atualizar(
         self,
+        solicitante: Usuario | None,
         numero_atual: str,
         dados: DadosCadastroContrato,
         nova_situacao: SituacaoContrato | str | None = None,
-        usuario_logado: str | None = None,
     ) -> Contrato:
         """Atualiza os dados de um contrato existente e/ou encerra-o (RF 06)."""
+        self._controle_acesso.verificar(solicitante, Operacao.EDITAR_CONTRATO)
         contrato = self._repositorio.buscar_por_numero(numero_atual)
         if not contrato:
             raise ContratoNaoEncontradoError(f"Contrato '{numero_atual}' não encontrado")
@@ -167,6 +180,9 @@ class ContratoController:
         if novo_numero != numero_atual:
             if self._repositorio.buscar_por_numero(novo_numero) is not None:
                 raise ContratoNumeroJaCadastradoError()
+            self._exigir_sem_evidencias(
+                numero_atual,
+                "Contrato com evidências não pode ter o número alterado")
 
         anterior = (
             f"numero={contrato.numero}, empresa={contrato.empresa_contratada}, "
@@ -186,9 +202,12 @@ class ContratoController:
                 contrato.situacao = nova_situacao
 
         if novo_numero != numero_atual:
+            # Grava o novo antes de apagar o antigo: se a gravação falhar, o
+            # contrato continua existindo com o número anterior.
+            renomeado = replace(contrato, numero=novo_numero)
+            self._repositorio.salvar(renomeado)
             self._repositorio.remover(numero_atual)
-            contrato.numero = novo_numero
-            self._repositorio.salvar(contrato)
+            contrato = renomeado
         else:
             self._repositorio.atualizar(contrato)
 
@@ -201,7 +220,7 @@ class ContratoController:
         if self._log:
             self._log.registrar(
                 RegistroLog(
-                    usuario=usuario_logado,
+                    usuario=solicitante.login,
                     operacao=OperacaoLog.EDICAO,
                     data_hora=self._relogio(),
                     detalhes=f"Contrato {numero_atual} alterado: anterior={{{anterior}}} | novo={{{novo}}}",
@@ -212,10 +231,11 @@ class ContratoController:
 
     def encerrar(
         self,
+        solicitante: Usuario | None,
         numero: str,
-        usuario_logado: str | None = None,
     ) -> Contrato:
         """Encerra um contrato alterando sua situação para ENCERRADO (RF 06)."""
+        self._controle_acesso.verificar(solicitante, Operacao.EDITAR_CONTRATO)
         contrato = self._repositorio.buscar_por_numero(numero)
         if not contrato:
             raise ContratoNaoEncontradoError(f"Contrato '{numero}' não encontrado")
@@ -228,10 +248,10 @@ class ContratoController:
             arquivo=contrato.arquivo,
         )
         return self.atualizar(
+            solicitante,
             numero,
             dados,
             nova_situacao=SituacaoContrato.ENCERRADO,
-            usuario_logado=usuario_logado,
         )
 
     def validar_recebimento_evidencia(self, numero: str) -> None:
@@ -244,11 +264,12 @@ class ContratoController:
 
     def remover(
         self,
+        solicitante: Usuario | None,
         numero: str,
         confirmado: bool = False,
-        usuario_logado: str | None = None,
     ) -> bool:
         """Remove um contrato sem evidências após confirmação explícita (RF 07)."""
+        self._controle_acesso.verificar(solicitante, Operacao.REMOVER_CONTRATO)
         contrato = self._repositorio.buscar_por_numero(numero)
         if not contrato:
             raise ContratoNaoEncontradoError(f"Contrato '{numero}' não encontrado")
@@ -258,10 +279,7 @@ class ContratoController:
             return False
 
         # RN07.2: Contrato com ao menos uma evidência não pode ser removido
-        if self._evidencia_repositorio is not None:
-            evidencias = self._evidencia_repositorio.listar(numero_contrato=numero)
-            if len(evidencias) > 0:
-                raise ContratoComEvidenciasError()
+        self._exigir_sem_evidencias(numero)
 
         # RN07.3: Remove e desfaz vínculos
         self._repositorio.remover(numero)
@@ -269,7 +287,7 @@ class ContratoController:
         if self._log:
             self._log.registrar(
                 RegistroLog(
-                    usuario=usuario_logado,
+                    usuario=solicitante.login,
                     operacao=OperacaoLog.EXCLUSAO,
                     data_hora=self._relogio(),
                     detalhes=f"Contrato {numero} removido sem evidências vinculadas",
@@ -279,11 +297,13 @@ class ContratoController:
 
     def vincular(
         self,
+        solicitante: Usuario | None,
         numero: str,
         id_usuario: int,
-        usuario_logado: str | None = None,
     ) -> None:
         """Vincula um fiscal ou funcionário ativo a um contrato (RF 08)."""
+        self._controle_acesso.verificar(
+            solicitante, Operacao.VINCULAR_USUARIO_CONTRATO)
         contrato = self._repositorio.buscar_por_numero(numero)
         if not contrato:
             raise ContratoNaoEncontradoError(f"Contrato '{numero}' não encontrado")
@@ -309,14 +329,17 @@ class ContratoController:
         if id_usuario not in contrato.usuarios_vinculados:
             contrato.usuarios_vinculados.append(id_usuario)
             self._repositorio.atualizar(contrato)
+            self._registrar_vinculo(solicitante, "vinculado ao", numero, id_usuario)
 
     def desvincular(
         self,
+        solicitante: Usuario | None,
         numero: str,
         id_usuario: int,
-        usuario_logado: str | None = None,
     ) -> None:
         """Desvincula um usuário de um contrato, respeitando o mínimo de 1 fiscal em contratos ativos (RF 08)."""
+        self._controle_acesso.verificar(
+            solicitante, Operacao.VINCULAR_USUARIO_CONTRATO)
         contrato = self._repositorio.buscar_por_numero(numero)
         if not contrato:
             raise ContratoNaoEncontradoError(f"Contrato '{numero}' não encontrado")
@@ -346,3 +369,24 @@ class ContratoController:
 
         contrato.usuarios_vinculados.remove(id_usuario)
         self._repositorio.atualizar(contrato)
+        self._registrar_vinculo(solicitante, "desvinculado do", numero, id_usuario)
+
+    def _exigir_sem_evidencias(self, numero: str, *mensagem: str) -> None:
+        """As evidências apontam para o número do contrato; com elas, o
+        contrato não pode ser removido nem renumerado."""
+        if self._evidencia_repositorio is None:
+            return
+        if self._evidencia_repositorio.listar(numero_contrato=numero):
+            raise ContratoComEvidenciasError(*mensagem)
+
+    def _registrar_vinculo(self, solicitante: Usuario, acao: str,
+                           numero: str, id_usuario: int) -> None:
+        if self._log:
+            self._log.registrar(
+                RegistroLog(
+                    usuario=solicitante.login,
+                    operacao=OperacaoLog.EDICAO,
+                    data_hora=self._relogio(),
+                    detalhes=f"Usuário {id_usuario} {acao} contrato {numero}",
+                )
+            )

@@ -1,6 +1,8 @@
 from datetime import datetime
 from typing import Callable
 
+from controle.acesso.controle_acesso import ControleAcesso
+from controle.acesso.operacao import Operacao
 from controle.dados_cadastro_usuario import DadosCadastroUsuario
 from controle.seguranca.hash_senha import HashSenha
 from controle.validacao.validador_cadastro_usuario import (
@@ -20,11 +22,13 @@ class UsuarioController:
     def __init__(self, repositorio: UsuarioRepositorio,
                  validador: ValidadorCadastroUsuario,
                  hash_senha: HashSenha,
+                 controle_acesso: ControleAcesso,
                  relogio: Callable[[], datetime] = datetime.now,
                  log: LogAuditoria | None = None):
         self._repositorio = repositorio
         self._validador = validador
         self._hash_senha = hash_senha
+        self._controle_acesso = controle_acesso
         self._relogio = relogio
         self._log = log
 
@@ -54,7 +58,10 @@ class UsuarioController:
             )
         return salvo
 
-    def listar_todos(self) -> list[Usuario]:
+    def listar_todos(self, solicitante: Usuario | None) -> list[Usuario]:
+        """Lista os usuários; levanta AcessoNegadoError se o solicitante
+        não tiver permissão (RF 03)."""
+        self._controle_acesso.verificar(solicitante, Operacao.LISTAR_USUARIOS)
         return self._repositorio.listar_todos()
 
     def _normalizar(self, dados: DadosCadastroUsuario) -> DadosCadastroUsuario:

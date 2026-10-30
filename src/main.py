@@ -1,6 +1,9 @@
+from controle.acesso.controle_acesso import ControleAcesso
+from controle.acesso.operacao import Operacao
 from controle.autenticacao_controller import AutenticacaoController
 from controle.contrato_controller import ContratoController
 from controle.seguranca.hash_senha_argon2 import HashSenhaArgon2
+from controle.sessao import Sessao
 from controle.usuario_controller import UsuarioController
 from controle.validacao.validador_cadastro_usuario import (
     ValidadorCadastroUsuario,
@@ -8,7 +11,7 @@ from controle.validacao.validador_cadastro_usuario import (
 from excecao.persistencia_error import PersistenciaError
 from fronteira.autenticacao_fronteira import AutenticacaoFronteira
 from fronteira.contrato_fronteira import ContratoFronteira
-from fronteira.painel_fronteira import PainelFronteira
+from fronteira.painel_fronteira import AcaoDoPainel, PainelFronteira
 from fronteira.usuario_fronteira import UsuarioFronteira
 from log.log_auditoria import LogAuditoria
 from log.log_auditoria_adapter import LogAuditoriaAdapter
@@ -101,25 +104,47 @@ def main():
     ) = escolher_repositorios()
 
     hash_senha = HashSenhaArgon2()
+    controle_acesso = ControleAcesso()
+    sessao = Sessao()
     validador_usuario = ValidadorCadastroUsuario(usuario_repo)
     controller_usuario = UsuarioController(
-        usuario_repo, validador_usuario, hash_senha, log=log_auditoria
-    )
+        usuario_repo, validador_usuario, hash_senha, controle_acesso,
+        log=log_auditoria)
     autenticacao = AutenticacaoController(usuario_repo, acesso_repo, hash_senha)
 
     contrato_controller = ContratoController(
         repositorio=contrato_repo,
+        controle_acesso=controle_acesso,
         evidencia_repositorio=evidencia_repo,
         usuario_repositorio=usuario_repo,
         log=log_auditoria,
     )
-    contrato_fronteira = ContratoFronteira(contrato_controller)
-    painel_fronteira = PainelFronteira(contrato_fronteira=contrato_fronteira)
+    contrato_fronteira = ContratoFronteira(contrato_controller, sessao)
+    painel = PainelFronteira(sessao, controle_acesso)
 
     fronteira = UsuarioFronteira(
-        controller_usuario,
-        AutenticacaoFronteira(autenticacao, painel_fronteira),
-    )
+        controller_usuario, AutenticacaoFronteira(autenticacao, painel),
+        sessao)
+    painel.registrar(AcaoDoPainel(
+        Operacao.LISTAR_USUARIOS, "Listar usuários",
+        fronteira.listar_usuarios))
+    for operacao, rotulo, acao in (
+        (Operacao.CADASTRAR_CONTRATO, "Cadastrar contrato",
+         contrato_fronteira.cadastrar_contrato),
+        (Operacao.LISTAR_CONTRATOS, "Listar contratos",
+         contrato_fronteira.listar_contratos),
+        (Operacao.EDITAR_CONTRATO, "Editar contrato",
+         contrato_fronteira.editar_contrato),
+        (Operacao.EDITAR_CONTRATO, "Encerrar contrato",
+         contrato_fronteira.encerrar_contrato),
+        (Operacao.REMOVER_CONTRATO, "Remover contrato",
+         contrato_fronteira.remover_contrato),
+        (Operacao.VINCULAR_USUARIO_CONTRATO, "Vincular usuário a contrato",
+         contrato_fronteira.vincular_usuario),
+        (Operacao.VINCULAR_USUARIO_CONTRATO, "Desvincular usuário de contrato",
+         contrato_fronteira.desvincular_usuario),
+    ):
+        painel.registrar(AcaoDoPainel(operacao, rotulo, acao))
     fronteira.menu()
 
 

@@ -74,10 +74,9 @@ class UltimoFiscalError(ValidacaoError):
 
 
 class ContratoComEvidenciasError(ValidacaoError):
-    def __init__(self):
-        super().__init__(
-            "Contrato com evidências não pode ser removido; encerre-o"
-        )
+    def __init__(self, mensagem: str = "Contrato com evidências não pode "
+                                       "ser removido; encerre-o"):
+        super().__init__(mensagem)
 
 
 class ContratoNaoEncontradoError(ValidacaoError):
