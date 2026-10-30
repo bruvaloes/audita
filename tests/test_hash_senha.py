@@ -50,6 +50,7 @@ def test_representacoes_nao_devem_expor_senha_nem_hash(controller, dados_validos
 
 def test_banco_nao_deve_conter_a_senha_em_texto_aberto(
         controller, dados_validos, tmp_path):
+    from controle.acesso.controle_acesso import ControleAcesso
     from controle.usuario_controller import UsuarioController
     from controle.validacao.validador_cadastro_usuario import (
         ValidadorCadastroUsuario,
@@ -58,7 +59,8 @@ def test_banco_nao_deve_conter_a_senha_em_texto_aberto(
     repositorio = UsuarioRepositorioSQLite(caminho)
     sqlite_controller = UsuarioController(
         repositorio, ValidadorCadastroUsuario(repositorio),
-        HashSenhaArgon2(custo_tempo=1, custo_memoria_kib=8, paralelismo=1))
+        HashSenhaArgon2(custo_tempo=1, custo_memoria_kib=8, paralelismo=1),
+        ControleAcesso())
 
     sqlite_controller.adicionar(dados_validos)
 

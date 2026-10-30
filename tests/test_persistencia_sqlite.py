@@ -2,6 +2,7 @@ import sqlite3
 
 import pytest
 
+from controle.acesso.controle_acesso import ControleAcesso
 from controle.dados_cadastro_usuario import DadosCadastroUsuario
 from controle.seguranca.hash_senha_argon2 import HashSenhaArgon2
 from controle.usuario_controller import UsuarioController
@@ -26,7 +27,8 @@ def controller(tmp_path):
     hash_senha = HashSenhaArgon2(custo_tempo=1, custo_memoria_kib=8,
                                  paralelismo=1)
     return UsuarioController(
-        repositorio, ValidadorCadastroUsuario(repositorio), hash_senha)
+        repositorio, ValidadorCadastroUsuario(repositorio), hash_senha,
+        ControleAcesso())
 
 
 def adicionar(controller, cpf, email, login):

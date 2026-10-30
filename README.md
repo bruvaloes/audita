@@ -66,6 +66,7 @@ Nesta etapa do projeto, o Audita permite:
 
 - **Python 3.10+**
 - **SQLite** para persistência (planejado; hoje os dados ficam em memória)
+- **argon2-cffi** para o hash das senhas (Argon2id)
 - **pytest** para testes
 - Interface de console
 
@@ -97,28 +98,37 @@ Ao cadastrar um usuário, a aplicação valida os campos e informa qual regra fo
 | Campo | Regra |
 |-------|-------|
 | Login | Obrigatório, com no máximo 12 caracteres e sem números |
-| Senha | De 8 a 128 caracteres, com ao menos uma letra maiúscula (A-Z), uma minúscula (a-z), um número (0-9) e um caractere especial |
-| CPF | Exatamente 11 dígitos numéricos e único entre os usuários |
-| E-mail | Deve conter `@` e ser único entre os usuários |
+| Senha | De 8 a 128 caracteres, com ao menos 3 dos 4 tipos (maiúscula A-Z, minúscula a-z, número 0-9 e caractere especial), diferente do login |
+| Confirmação da senha | Deve ser igual à senha |
+| Nome | Obrigatório, com até 100 caracteres |
+| CPF | Com ou sem pontuação, 11 dígitos com dígitos verificadores válidos (sequências como `111.111.111-11` são recusadas) e único entre os usuários. É guardado só com números e exibido mascarado (`XXX.456.789-XX`) |
+| E-mail | Formato `nome@dominio`, sem espaços e com até 100 caracteres, único entre os usuários |
+| Perfil | Um dos perfis disponíveis (`GESTOR`, `FISCAL` ou `FUNCIONARIO`) |
+| Termos de Uso | O aceite da Política de Privacidade é obrigatório e a data e hora do aceite ficam registradas |
 
-**Política de senhas.** As regras da senha tomam como referência a [política de senhas da AWS IAM](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_passwords_account-policy.html), exigindo cada tipo de caractere. Os caracteres especiais aceitos são:
+**Política de senhas.** As regras da senha tomam como referência a [política de senhas da AWS IAM](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_passwords_account-policy.html), exigindo pelo menos 3 dos 4 tipos de caractere e senha diferente do login. Os caracteres especiais aceitos são:
 
 ```
 ! @ # $ % ^ & * ( ) _ + - = [ ] { } | '
 ```
 
-Letras acentuadas não contam como maiúscula ou minúscula, e espaço não conta como caractere especial. Hash e recuperação de senha ainda não fazem parte do escopo.
+Letras acentuadas não contam como maiúscula ou minúscula, e espaço não conta como caractere especial. A senha é guardada apenas como hash Argon2id, com salt próprio por senha, e nunca em texto aberto. A recuperação de senha não faz parte do escopo.
 
-**Exceções.** Os erros de login e de senha usam exceções próprias, definidas em `src/excecao/`, e a tela de cadastro exibe a mensagem correspondente sem encerrar o programa:
+> **Bancos antigos.** Um `usuarios.db` criado antes do hash guarda as senhas em texto aberto e essas senhas não passam na verificação do hash. Apague o arquivo e cadastre os usuários de novo (o `.db` fica fora do Git).
 
+**Exceções.** Todas as regras do cadastro usam exceções próprias, definidas em `src/excecao/`, e a tela de cadastro exibe a mensagem correspondente sem encerrar o programa:
+
+- `ValidacaoError` é a base de todas as regras do cadastro. Também derivam dela `CampoObrigatorioError`, `CpfInvalidoError`, `NomeMuitoLongoError`, `EmailInvalidoError`, `PerfilInvalidoError`, `UsuarioDuplicadoError` e `TermosNaoAceitosError`.
 - `LoginInvalidoError`: `LoginVazioError`, `LoginMuitoLongoError` e `LoginComNumerosError`.
-- `SenhaInvalidaError`: `SenhaMuitoCurtaError`, `SenhaMuitoLongaError`, `SenhaSemMaiusculaError`, `SenhaSemMinusculaError`, `SenhaSemNumeroError` e `SenhaSemCaractereEspecialError`.
+- `SenhaInvalidaError`: `SenhaMuitoCurtaError`, `SenhaMuitoLongaError`, `SenhaComPoucosTiposError`, `SenhaIgualLoginError` e `SenhasDiferentesError`.
 
-As demais validações (campos obrigatórios, CPF, e-mail, unicidade e perfil) ainda lançam `ValueError`.
+Cada regra é um validador próprio em `src/controle/validacao/`, e as regras que cruzam campos (confirmação da senha, senha diferente do login) ficam em `RegraCadastro`.
+
+**Termos de Uso e Política de Privacidade.** O cadastro exibe um resumo antes de pedir o aceite, e o texto completo está na opção **2** do menu (`src/fronteira/textos_legais.py`).
 
 ## Autenticação
 
-A opção **4 - Entrar (login)** do menu pede o identificador, a senha e o perfil.
+A opção **3 - Entrar (login)** do menu pede o identificador, a senha e o perfil.
 
 | Regra | Comportamento |
 |-------|---------------|
@@ -127,7 +137,17 @@ A opção **4 - Entrar (login)** do menu pede o identificador, a senha e o perfi
 | RN02.3 | Qualquer falha mostra apenas `Credenciais inválidas` (`CredenciaisInvalidasError`), sem revelar o motivo. |
 | RN02.6 | Usuário inativo não autentica. |
 
-Em caso de sucesso, abre o painel do perfil (por enquanto só se identifica e permite sair).
+Em caso de sucesso, abre o painel do perfil, que mostra só as ações que o perfil pode executar.
+
+**Controle de acesso por perfil (RF 03).** A matriz de permissões fica em `src/controle/acesso/permissoes.py`, e o `ControleAcesso` confere a permissão nos controllers, e não só no menu. Sem usuário autenticado, toda operação protegida responde `Acesso negado`. Cadastrar-se, ver os termos e entrar são públicos.
+
+| Perfil | Pode |
+|--------|------|
+| Gestor | Listar usuários, gerenciar contratos (RF 04 a RF 08) e validar evidências (RF 10 e RF 11) |
+| Funcionário | Registrar evidência (RF 09) e consultar os próprios envios (RF 12) |
+| Fiscal | Só se autenticar, nesta etapa |
+
+Por enquanto só "Listar usuários" tem tela; as demais funcionalidades se registram no painel (`PainelFronteira.registrar`) quando forem implementadas.
 
 **Registro de acessos.** Toda tentativa, com sucesso ou falha, grava exatamente um `Acesso` (`AcessoRepositorio`, em memória ou SQLite, tabela `acessos`) com o usuário, o perfil informado, a data e hora e o `ResultadoAcesso` (`SUCESSO`, `CREDENCIAIS_INVALIDAS` ou `BLOQUEADO`; este último só será gerado quando o bloqueio por tentativas for implementado). Quando nenhum usuário é identificado, o usuário fica vazio. O texto digitado como identificador não é guardado. Se o registro falhar, o login não é concedido.
 
@@ -145,7 +165,7 @@ Hoje, `UsuarioRepositorio` guarda os usuários em memória. O [diagrama de class
 
 ## Documentação
 
-- [Documento de Requisitos](docs/documento_de_requisitos_v1.pdf)
+- [Documento de Requisitos](docs/documento_de_requisitos_v2.pdf)
 - [Diagrama de casos de uso](docs/diagramas/casos-de-uso-usuarios.png)
 - [Diagrama de classes](docs/diagramas/classes-analise-usuarios.png) ([fonte editável no draw.io](docs/diagramas/classes-analise-usuarios.drawio))
 - [Board do projeto (GitHub Projects)](https://github.com/users/bruvaloes/projects/1)
@@ -157,7 +177,7 @@ Hoje, `UsuarioRepositorio` guarda os usuários em memória. O [diagrama de class
 audita/
 ├── docs/
 │   ├── diagramas/               # Diagramas de casos de uso e de classes
-│   └── documento_de_requisitos_v1.pdf
+│   └── documento_de_requisitos_v2.pdf
 ├── src/
 │   ├── fronteira/               # Telas de console
 │   ├── controle/                # Regras de negócio, validações e autenticação
