@@ -21,6 +21,8 @@ Aplicação para registro e gestão de vistorias de serviços terceirizados.
   - [Como rodar](#como-rodar)
   - [Regras de validação](#regras-de-validação)
   - [Autenticação](#autenticação)
+  - [Contratos](#contratos)
+  - [Fachada e log de auditoria](#fachada-e-log-de-auditoria)
   - [Persistência](#persistência)
   - [Repositório](#repositório)
   - [Documentação](#documentação)
@@ -32,27 +34,33 @@ Aplicação para registro e gestão de vistorias de serviços terceirizados.
 
 ## Visão geral
 
-Nesta etapa do projeto, o Audita permite:
+O Audita apoia a fiscalização de contratos públicos terceirizados: o gestor cadastra os contratos, vincula fiscais e funcionários, e a execução dos serviços passa a ser comprovada por evidências fotográficas validadas.
 
-- **Cadastro e login de usuários**, com seleção de perfil (Gestor, Fiscal ou Funcionário) e controle de acesso.
-- **Cadastro e gestão de contratos**, vinculados aos usuários responsáveis.
-- **Registro fotográfico de tarefas** pelo funcionário, como evidência da execução do serviço.
-- **Validação manual das evidências** pelo gestor, aprovando ou recusando os registros enviados.
+**Nesta etapa** ele é uma aplicação de console em Python, com:
+
+- **Cadastro e login de usuários**, com perfil (Gestor, Fiscal ou Funcionário) e controle de acesso por perfil.
+- **Cadastro e gestão de contratos**: cadastrar, listar (com busca, filtro e paginação), editar, encerrar, remover e vincular usuários.
+- **Log de auditoria** das ações críticas e **fachada única** que concentra o acesso aos controllers.
+
+O registro fotográfico de tarefas e a validação manual das evidências fazem parte do produto completo e ainda não foram implementados.
 
 ## Status atual
 
 **Implementado**
 
-- Cadastro e listagem de usuários pelo console, com seleção de perfil.
-- Validação de login, senha, CPF e e-mail, com mensagem específica para cada regra violada.
-- Persistência de usuários em memória.
+- Cadastro e listagem de usuários, com validação de login, senha, CPF, e-mail e perfil, e aceite dos Termos de Uso.
 - Login por login, CPF ou e-mail, com senha e perfil, e registro de cada tentativa de acesso (veja [Autenticação](#autenticação)).
+- Controle de acesso por perfil nos controllers e painel por perfil.
+- CRUD de contratos e vínculo de fiscais e funcionários (veja [Contratos](#contratos)).
+- Log de auditoria e fachada única, com a contagem de entidades cadastradas (veja [Fachada e log de auditoria](#fachada-e-log-de-auditoria)).
+- Persistência em memória ou em SQLite, escolhida no início da execução (veja [Persistência](#persistência)).
 
 **Planejado**
 
-- Bloqueio após tentativas de login falhas, expiração de sessão e relatório de acessos.
-- Contratos, registro fotográfico de tarefas e validação das evidências.
-- Persistência em SQLite e escolha do mecanismo de persistência (veja [Persistência](#persistência)).
+- Bloqueio após tentativas de login falhas e expiração de sessão.
+- Relatório de acessos.
+- Registro fotográfico de tarefas e validação das evidências.
+- Repository com Factory, Template Method, Command e Memento (próximas sprints).
 
 ## Integrantes
 
@@ -65,7 +73,7 @@ Nesta etapa do projeto, o Audita permite:
 ## Tecnologias
 
 - **Python 3.10+**
-- **SQLite** para persistência (planejado; hoje os dados ficam em memória)
+- **SQLite** e memória como mecanismos de persistência, escolhidos ao iniciar
 - **argon2-cffi** para o hash das senhas (Argon2id)
 - **pytest** para testes
 - Interface de console
@@ -84,7 +92,7 @@ source .venv/bin/activate   # Windows: .venv\Scripts\activate
 # 3. Instalar as dependências
 pip install -r requirements.txt
 
-# 4. Executar a aplicação
+# 4. Executar a aplicação (ao iniciar, escolha SQLite ou memória)
 python src/main.py
 
 # 5. Rodar os testes
@@ -97,12 +105,12 @@ Ao cadastrar um usuário, a aplicação valida os campos e informa qual regra fo
 
 | Campo | Regra |
 |-------|-------|
-| Login | Obrigatório, com no máximo 12 caracteres e sem números |
+| Login | Obrigatório, com no máximo 12 caracteres, sem números, e único sem diferenciar maiúsculas de minúsculas |
 | Senha | De 8 a 128 caracteres, com ao menos 3 dos 4 tipos (maiúscula A-Z, minúscula a-z, número 0-9 e caractere especial), diferente do login |
 | Confirmação da senha | Deve ser igual à senha |
 | Nome | Obrigatório, com até 100 caracteres |
 | CPF | Com ou sem pontuação, 11 dígitos com dígitos verificadores válidos (sequências como `111.111.111-11` são recusadas) e único entre os usuários. É guardado só com números e exibido mascarado (`XXX.456.789-XX`) |
-| E-mail | Formato `nome@dominio`, sem espaços e com até 100 caracteres, único entre os usuários |
+| E-mail | Formato `nome@dominio`, sem espaços e com até 100 caracteres, único entre os usuários e guardado em minúsculas |
 | Perfil | Um dos perfis disponíveis (`GESTOR`, `FISCAL` ou `FUNCIONARIO`) |
 | Termos de Uso | O aceite da Política de Privacidade é obrigatório e a data e hora do aceite ficam registradas |
 
@@ -147,17 +155,37 @@ Em caso de sucesso, abre o painel do perfil, que mostra só as ações que o per
 | Funcionário | Registrar evidência (RF 09) e consultar os próprios envios (RF 12) |
 | Fiscal | Só se autenticar, nesta etapa |
 
-Por enquanto só "Listar usuários" tem tela; as demais funcionalidades se registram no painel (`PainelFronteira.registrar`) quando forem implementadas.
+O painel do Gestor oferece "Listar usuários" e as ações de contrato. As demais funcionalidades se registram no painel (`PainelFronteira.registrar`) quando forem implementadas.
 
 **Registro de acessos.** Toda tentativa, com sucesso ou falha, grava exatamente um `Acesso` (`AcessoRepositorio`, em memória ou SQLite, tabela `acessos`) com o usuário, o perfil informado, a data e hora e o `ResultadoAcesso` (`SUCESSO`, `CREDENCIAIS_INVALIDAS` ou `BLOQUEADO`; este último só será gerado quando o bloqueio por tentativas for implementado). Quando nenhum usuário é identificado, o usuário fica vazio. O texto digitado como identificador não é guardado. Se o registro falhar, o login não é concedido.
 
+## Contratos
+
+O painel do Gestor traz as ações de contrato. Cada operação confere a permissão no `ContratoController`, e não só no menu.
+
+| Operação | Regras principais |
+|----------|-------------------|
+| Cadastrar | Número (até 20 caracteres, único), empresa (até 150), vigência em `dd/mm/aaaa` com fim igual ou posterior ao início, e arquivo opcional (PDF ou DOCX existente, até 30 MB). Nasce `ATIVO`. |
+| Listar | Mais recentes primeiro, busca por parte do número ou da empresa, filtro por situação e 20 contratos por página. |
+| Editar e encerrar | Mesmas validações do cadastro. Contrato encerrado não recebe evidências, e não se encerra um contrato já encerrado. |
+| Remover | Exige confirmação e é recusado se o contrato tem evidências (nesse caso, encerre-o). |
+| Vincular | Só usuários ativos, fiscais ou funcionários. Todo contrato ativo mantém ao menos um fiscal. |
+
+Renumerar um contrato com evidências é recusado, porque as evidências apontam para o número.
+
+## Fachada e log de auditoria
+
+- **Fachada.** `FacadeSingletonController` (Facade + Singleton) é o ponto único de acesso das telas aos controllers de autenticação, de usuários e de contratos. Ela também informa a quantidade de entidades cadastradas (`contar_entidades()` e `contar_entidades_detalhado()`), uma consulta pública que não traz dados pessoais. Veja o [ADR 0002](docs/adr/0002-fachada-unica.md).
+- **Log de auditoria.** O cadastro de usuário e o cadastro, a edição, a remoção e os vínculos de contrato geram um registro com usuário, operação, data e hora e detalhes. A interface `LogAuditoria` só permite registrar e consultar, e o `LogAuditoriaAdapter` isola a biblioteca `logging`. No SQLite os registros ficam em `auditoria.log`.
+
 ## Persistência
 
-Hoje, `UsuarioRepositorio` guarda os usuários em memória. O [diagrama de classes](docs/diagramas/classes-analise-usuarios.png) descreve a evolução prevista, ainda **não implementada**:
+Ao iniciar, o programa pergunta onde guardar os dados:
 
-- `UsuarioRepositorio` passa a ser a interface do repositório.
-- `UsuarioRepositorioMemoria` (a implementação atual) e `UsuarioRepositorioSQLite` implementam a interface.
-- `UsuarioRepositorioFactory` escolhe a implementação pela variável de ambiente `AUDITA_PERSISTENCIA` (`sqlite` ou `memoria`; padrão `sqlite`), e o `main.py` injeta o repositório criado no controlador.
+- **1 - Banco de dados (SQLite):** os dados permanecem depois de encerrar o programa. Os arquivos ficam na pasta de execução: `usuarios.db` (usuários e acessos), `contratos.db` (contratos e vínculos), `evidencias.db` e `auditoria.log`.
+- **2 - Em memória:** os dados somem ao encerrar.
+
+Cada entidade tem uma interface de repositório, dividida em consulta e persistência (`ConsultaUsuarios` e `PersistenciaUsuarios`, `ConsultaContratos` e `PersistenciaContratos`), com uma implementação em memória e outra em SQLite. A escolha acontece só no `main.py`; veja o [ADR 0001](docs/adr/0001-persistencia-substituivel.md). Falhas de leitura ou gravação viram `PersistenciaError` e aparecem como `Erro de armazenamento: <motivo>`, sem encerrar o programa.
 
 ## Repositório
 
@@ -166,8 +194,11 @@ Hoje, `UsuarioRepositorio` guarda os usuários em memória. O [diagrama de class
 ## Documentação
 
 - [Documento de Requisitos](docs/documento_de_requisitos_v2.pdf)
-- [Diagrama de casos de uso](docs/diagramas/casos-de-uso-usuarios.png)
-- [Diagrama de classes](docs/diagramas/classes-analise-usuarios.png) ([fonte editável no draw.io](docs/diagramas/classes-analise-usuarios.drawio))
+- [Visão](docs/01-visao.md), [glossário](docs/02-glossario.md) e [elicitação](docs/03-elicitacao.md)
+- [Casos de uso](docs/04-casos-de-uso/README.md) e [casos de uso do sistema](docs/04-casos-de-uso/casos-de-uso-completo.md)
+- [Análise](docs/05-analise.md), [interface](docs/06-interface/README.md), [arquitetura](docs/07-arquitetura/README.md) e [projeto](docs/08-projeto.md)
+- Decisões de arquitetura: [ADR 0001](docs/adr/0001-persistencia-substituivel.md) e [ADR 0002](docs/adr/0002-fachada-unica.md)
+- Especificações em [`openspec/specs`](openspec/specs) (usuários, contratos e fachada)
 - [Board do projeto (GitHub Projects)](https://github.com/users/bruvaloes/projects/1)
 - [Guia de contribuição](CONTRIBUTING.md)
 
@@ -175,15 +206,19 @@ Hoje, `UsuarioRepositorio` guarda os usuários em memória. O [diagrama de class
 
 ```
 audita/
-├── docs/
-│   ├── diagramas/               # Diagramas de casos de uso e de classes
-│   └── documento_de_requisitos_v2.pdf
+├── docs/                        # Documentação, ADRs e diagramas
+│   ├── adr/
+│   └── diagramas/
+├── openspec/
+│   ├── specs/                   # Especificações do sistema entregue
+│   └── changes/archive/         # Mudanças já concluídas
 ├── src/
-│   ├── fronteira/               # Telas de console
-│   ├── controle/                # Regras de negócio, validações e autenticação
+│   ├── fronteira/               # Telas de console e painel por perfil
+│   ├── controle/                # Regras de negócio, validações, acesso, autenticação e fachada
 │   ├── entidade/                # Entidades de domínio
-│   ├── excecao/                 # Exceções de validação, de autenticação e de persistência
-│   ├── persistencia/            # Repositórios de usuários e de acessos (memória e SQLite)
+│   ├── excecao/                 # Exceções de validação, de acesso, de autenticação e de persistência
+│   ├── log/                     # Log de auditoria
+│   ├── persistencia/            # Repositórios (memória e SQLite)
 │   └── main.py                  # Ponto de entrada da aplicação
 ├── tests/                       # Testes unitários e de integração
 └── requirements.txt             # Dependências
