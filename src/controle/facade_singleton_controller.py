@@ -7,7 +7,11 @@ para coordenação dos controladores e contagem global de entidades.
 from typing import ClassVar
 
 from controle.autenticacao_controller import AutenticacaoController
-from controle.contrato_controller import ContratoController, ResultadoPaginado
+from controle.contrato_controller import (
+    ITENS_POR_PAGINA,
+    ContratoController,
+    ResultadoPaginado,
+)
 from controle.dados_cadastro_contrato import DadosCadastroContrato
 from controle.dados_cadastro_usuario import DadosCadastroUsuario
 from controle.usuario_controller import UsuarioController
@@ -49,14 +53,8 @@ class FacadeSingletonController:
                 self._contrato_controller = contrato_controller
             if evidencia_repositorio is not None:
                 self._evidencia_repositorio = evidencia_repositorio
-            elif (
-                hasattr(self, "_contrato_controller")
-                and getattr(self._contrato_controller, "_evidencia_repositorio", None) is not None
-            ):
-                self._evidencia_repositorio = self._contrato_controller._evidencia_repositorio
-            else:
-                if not hasattr(self, "_evidencia_repositorio"):
-                    self._evidencia_repositorio = None
+            elif not hasattr(self, "_evidencia_repositorio"):
+                self._evidencia_repositorio = None
 
             self._inicializado = True
 
@@ -144,7 +142,7 @@ class FacadeSingletonController:
         busca: str | None = None,
         situacao: str | SituacaoContrato | None = None,
         pagina: int = 1,
-        por_pagina: int = 20,
+        por_pagina: int = ITENS_POR_PAGINA,
         id_usuario: int | None = None,
     ) -> ResultadoPaginado:
         """Lista contratos com filtro, busca e paginação (RF 05 e RF 08)."""
@@ -236,7 +234,7 @@ class FacadeSingletonController:
         busca: str | None = None,
         situacao: str | SituacaoContrato | None = None,
         pagina: int = 1,
-        por_pagina: int = 20,
+        por_pagina: int = ITENS_POR_PAGINA,
         id_usuario: int | None = None,
     ) -> ResultadoPaginado:
         """Alias para listar_contratos, compatível com ContratoController."""
@@ -321,50 +319,25 @@ class FacadeSingletonController:
     # Contagem de Entidades (Issue #19)
     # =========================================================================
 
-    def contar_entidades(self, solicitante: Usuario | None = None) -> int:
-        """Retorna a quantidade total de entidades cadastradas no sistema.
+    def contar_entidades(self) -> int:
+        """Quantidade total de entidades cadastradas: usuários, contratos e
+        evidências (RF 16). É uma contagem agregada, sem dados pessoais, e por
+        isso não exige login."""
+        return self.contar_entidades_detalhado()["total"]
 
-        Soma os usuários cadastrados, os contratos cadastrados (#64)
-        e as evidências cadastradas (#68), conforme especificação da issue #19.
-        """
-        detalhes = self.contar_entidades_detalhado(solicitante)
-        return detalhes["total"]
-
-    def quantidade_entidades_cadastradas(self, solicitante: Usuario | None = None) -> int:
+    def quantidade_entidades_cadastradas(self) -> int:
         """Alias para contar_entidades."""
-        return self.contar_entidades(solicitante)
+        return self.contar_entidades()
 
-    def contar_entidades_detalhado(self, solicitante: Usuario | None = None) -> dict[str, int]:
-        """Retorna o detalhamento das quantidades de entidades cadastradas."""
-        total_usuarios = 0
-        if hasattr(self, "_usuario_controller") and self._usuario_controller is not None:
-            repo = getattr(self._usuario_controller, "_repositorio", None)
-            if repo is not None and type(repo).__name__ != "MagicMock":
-                total_usuarios = len(repo.listar_todos())
-            else:
-                try:
-                    total_usuarios = len(self._usuario_controller.listar_todos(solicitante))
-                except TypeError:
-                    total_usuarios = len(self._usuario_controller.listar_todos())
-
-        total_contratos = 0
-        if hasattr(self, "_contrato_controller") and self._contrato_controller is not None:
-            repo = getattr(self._contrato_controller, "_repositorio", None)
-            if repo is not None and type(repo).__name__ != "MagicMock":
-                total_contratos = len(repo.listar())
-            else:
-                try:
-                    total_contratos = self._contrato_controller.listar(solicitante, por_pagina=1).total_itens
-                except TypeError:
-                    total_contratos = self._contrato_controller.listar(por_pagina=1).total_itens
-
-        total_evidencias = 0
-        if self._evidencia_repositorio is not None:
-            total_evidencias = len(self._evidencia_repositorio.listar())
-
+    def contar_entidades_detalhado(self) -> dict[str, int]:
+        """Quantidade de cada tipo de entidade e o total."""
+        usuarios = self._usuario_controller.contar()
+        contratos = self._contrato_controller.contar()
+        evidencias = (len(self._evidencia_repositorio.listar())
+                      if self._evidencia_repositorio is not None else 0)
         return {
-            "usuarios": total_usuarios,
-            "contratos": total_contratos,
-            "evidencias": total_evidencias,
-            "total": total_usuarios + total_contratos + total_evidencias,
+            "usuarios": usuarios,
+            "contratos": contratos,
+            "evidencias": evidencias,
+            "total": usuarios + contratos + evidencias,
         }
