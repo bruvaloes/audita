@@ -1,6 +1,6 @@
 """Fronteira CLI para gerenciamento de contratos (RF 04 a RF 08)."""
 from functools import wraps
-
+from typing import TYPE_CHECKING
 from controle.contrato_controller import ContratoController
 from controle.dados_cadastro_contrato import DadosCadastroContrato
 from controle.sessao import Sessao
@@ -9,6 +9,9 @@ from entidade.usuario import Usuario
 from excecao.acesso_negado_error import AcessoNegadoError
 from excecao.persistencia_error import PersistenciaError
 from excecao.validacao_error import ValidacaoError
+
+if TYPE_CHECKING:
+    from controle.facade_singleton_controller import FacadeSingletonController
 
 LARGURA_TABELA = 85
 
@@ -27,9 +30,10 @@ def _mostrando_acesso_negado(acao):
 class ContratoFronteira:
     """Interface de usuário no terminal para operações de contrato."""
 
-    def __init__(self, controller: ContratoController, sessao: Sessao):
+    def __init__(self, controller: "FacadeSingletonController | ContratoController", sessao: Sessao):
         self._controller = controller
         self._sessao = sessao
+
 
     @property
     def _solicitante(self) -> Usuario | None:

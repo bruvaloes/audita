@@ -2,6 +2,7 @@ from controle.acesso.controle_acesso import ControleAcesso
 from controle.acesso.operacao import Operacao
 from controle.autenticacao_controller import AutenticacaoController
 from controle.contrato_controller import ContratoController
+from controle.facade_singleton_controller import FacadeSingletonController
 from controle.seguranca.hash_senha_argon2 import HashSenhaArgon2
 from controle.sessao import Sessao
 from controle.usuario_controller import UsuarioController
@@ -119,11 +120,18 @@ def main():
         usuario_repositorio=usuario_repo,
         log=log_auditoria,
     )
-    contrato_fronteira = ContratoFronteira(contrato_controller, sessao)
+    fachada = FacadeSingletonController(
+        usuario_controller=controller_usuario,
+        autenticacao_controller=autenticacao,
+        contrato_controller=contrato_controller,
+        evidencia_repositorio=evidencia_repo,
+    )
+
+    contrato_fronteira = ContratoFronteira(fachada, sessao)
     painel = PainelFronteira(sessao, controle_acesso)
 
     fronteira = UsuarioFronteira(
-        controller_usuario, AutenticacaoFronteira(autenticacao, painel),
+        fachada, AutenticacaoFronteira(fachada, painel),
         sessao)
     painel.registrar(AcaoDoPainel(
         Operacao.LISTAR_USUARIOS, "Listar usuários",
