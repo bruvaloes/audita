@@ -14,8 +14,8 @@ class ValidadorVigencia:
         if not vigencia_fim or not str(vigencia_fim).strip():
             raise CampoObrigatorioError("Vigência fim")
 
-        inicio = parsear_data(vigencia_inicio, "vigência início")
-        fim = parsear_data(vigencia_fim, "vigência fim")
+        inicio = parsear_data(vigencia_inicio, "Vigência início")
+        fim = parsear_data(vigencia_fim, "Vigência fim")
 
         if fim < inicio:
             raise VigenciaInvalidaError()

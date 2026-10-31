@@ -19,6 +19,7 @@ from excecao.validacao_error import (
     ArquivoInvalidoError,
     CampoObrigatorioError,
     ContratoNumeroJaCadastradoError,
+    DataInvalidaError,
     VigenciaInvalidaError,
 )
 from log.log_auditoria_memoria import LogAuditoriaMemoria
@@ -47,13 +48,15 @@ def controller(repo, log):
 
 
 @pytest.fixture
-def dados_validos():
+def dados_validos(tmp_path):
+    minuta = tmp_path / "minuta.pdf"
+    minuta.write_bytes(b"%PDF-1.4")
     return DadosCadastroContrato(
         numero="CT-2026-001",
         empresa_contratada="Empresa Alpha Ltda",
         vigencia_inicio="01/01/2026",
         vigencia_fim="31/12/2026",
-        arquivo="minuta.pdf",
+        arquivo=str(minuta),
     )
 
 
@@ -136,3 +139,36 @@ def test_c5_empresa_contratada_vazia(controller, dados_validos, gestor):
         controller.adicionar(gestor, dados_validos)
 
     assert "Empresa contratada" in str(exc_info.value)
+
+
+def test_c4_arquivo_inexistente_deve_ser_recusado(controller, dados_validos, gestor, tmp_path):
+    dados_validos.arquivo = str(tmp_path / "nao_existe.pdf")
+
+    with pytest.raises(ArquivoInvalidoError) as erro:
+        controller.adicionar(gestor, dados_validos)
+
+    assert "Arquivo não encontrado" in str(erro.value)
+
+
+def test_c4_pasta_com_extensao_de_arquivo_deve_ser_recusada(
+        controller, dados_validos, gestor, tmp_path):
+    pasta = tmp_path / "pasta.pdf"
+    pasta.mkdir()
+    dados_validos.arquivo = str(pasta)
+
+    with pytest.raises(ArquivoInvalidoError):
+        controller.adicionar(gestor, dados_validos)
+
+
+@pytest.mark.parametrize("campo, rotulo", [
+    ("vigencia_inicio", "Vigência início"),
+    ("vigencia_fim", "Vigência fim"),
+])
+def test_data_fora_do_formato_deve_citar_o_campo_com_o_mesmo_nome_da_tela(
+        controller, dados_validos, gestor, campo, rotulo):
+    setattr(dados_validos, campo, "2026-01-31")
+
+    with pytest.raises(DataInvalidaError) as erro:
+        controller.adicionar(gestor, dados_validos)
+
+    assert str(erro.value) == f"O campo '{rotulo}' deve estar no formato dd/mm/aaaa"

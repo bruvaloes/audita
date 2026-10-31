@@ -1,4 +1,5 @@
 from entidade.contrato import Contrato
+from excecao.persistencia_error import EscritaPersistenciaError
 from persistencia.contrato_repositorio import ContratoRepositorio
 
 
@@ -9,6 +10,9 @@ class ContratoRepositorioMemoria(ContratoRepositorio):
         self._proximo_id: int = 1
 
     def salvar(self, contrato: Contrato) -> Contrato:
+        if contrato.numero in self._contratos:
+            raise EscritaPersistenciaError(
+                f"Erro ao salvar contrato: o número {contrato.numero} já existe")
         contrato.id = self._proximo_id
         self._contratos[contrato.numero] = contrato
         self._proximo_id += 1
