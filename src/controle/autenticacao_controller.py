@@ -4,6 +4,8 @@ from typing import Callable
 from controle.seguranca.hash_senha import HashSenha
 from controle.validacao.validador_email import SEPARADOR_EMAIL
 from entidade.acesso import Acesso
+from entidade.cpf import normalizar_cpf
+from entidade.email import normalizar_email
 from entidade.perfil import Perfil
 from entidade.resultado_acesso import ResultadoAcesso
 from entidade.usuario import Usuario
@@ -32,7 +34,8 @@ class AutenticacaoController:
                    perfil: str) -> Usuario:
         """Retorna o usuário autenticado ou levanta CredenciaisInvalidasError.
 
-        `identificador` é o login, o CPF (só números) ou o e-mail (RN02.1).
+        `identificador` é o login, o CPF (com ou sem pontuação) ou o e-mail, sem
+        diferenciar maiúsculas de minúsculas (RN02.1).
         Toda tentativa gera exatamente um Acesso; se o registro falhar, a
         PersistenciaError sobe e o login não é concedido.
         """
@@ -58,9 +61,11 @@ class AutenticacaoController:
 
     def _localizar(self, identificador: str) -> Usuario | None:
         if SEPARADOR_EMAIL in identificador:
-            return self._consulta_usuarios.buscar_por_email(identificador)
-        if identificador.isascii() and identificador.isdigit():
-            return self._consulta_usuarios.buscar_por_cpf(identificador)
+            return self._consulta_usuarios.buscar_por_email(
+                normalizar_email(identificador))
+        cpf = normalizar_cpf(identificador)
+        if cpf.isascii() and cpf.isdigit():
+            return self._consulta_usuarios.buscar_por_cpf(cpf)
         return self._consulta_usuarios.buscar_por_login(identificador)
 
     @staticmethod

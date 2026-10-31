@@ -94,10 +94,34 @@ def test_deve_recusar_campo_vazio(
         autenticacao.autenticar(identificador, senha, perfil)
 
 
-def test_cpf_so_identifica_quando_digitado_apenas_com_numeros(
+@pytest.mark.parametrize("login", ["MARIA", "Maria", "  maria  "])
+def test_login_pelo_apelido_ignora_maiusculas(autenticacao, maria, login):
+    assert autenticacao.autenticar(login, SENHA, "GESTOR") == maria
+
+
+def test_c2_deve_autenticar_por_cpf_com_pontuacao(autenticacao, maria):
+    assert autenticacao.autenticar("529.982.247-25", SENHA, "GESTOR") == maria
+
+
+def test_cpf_com_pontuacao_e_senha_incorreta_deve_ser_recusado(
         autenticacao, maria):
+    with pytest.raises(CredenciaisInvalidasError) as erro:
+        autenticacao.autenticar("529.982.247-25", "Outra@123", "GESTOR")
+    assert str(erro.value) == "Credenciais inválidas"
+
+
+@pytest.mark.parametrize("identificador", ["...-", "-", ".", ".-.-."])
+def test_identificador_so_com_pontuacao_nao_identifica_ninguem(
+        autenticacao, maria, identificador):
     with pytest.raises(CredenciaisInvalidasError):
-        autenticacao.autenticar("529.982.247-25", SENHA, "GESTOR")
+        autenticacao.autenticar(identificador, SENHA, "GESTOR")
+
+
+@pytest.mark.parametrize("identificador", [
+    "Maria@Email.com", "MARIA@EMAIL.COM", "  maria@email.com  "])
+def test_login_por_email_ignora_maiusculas(
+        autenticacao, maria, identificador):
+    assert autenticacao.autenticar(identificador, SENHA, "GESTOR") == maria
 
 
 @pytest.mark.parametrize("identificador, senha, perfil", [
@@ -143,7 +167,8 @@ def test_tentativa_gera_um_acesso(
     except CredenciaisInvalidasError:
         pass
 
-    usuario = repositorio.buscar_por_login(login_esperado)
+    usuario = (repositorio.buscar_por_login(login_esperado)
+               if login_esperado else None)
     (acesso,) = acessos.listar_todos()
     assert (acesso.usuario_id, acesso.perfil, acesso.resultado) == (
         usuario.id if usuario else None, perfil_esperado, resultado)

@@ -9,6 +9,7 @@ from controle.validacao.validador_cadastro_usuario import (
     ValidadorCadastroUsuario,
 )
 from entidade.cpf import normalizar_cpf
+from entidade.email import normalizar_email
 from entidade.perfil import Perfil
 from entidade.usuario import Usuario
 from log.log_auditoria import LogAuditoria
@@ -64,11 +65,16 @@ class UsuarioController:
         self._controle_acesso.verificar(solicitante, Operacao.LISTAR_USUARIOS)
         return self._repositorio.listar_todos()
 
+    def contar(self) -> int:
+        """Quantidade de usuários cadastrados (contagem agregada, sem dados
+        pessoais)."""
+        return len(self._repositorio.listar_todos())
+
     def _normalizar(self, dados: DadosCadastroUsuario) -> DadosCadastroUsuario:
         return DadosCadastroUsuario(
             nome=dados.nome,
             cpf=normalizar_cpf(dados.cpf),
-            email=dados.email,
+            email=normalizar_email(dados.email),
             login=dados.login.strip(),
             senha=dados.senha,
             confirmacao_senha=dados.confirmacao_senha,

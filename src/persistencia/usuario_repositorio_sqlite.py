@@ -22,7 +22,9 @@ class UsuarioRepositorioSQLite(UsuarioRepositorio):
 
     def _conectar(self) -> sqlite3.Connection:
         try:
-            return sqlite3.connect(self.db_name)
+            conexao = sqlite3.connect(self.db_name)
+            conexao.create_function("casefold", 1, str.casefold)
+            return conexao
         except sqlite3.Error as e:
             raise ConexaoPersistenciaError(f"Erro ao conectar ao banco de dados: {e}") from e
 
@@ -85,7 +87,8 @@ class UsuarioRepositorioSQLite(UsuarioRepositorio):
         return self._buscar_um("cpf", cpf, "CPF")
 
     def buscar_por_login(self, login: str) -> Usuario | None:
-        return self._buscar_um("login", login, "login")
+        # O login é único sem diferenciar maiúsculas de minúsculas.
+        return self._buscar_um("casefold(login)", login.casefold(), "login")
 
     def buscar_por_email(self, email: str) -> Usuario | None:
         return self._buscar_um("email", email, "E-mail")
