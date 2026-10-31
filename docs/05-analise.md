@@ -2,7 +2,7 @@
 
 ## Diagrama de classes de análise do gerenciamento de usuários
 
-Diagrama editável: [`classes-analise-usuarios.drawio`](diagramas/classes-analise-usuarios.drawio) (abra no [diagrams.net](https://app.diagrams.net) ou na extensão Draw.io do VS Code).
+![Diagrama de classes de análise do gerenciamento de usuários](diagramas/classes-analise-usuarios.png)
 
 ```mermaid
 classDiagram
