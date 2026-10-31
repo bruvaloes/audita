@@ -222,32 +222,37 @@ Não é refactoring massivo — é renomear uma variável confusa, extrair um bl
 
 ## 6. Tags de entrega
 
-Cada entrega de sprint recebe uma tag **anotada** no commit de merge que a leva para `main` (o merge do PR `dev` → `main`). A tag marca o estado de produção descrito na seção 1.
+Cada entrega recebe uma tag **anotada** no commit de merge que a leva para `main`. A tag marca o estado de produção descrito na seção 1.
 
-**Padrão de nome:** `sprint-<N>`, com o número da sprint sem zero à esquerda (`sprint-1`, `sprint-2`, `sprint-3`...).
+**Padrão de nome:** `v<maior>.<menor>.<correção>`, seguindo o calendário de entregas. As entregas parciais usam `v0.<N>.0`, e a entrega final é a `v1.0.0`.
 
-**Mensagem:** `Entrega da Sprint <N> (PR #<número>)`, com o número do PR que entregou a sprint.
+| Data | Entrega | Tag |
+|------|---------|-----|
+| 14/10/2026 | Entrega 1: documentação base + Sprints 1 e 2 | `v0.1.0` |
+| 30/10/2026 | Entrega 2: documentação do essencial completa + Sprint 3 | `v0.2.0` |
+| 11/11/2026 | Sprint 4: Padrões 2 | `v0.3.0` |
+| 18/11/2026 | Sprint 5: Padrões 3 | `v0.4.0` |
+| 09/12/2026 | Sprint 6: entrega final | `v1.0.0` |
 
-| Tag | Commit na `main` | PR |
-|-----|------------------|----|
-| `sprint-1` | `3d1bfa3` (release: entrega da Sprint 1) | [#41](https://github.com/bruvaloes/audita/pull/41) |
-| `sprint-2` | `4805481` (docs(sprint2): persistência e exceções) | [#47](https://github.com/bruvaloes/audita/pull/47) |
+**Mensagem:** `Entrega <N>: <resumo> (PR #<número>)`, com o número do PR que levou a entrega para a `main`.
 
 **Como criar**, logo após o merge do PR de entrega:
 
 ```
 git checkout main && git pull
-git tag -a sprint-3 -m "Entrega da Sprint 3 (PR #99)"   # tag no commit de merge (HEAD da main)
-git push origin sprint-3
+git tag -a v0.2.0 -m "Entrega 2: Sprint 3 (PR #99)"   # tag no commit de merge (HEAD da main)
+git push origin v0.2.0
 ```
 
-Para marcar um commit anterior, informe o hash ao final: `git tag -a sprint-1 3d1bfa3 -m "..."`.
+Para marcar um commit anterior, informe o hash ao final: `git tag -a v0.1.0 4805481 -m "..."`.
 
 **Regras:**
 - Tags são sempre anotadas (`-a`); tags leves não são usadas
 - Tags só existem em commits da `main`
 - Uma tag publicada nunca é movida nem apagada; se estiver errada, crie uma nova e registre o motivo no PR
 - `git push` não envia tags: use `git push origin <tag>` (ou `git push --tags`)
+
+**Tags antigas:** as tags `sprint-1` e `sprint-2`, do padrão `sprint-<N>`, foram substituídas pela `v0.1.0` por decisão da equipe e deixam de ser usadas.
 
 ---
 
