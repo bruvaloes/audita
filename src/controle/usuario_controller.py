@@ -22,10 +22,9 @@ class UsuarioController:
     def __init__(self, repositorio: UsuarioRepositorio,
                  validador: ValidadorCadastroUsuario,
                  hash_senha: HashSenha,
+                 controle_acesso: ControleAcesso,
                  relogio: Callable[[], datetime] = datetime.now,
                  log: LogAuditoria | None = None):
-                 controle_acesso: ControleAcesso,
-                 relogio: Callable[[], datetime] = datetime.now):
         self._repositorio = repositorio
         self._validador = validador
         self._hash_senha = hash_senha

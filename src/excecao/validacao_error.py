@@ -41,3 +41,45 @@ class TermosNaoAceitosError(ValidacaoError):
             "Termos de Uso: aceite os Termos e a Política de Privacidade "
             "para concluir o cadastro"
         )
+
+
+class DataInvalidaError(ValidacaoError):
+    def __init__(self, campo: str):
+        super().__init__(f"O campo '{campo}' deve estar no formato dd/mm/aaaa")
+
+
+class ContratoNumeroJaCadastradoError(ValidacaoError):
+    def __init__(self):
+        super().__init__("Número de contrato já cadastrado")
+
+
+class VigenciaInvalidaError(ValidacaoError):
+    def __init__(self):
+        super().__init__("A data de fim deve ser igual ou posterior à data de início")
+
+
+class ArquivoInvalidoError(ValidacaoError):
+    def __init__(self, mensagem: str = "Arquivo: use PDF ou DOCX com até 30 MB"):
+        super().__init__(mensagem)
+
+
+class PerfilNaoVinculavelError(ValidacaoError):
+    def __init__(self):
+        super().__init__("Perfil não pode ser vinculado a contrato")
+
+
+class UltimoFiscalError(ValidacaoError):
+    def __init__(self):
+        super().__init__("O contrato deve ter ao menos um fiscal")
+
+
+class ContratoComEvidenciasError(ValidacaoError):
+    def __init__(self, mensagem: str = "Contrato com evidências não pode "
+                                       "ser removido; encerre-o"):
+        super().__init__(mensagem)
+
+
+class ContratoNaoEncontradoError(ValidacaoError):
+    def __init__(self, mensagem: str = "Contrato não encontrado"):
+        super().__init__(mensagem)
+
