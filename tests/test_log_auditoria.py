@@ -14,6 +14,7 @@ from pathlib import Path
 
 import pytest
 
+from controle.acesso.controle_acesso import ControleAcesso
 from controle.usuario_controller import UsuarioController
 from controle.validacao.validador_cadastro_usuario import (
     ValidadorCadastroUsuario,
@@ -119,6 +120,7 @@ def test_usuario_controller_registra_cadastro_no_log_de_auditoria(
         repositorio=repositorio,
         validador=ValidadorCadastroUsuario(repositorio),
         hash_senha=hash_senha,
+        controle_acesso=ControleAcesso(),
         relogio=lambda: momento,
         log=log,
     )
@@ -198,6 +200,7 @@ def test_trocar_implementacao_de_log_nao_muda_controller(
         repositorio=repositorio,
         validador=ValidadorCadastroUsuario(repositorio),
         hash_senha=hash_senha,
+        controle_acesso=ControleAcesso(),
         relogio=lambda: momento,
         log=log_memoria,
     )
@@ -212,6 +215,7 @@ def test_trocar_implementacao_de_log_nao_muda_controller(
             repositorio=repositorio,
             validador=ValidadorCadastroUsuario(repositorio),
             hash_senha=hash_senha,
+            controle_acesso=ControleAcesso(),
             relogio=lambda: momento,
             log=log_adapter,
         )

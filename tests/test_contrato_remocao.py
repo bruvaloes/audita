@@ -9,6 +9,7 @@ Cobre os cenários de aceite C1 a C3 e regras RN07.1 a RN07.3:
 from datetime import datetime
 import pytest
 
+from controle.acesso.controle_acesso import ControleAcesso
 from controle.contrato_controller import ContratoController
 from controle.dados_cadastro_contrato import DadosCadastroContrato
 from entidade.evidencia import Evidencia
@@ -40,6 +41,7 @@ def log():
 def controller(repo_contrato, repo_evidencia, log):
     return ContratoController(
         repositorio=repo_contrato,
+        controle_acesso=ControleAcesso(),
         evidencia_repositorio=repo_evidencia,
         relogio=lambda: datetime(2026, 10, 28, 16, 0, 0),
         log=log,
@@ -47,28 +49,27 @@ def controller(repo_contrato, repo_evidencia, log):
 
 
 @pytest.fixture
-def contrato_cadastrado(controller):
-    return controller.adicionar(
+def contrato_cadastrado(controller, gestor):
+    return controller.adicionar(gestor,
         DadosCadastroContrato(
             numero="CT-2026-001",
             empresa_contratada="Empresa Limpeza Ltda",
             vigencia_inicio="01/01/2026",
             vigencia_fim="31/12/2026",
         ),
-        usuario_logado="gestor1",
     )
 
 
 def test_c1_remocao_sem_evidencias_e_confirmada(
-    controller, contrato_cadastrado, log
+    controller, contrato_cadastrado, log, gestor
 ):
-    removido = controller.remover(
-        "CT-2026-001", confirmado=True, usuario_logado="gestor1"
+    removido = controller.remover(gestor,
+        "CT-2026-001", confirmado=True
     )
     assert removido is True
 
     # Não deve mais aparecer na listagem
-    itens, _ = controller.listar()
+    itens, _ = controller.listar(gestor)
     assert len(itens) == 0
 
     # RN07.3: Log de auditoria EXCLUSAO
@@ -79,18 +80,18 @@ def test_c1_remocao_sem_evidencias_e_confirmada(
     assert "removido" in registros[1].detalhes.lower()
 
 
-def test_c2_remocao_cancelada_permanece(controller, contrato_cadastrado):
-    removido = controller.remover("CT-2026-001", confirmado=False)
+def test_c2_remocao_cancelada_permanece(controller, contrato_cadastrado, gestor):
+    removido = controller.remover(gestor, "CT-2026-001", confirmado=False)
     assert removido is False
 
     # Permanece na listagem
-    itens, _ = controller.listar()
+    itens, _ = controller.listar(gestor)
     assert len(itens) == 1
     assert itens[0].numero == "CT-2026-001"
 
 
 def test_c3_remocao_bloqueada_com_evidencias(
-    controller, contrato_cadastrado, repo_evidencia
+    controller, contrato_cadastrado, repo_evidencia, gestor
 ):
     # Registra uma evidência vinculada a este contrato
     repo_evidencia.salvar(
@@ -108,12 +109,12 @@ def test_c3_remocao_bloqueada_com_evidencias(
     )
 
     with pytest.raises(ContratoComEvidenciasError) as exc_info:
-        controller.remover("CT-2026-001", confirmado=True)
+        controller.remover(gestor, "CT-2026-001", confirmado=True)
 
     assert "Contrato com evidências não pode ser removido; encerre-o" in str(
         exc_info.value
     )
 
     # Confere que o contrato continua intacto no repositório
-    itens, _ = controller.listar()
+    itens, _ = controller.listar(gestor)
     assert len(itens) == 1

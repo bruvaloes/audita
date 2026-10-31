@@ -80,27 +80,27 @@ def test_descricao_da_politica_deve_citar_os_limites():
     assert "3 destes tipos" in DESCRICAO_POLITICA
 
 
-def test_nao_deve_salvar_usuario_quando_senha_invalida(adicionar, controller):
+def test_nao_deve_salvar_usuario_quando_senha_invalida(adicionar, controller, repositorio):
     with pytest.raises(SenhaInvalidaError):
         adicionar("fraca")
-    assert controller.listar_todos() == []
+    assert repositorio.listar_todos() == []
 
 
-def test_deve_lancar_erro_quando_confirmacao_difere_da_senha(controller, dados_validos):
+def test_deve_lancar_erro_quando_confirmacao_difere_da_senha(controller, dados_validos, repositorio):
     dados = replace(dados_validos, confirmacao_senha="Senha@124")
     with pytest.raises(SenhasDiferentesError) as erro:
         controller.adicionar(dados)
     assert str(erro.value) == "As senhas não coincidem"
-    assert controller.listar_todos() == []
+    assert repositorio.listar_todos() == []
 
 
-def test_deve_lancar_erro_quando_senha_igual_ao_login(controller, dados_validos):
+def test_deve_lancar_erro_quando_senha_igual_ao_login(controller, dados_validos, repositorio):
     dados = replace(dados_validos, login="Senha@Forte",
                     senha="Senha@Forte", confirmacao_senha="Senha@Forte")
     with pytest.raises(SenhaIgualLoginError) as erro:
         controller.adicionar(dados)
     assert str(erro.value) == "Senha: não pode ser igual ao login"
-    assert controller.listar_todos() == []
+    assert repositorio.listar_todos() == []
 
 
 def test_deve_validar_politica_antes_da_confirmacao(controller, dados_validos):

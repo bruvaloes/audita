@@ -1,9 +1,11 @@
 from typing import TYPE_CHECKING
 
 from controle.dados_cadastro_usuario import DadosCadastroUsuario
+from controle.sessao import Sessao
 from controle.usuario_controller import UsuarioController
 from entidade.perfil import Perfil
 from entidade.usuario import Usuario
+from excecao.acesso_negado_error import AcessoNegadoError
 from excecao.persistencia_error import PersistenciaError
 from excecao.validacao_error import ValidacaoError
 from fronteira.autenticacao_fronteira import AutenticacaoFronteira
@@ -22,13 +24,14 @@ LARGURA_TABELA = 75
 class UsuarioFronteira:
 
     def __init__(self, controller: "FacadeSingletonController | UsuarioController",
-                 autenticacao_fronteira: AutenticacaoFronteira):
+                 autenticacao_fronteira: AutenticacaoFronteira,
+                 sessao: Sessao):
         self._controller = controller
+        self._sessao = sessao
         self._opcoes_menu = {
             "1": self.cadastrar_usuario,
-            "2": self.listar_usuarios,
-            "3": self.exibir_termos,
-            "4": autenticacao_fronteira.entrar,
+            "2": self.exibir_termos,
+            "3": autenticacao_fronteira.entrar,
         }
 
     def menu(self) -> None:
@@ -64,7 +67,11 @@ class UsuarioFronteira:
 
     def listar_usuarios(self) -> None:
         try:
-            usuarios = self._controller.listar_todos()
+            usuarios = self._controller.listar_todos(
+                self._sessao.usuario_atual)
+        except AcessoNegadoError as erro:
+            print(f"\n{erro}")
+            return
         except PersistenciaError as erro:
             print(f"\nErro de armazenamento: {erro}")
             return
@@ -81,9 +88,8 @@ class UsuarioFronteira:
     def _exibir_menu(self) -> None:
         print("\n===== GERENCIAMENTO DE USUÁRIOS =====")
         print("1 - Cadastrar usuário")
-        print("2 - Listar usuários")
-        print("3 - Ver Termos de Uso e Política de Privacidade")
-        print("4 - Entrar (login)")
+        print("2 - Ver Termos de Uso e Política de Privacidade")
+        print("3 - Entrar (login)")
         print("0 - Sair")
 
     def _ler_dados_cadastro(self) -> DadosCadastroUsuario:

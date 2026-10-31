@@ -1,10 +1,12 @@
 """Fronteira CLI para gerenciamento de contratos (RF 04 a RF 08)."""
+from functools import wraps
 from typing import TYPE_CHECKING
-
 from controle.contrato_controller import ContratoController
 from controle.dados_cadastro_contrato import DadosCadastroContrato
+from controle.sessao import Sessao
 from controle.utils.datas import formatar_data
 from entidade.usuario import Usuario
+from excecao.acesso_negado_error import AcessoNegadoError
 from excecao.persistencia_error import PersistenciaError
 from excecao.validacao_error import ValidacaoError
 
@@ -14,49 +16,31 @@ if TYPE_CHECKING:
 LARGURA_TABELA = 85
 
 
+def _mostrando_acesso_negado(acao):
+    """Exibe `Acesso negado` em vez de deixar o erro encerrar o programa."""
+    @wraps(acao)
+    def executar(self):
+        try:
+            acao(self)
+        except AcessoNegadoError as erro:
+            print(f"\n{erro}")
+    return executar
+
+
 class ContratoFronteira:
     """Interface de usuário no terminal para operações de contrato."""
 
-    def __init__(self, controller: "FacadeSingletonController | ContratoController"):
+    def __init__(self, controller: "FacadeSingletonController | ContratoController", sessao: Sessao):
         self._controller = controller
+        self._sessao = sessao
 
-    def menu(self, usuario_logado: Usuario | None = None) -> None:
-        """Exibe o menu de gerenciamento de contratos."""
-        while True:
-            self._exibir_menu()
-            opcao = input("Escolha uma opção: ").strip()
 
-            if opcao == "0":
-                return
-            elif opcao == "1":
-                self.cadastrar_contrato(usuario_logado)
-            elif opcao == "2":
-                self.listar_contratos(usuario_logado)
-            elif opcao == "3":
-                self.editar_contrato(usuario_logado)
-            elif opcao == "4":
-                self.encerrar_contrato(usuario_logado)
-            elif opcao == "5":
-                self.remover_contrato(usuario_logado)
-            elif opcao == "6":
-                self.vincular_usuario(usuario_logado)
-            elif opcao == "7":
-                self.desvincular_usuario(usuario_logado)
-            else:
-                print("Opção inválida. Tente novamente.")
+    @property
+    def _solicitante(self) -> Usuario | None:
+        return self._sessao.usuario_atual
 
-    def _exibir_menu(self) -> None:
-        print("\n===== GERENCIAMENTO DE CONTRATOS =====")
-        print("1 - Cadastrar contrato")
-        print("2 - Listar contratos")
-        print("3 - Editar contrato")
-        print("4 - Encerrar contrato")
-        print("5 - Remover contrato")
-        print("6 - Vincular usuário a contrato")
-        print("7 - Desvincular usuário de contrato")
-        print("0 - Voltar")
-
-    def cadastrar_contrato(self, usuario_logado: Usuario | None = None) -> None:
+    @_mostrando_acesso_negado
+    def cadastrar_contrato(self) -> None:
         print("\n--- Cadastro de Contrato ---")
         numero = input("Número do contrato (até 20 caracteres): ").strip()
         empresa = input("Empresa contratada: ").strip()
@@ -75,8 +59,8 @@ class ContratoFronteira:
 
         try:
             contrato = self._controller.adicionar(
-                dados,
-                usuario_logado=usuario_logado.login if usuario_logado else None,
+                self._solicitante,
+                dados
             )
             print("\nContrato cadastrado com sucesso!")
             print(f"   {contrato}")
@@ -85,7 +69,8 @@ class ContratoFronteira:
         except PersistenciaError as erro:
             print(f"\nErro de armazenamento: {erro}")
 
-    def listar_contratos(self, usuario_logado: Usuario | None = None) -> None:
+    @_mostrando_acesso_negado
+    def listar_contratos(self) -> None:
         print("\n--- Listagem de Contratos ---")
         busca = input("Termo de busca por número ou empresa (ou Enter para todos): ").strip()
         busca = busca if busca else None
@@ -93,20 +78,15 @@ class ContratoFronteira:
         situacao = input("Filtro de situação (ATIVO, ENCERRADO ou Enter para todos): ").strip()
         situacao = situacao if situacao else None
 
-        # Se for funcionário, filtra pelos contratos atribuídos a ele
-        id_usuario = None
-        if usuario_logado and usuario_logado.perfil.value == "FUNCIONARIO":
-            id_usuario = usuario_logado.id
-
         pagina = 1
         while True:
             try:
                 resultado = self._controller.listar(
+                    self._solicitante,
                     busca=busca,
                     situacao=situacao,
                     pagina=pagina,
                     por_pagina=20,
-                    id_usuario=id_usuario,
                 )
             except PersistenciaError as erro:
                 print(f"\nErro de armazenamento: {erro}")
@@ -134,10 +114,11 @@ class ContratoFronteira:
             else:
                 break
 
-    def editar_contrato(self, usuario_logado: Usuario | None = None) -> None:
+    @_mostrando_acesso_negado
+    def editar_contrato(self) -> None:
         print("\n--- Edição de Contrato ---")
         numero_atual = input("Número do contrato que deseja editar: ").strip()
-        contrato = self._controller.buscar_por_numero(numero_atual)
+        contrato = self._controller.buscar_por_numero(self._solicitante, numero_atual)
         if not contrato:
             print(f"\nContrato '{numero_atual}' não encontrado.")
             return
@@ -173,9 +154,9 @@ class ContratoFronteira:
 
         try:
             atualizado = self._controller.atualizar(
+                self._solicitante,
                 numero_atual,
-                dados,
-                usuario_logado=usuario_logado.login if usuario_logado else None,
+                dados
             )
             print("\nContrato atualizado com sucesso!")
             print(f"   {atualizado}")
@@ -184,10 +165,11 @@ class ContratoFronteira:
         except PersistenciaError as erro:
             print(f"\nErro de armazenamento: {erro}")
 
-    def encerrar_contrato(self, usuario_logado: Usuario | None = None) -> None:
+    @_mostrando_acesso_negado
+    def encerrar_contrato(self) -> None:
         print("\n--- Encerramento de Contrato ---")
         numero = input("Número do contrato a encerrar: ").strip()
-        contrato = self._controller.buscar_por_numero(numero)
+        contrato = self._controller.buscar_por_numero(self._solicitante, numero)
         if not contrato:
             print(f"\nContrato '{numero}' não encontrado.")
             return
@@ -199,7 +181,8 @@ class ContratoFronteira:
 
         try:
             encerrado = self._controller.encerrar(
-                numero, usuario_logado=usuario_logado.login if usuario_logado else None
+                self._solicitante,
+                numero
             )
             print(f"\nContrato {numero} encerrado com sucesso!")
             print(f"   {encerrado}")
@@ -208,10 +191,11 @@ class ContratoFronteira:
         except PersistenciaError as erro:
             print(f"\nErro de armazenamento: {erro}")
 
-    def remover_contrato(self, usuario_logado: Usuario | None = None) -> None:
+    @_mostrando_acesso_negado
+    def remover_contrato(self) -> None:
         print("\n--- Remoção de Contrato ---")
         numero = input("Número do contrato que deseja remover: ").strip()
-        contrato = self._controller.buscar_por_numero(numero)
+        contrato = self._controller.buscar_por_numero(self._solicitante, numero)
         if not contrato:
             print(f"\nContrato '{numero}' não encontrado.")
             return
@@ -223,9 +207,9 @@ class ContratoFronteira:
 
         try:
             removido = self._controller.remover(
+                self._solicitante,
                 numero,
-                confirmado=confirmado,
-                usuario_logado=usuario_logado.login if usuario_logado else None,
+                confirmado=confirmado
             )
             if removido:
                 print(f"\nContrato {numero} removido com sucesso!")
@@ -236,7 +220,8 @@ class ContratoFronteira:
         except PersistenciaError as erro:
             print(f"\nErro de armazenamento: {erro}")
 
-    def vincular_usuario(self, usuario_logado: Usuario | None = None) -> None:
+    @_mostrando_acesso_negado
+    def vincular_usuario(self) -> None:
         print("\n--- Vincular Usuário ao Contrato ---")
         numero = input("Número do contrato: ").strip()
         id_str = input("ID do usuário a vincular (fiscal ou funcionário): ").strip()
@@ -246,9 +231,9 @@ class ContratoFronteira:
 
         try:
             self._controller.vincular(
+                self._solicitante,
                 numero,
-                int(id_str),
-                usuario_logado=usuario_logado.login if usuario_logado else None,
+                int(id_str)
             )
             print(f"\nUsuário {id_str} vinculado ao contrato {numero} com sucesso!")
         except ValidacaoError as erro:
@@ -256,7 +241,8 @@ class ContratoFronteira:
         except PersistenciaError as erro:
             print(f"\nErro de armazenamento: {erro}")
 
-    def desvincular_usuario(self, usuario_logado: Usuario | None = None) -> None:
+    @_mostrando_acesso_negado
+    def desvincular_usuario(self) -> None:
         print("\n--- Desvincular Usuário do Contrato ---")
         numero = input("Número do contrato: ").strip()
         id_str = input("ID do usuário a desvincular: ").strip()
@@ -266,9 +252,9 @@ class ContratoFronteira:
 
         try:
             self._controller.desvincular(
+                self._solicitante,
                 numero,
-                int(id_str),
-                usuario_logado=usuario_logado.login if usuario_logado else None,
+                int(id_str)
             )
             print(f"\nUsuário {id_str} desvinculado do contrato {numero} com sucesso!")
         except ValidacaoError as erro:

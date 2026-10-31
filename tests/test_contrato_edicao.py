@@ -9,6 +9,7 @@ Cobre os cenários de aceite C1 a C3 e regras RN06.1 a RN06.3:
 from datetime import datetime
 import pytest
 
+from controle.acesso.controle_acesso import ControleAcesso
 from controle.contrato_controller import ContratoController
 from controle.dados_cadastro_contrato import DadosCadastroContrato
 from entidade.situacao_contrato import SituacaoContrato
@@ -32,20 +33,20 @@ def log():
 def controller(repo, log):
     return ContratoController(
         repositorio=repo,
+        controle_acesso=ControleAcesso(),
         relogio=lambda: datetime(2026, 10, 28, 15, 0, 0),
         log=log,
     )
 
 
-def test_c1_edicao_valida_altera_empresa_e_gera_log(controller, log):
-    controller.adicionar(
+def test_c1_edicao_valida_altera_empresa_e_gera_log(controller, log, gestor):
+    controller.adicionar(gestor,
         DadosCadastroContrato(
             numero="CT-2026-001",
             empresa_contratada="Empresa Inicial Ltda",
             vigencia_inicio="01/01/2026",
             vigencia_fim="31/12/2026",
         ),
-        usuario_logado="gestor1",
     )
 
     dados_atualizacao = DadosCadastroContrato(
@@ -55,14 +56,14 @@ def test_c1_edicao_valida_altera_empresa_e_gera_log(controller, log):
         vigencia_fim="31/12/2026",
     )
 
-    atualizado = controller.atualizar(
-        "CT-2026-001", dados_atualizacao, usuario_logado="gestor1"
+    atualizado = controller.atualizar(gestor,
+        "CT-2026-001", dados_atualizacao
     )
 
     assert atualizado.empresa_contratada == "Empresa Atualizada S/A"
 
     # Confere na listagem
-    contratos, _ = controller.listar()
+    contratos, _ = controller.listar(gestor)
     assert contratos[0].empresa_contratada == "Empresa Atualizada S/A"
 
     # RN06.3: Log de auditoria com anterior e novo
@@ -76,8 +77,8 @@ def test_c1_edicao_valida_altera_empresa_e_gera_log(controller, log):
     assert "Empresa Atualizada S/A" in reg_edicao.detalhes
 
 
-def test_c2_numero_de_outro_contrato_rejeitado(controller):
-    controller.adicionar(
+def test_c2_numero_de_outro_contrato_rejeitado(controller, gestor):
+    controller.adicionar(gestor,
         DadosCadastroContrato(
             numero="CT-2026-001",
             empresa_contratada="Empresa Alpha",
@@ -85,7 +86,7 @@ def test_c2_numero_de_outro_contrato_rejeitado(controller):
             vigencia_fim="31/12/2026",
         )
     )
-    controller.adicionar(
+    controller.adicionar(gestor,
         DadosCadastroContrato(
             numero="CT-2026-002",
             empresa_contratada="Empresa Beta",
@@ -103,13 +104,13 @@ def test_c2_numero_de_outro_contrato_rejeitado(controller):
     )
 
     with pytest.raises(ContratoNumeroJaCadastradoError) as exc_info:
-        controller.atualizar("CT-2026-001", dados_conflito)
+        controller.atualizar(gestor, "CT-2026-001", dados_conflito)
 
     assert "Número de contrato já cadastrado" in str(exc_info.value)
 
 
-def test_c3_encerramento_impede_novas_evidencias(controller):
-    contrato = controller.adicionar(
+def test_c3_encerramento_impede_novas_evidencias(controller, gestor):
+    contrato = controller.adicionar(gestor,
         DadosCadastroContrato(
             numero="CT-2026-001",
             empresa_contratada="Empresa Alpha",
@@ -120,7 +121,7 @@ def test_c3_encerramento_impede_novas_evidencias(controller):
     assert contrato.situacao == SituacaoContrato.ATIVO
 
     # Encerrando o contrato
-    encerrado = controller.encerrar("CT-2026-001", usuario_logado="gestor1")
+    encerrado = controller.encerrar(gestor, "CT-2026-001")
     assert encerrado.situacao == SituacaoContrato.ENCERRADO
 
     # RN06.2: Validação de recebimento de evidência bloqueia

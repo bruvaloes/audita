@@ -8,7 +8,6 @@ from fronteira.textos_legais import (
     TERMOS_DE_USO,
 )
 from fronteira.autenticacao_fronteira import AutenticacaoFronteira
-from fronteira.painel_fronteira import PainelFronteira
 from fronteira.usuario_fronteira import UsuarioFronteira
 
 RESPOSTAS_DO_CADASTRO = [
@@ -18,9 +17,9 @@ RESPOSTAS_DO_CADASTRO = [
 
 
 @pytest.fixture
-def fronteira(controller, autenticacao):
+def fronteira(controller, autenticacao, painel, sessao):
     return UsuarioFronteira(
-        controller, AutenticacaoFronteira(autenticacao, PainelFronteira()))
+        controller, AutenticacaoFronteira(autenticacao, painel), sessao)
 
 
 def simular_entradas(monkeypatch, *entradas):
@@ -52,13 +51,13 @@ def test_menu_deve_oferecer_a_opcao_de_ver_os_termos(
         fronteira, monkeypatch, capsys):
     simular_entradas(monkeypatch, "0")
     fronteira.menu()
-    assert "3 - Ver Termos de Uso e Política de Privacidade" in \
+    assert "2 - Ver Termos de Uso e Política de Privacidade" in \
         capsys.readouterr().out
 
 
-def test_opcao_3_do_menu_deve_exibir_os_dois_textos(
+def test_opcao_2_do_menu_deve_exibir_os_dois_textos(
         fronteira, monkeypatch, capsys):
-    simular_entradas(monkeypatch, "3", "0")
+    simular_entradas(monkeypatch, "2", "0")
     fronteira.menu()
     saida = capsys.readouterr().out
     assert TERMOS_DE_USO in saida
@@ -80,4 +79,4 @@ def test_cadastro_deve_exibir_o_resumo_antes_de_perguntar_o_aceite(
     fronteira.cadastrar_usuario()
 
     assert RESUMO_ANTES_DO_ACEITE in exibido_antes_do_aceite["texto"]
-    assert "opção 3 do menu" in RESUMO_ANTES_DO_ACEITE
+    assert "opção 2 do menu" in RESUMO_ANTES_DO_ACEITE
