@@ -1,5 +1,6 @@
 """O programa encerra com uma mensagem, e não com traceback, quando o
 terminal fecha a entrada (Ctrl+D) ou o usuário interrompe (Ctrl+C)."""
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -9,10 +10,12 @@ MAIN = RAIZ / "src" / "main.py"
 
 
 def executar(entrada: str, tmp_path):
+    env = os.environ.copy()
+    env["PYTHONPATH"] = str(RAIZ / "src")
     return subprocess.run(
         [sys.executable, str(MAIN)], input=entrada, text=True,
         capture_output=True, cwd=tmp_path, timeout=30,
-        env={"PYTHONPATH": str(RAIZ / "src"), "PATH": ""},
+        env=env,
     )
 
 
