@@ -2,7 +2,9 @@
 
 ## Gerenciamento de usuários
 
-![Diagrama de casos de uso do gerenciamento de usuários](../diagramas/casos-de-uso-usuarios.png)
+![Diagrama de casos de uso do Audita](../diagramas/casos-de-uso.png)
+
+O diagrama traz todos os casos de uso do sistema ([lista completa](casos-de-uso-completo.md)). Os casos de uso do gerenciamento de usuários são Cadastrar usuário, Fazer login, Selecionar perfil de acesso e Aceitar Termos de Uso, descritos abaixo.
 
 ### Atores
 

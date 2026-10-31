@@ -16,7 +16,7 @@ Casos de uso relacionados: [UC01](../04-casos-de-uso/uc01-cadastrar-usuario.md),
 ===== CONFIGURAÇÃO DE PERSISTÊNCIA =====
 1 - Banco de dados (SQLite)
 2 - Em memória
-Escolha uma opção: > 1
+Escolha o mecanismo de armazenamento: > 1
 Usando: Banco de dados (SQLite)
 
 ===== GERENCIAMENTO DE USUÁRIOS =====

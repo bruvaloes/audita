@@ -1,6 +1,6 @@
 # Casos de uso do sistema (completo)
 
-Diagrama editável: [`casos-de-uso-completo.drawio`](casos-de-uso-completo.drawio) (abra no [diagrams.net](https://app.diagrams.net) ou na extensão Draw.io do VS Code).
+![Diagrama de casos de uso completo do Audita](../diagramas/casos-de-uso.png)
 
 Os atores e as especializações seguem o [diagrama de usuários](README.md): Gestor, Fiscal e Funcionário são especializações de Usuário, então herdam os casos de uso dele.
 
