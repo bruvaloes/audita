@@ -79,6 +79,16 @@ class ContratoComEvidenciasError(ValidacaoError):
         super().__init__(mensagem)
 
 
+class ContratoJaEncerradoError(ValidacaoError):
+    def __init__(self):
+        super().__init__("Contrato já está encerrado")
+
+
+class SituacaoInvalidaError(ValidacaoError):
+    def __init__(self, valores_aceitos: str):
+        super().__init__(f"Situação: use um destes valores: {valores_aceitos}")
+
+
 class ContratoNaoEncontradoError(ValidacaoError):
     def __init__(self, mensagem: str = "Contrato não encontrado"):
         super().__init__(mensagem)

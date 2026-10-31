@@ -5,16 +5,15 @@ Padroniza:
 - Formato de data e horário: dd/mm/aaaa hh:mm (fuso horário de Brasília - America/Sao_Paulo)
 - Leitura e parsing de datas em vigências e consultas
 """
-from datetime import date, datetime
-from zoneinfo import ZoneInfo
+from datetime import date, datetime, timedelta, timezone
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from excecao.validacao_error import DataInvalidaError
 
 try:
-    from zoneinfo import ZoneInfo
     FUSO_BRASILIA = ZoneInfo("America/Sao_Paulo")
-except Exception:
-    from datetime import timezone, timedelta
+except ZoneInfoNotFoundError:
+    # Sem a base de fusos (ex.: Windows sem o pacote tzdata): Brasília é UTC-3.
     FUSO_BRASILIA = timezone(timedelta(hours=-3), name="BRT")
 FORMATO_DATA = "%d/%m/%Y"
 FORMATO_DATA_HORA = "%d/%m/%Y %H:%M"

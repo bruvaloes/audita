@@ -9,6 +9,7 @@ import pytest
 
 from entidade.perfil import Perfil
 from entidade.usuario import Usuario
+from excecao.persistencia_error import EscritaPersistenciaError
 from persistencia.usuario_repositorio import UsuarioRepositorio
 from persistencia.usuario_repositorio_memoria import UsuarioRepositorioMemoria
 from persistencia.usuario_repositorio_sqlite import UsuarioRepositorioSQLite
@@ -66,3 +67,35 @@ def test_deve_preservar_a_data_do_aceite_dos_termos(repositorio_implementacao):
     usuario.aceite_termos_em = momento
     repositorio_implementacao.salvar(usuario)
     assert repositorio_implementacao.listar_todos()[0].aceite_termos_em == momento
+
+
+@pytest.mark.parametrize("login_buscado", ["maria", "MARIA", "Maria"])
+def test_deve_buscar_por_login_sem_diferenciar_maiusculas(
+        repositorio_implementacao, login_buscado):
+    salvo = repositorio_implementacao.salvar(novo_usuario(login="Maria"))
+
+    assert repositorio_implementacao.buscar_por_login(login_buscado) == salvo
+
+
+def test_deve_buscar_por_login_com_letra_acentuada_sem_diferenciar_maiusculas(
+        repositorio_implementacao):
+    salvo = repositorio_implementacao.salvar(novo_usuario(login="José"))
+
+    assert repositorio_implementacao.buscar_por_login("JOSÉ") == salvo
+
+
+@pytest.mark.parametrize("repetido", [
+    {"cpf": "12345678900"},
+    {"email": "maria@email.com"},
+    {"login": "maria"},
+], ids=["cpf", "email", "login"])
+def test_deve_recusar_cpf_email_ou_login_repetido(
+        repositorio_implementacao, repetido):
+    repositorio_implementacao.salvar(novo_usuario())
+    outro = {"cpf": "98765432100", "email": "joao@email.com", "login": "joao"}
+    outro.update(repetido)
+
+    with pytest.raises(EscritaPersistenciaError):
+        repositorio_implementacao.salvar(novo_usuario(**outro))
+
+    assert len(repositorio_implementacao.listar_todos()) == 1

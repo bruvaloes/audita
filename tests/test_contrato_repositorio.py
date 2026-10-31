@@ -101,6 +101,17 @@ def test_remover_inexistente_nao_lanca_erro(repositorio_implementacao):
     repositorio_implementacao.remover("CT-INEXISTENTE")
 
 
+def test_numero_duplicado_deve_ser_recusado_e_manter_o_contrato_original(
+        repositorio_implementacao):
+    repositorio_implementacao.salvar(novo_contrato("CT-1", "Empresa Original"))
+
+    with pytest.raises(EscritaPersistenciaError):
+        repositorio_implementacao.salvar(novo_contrato("CT-1", "Outra Empresa"))
+
+    contratos = repositorio_implementacao.listar()
+    assert [c.empresa_contratada for c in contratos] == ["Empresa Original"]
+
+
 # Testes específicos de persistência e exceções para SQLite
 def test_salvar_numero_duplicado_lanca_escrita_persistencia_error(tmp_path):
     repo = ContratoRepositorioSQLite(str(tmp_path / "teste.db"))

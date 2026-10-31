@@ -1,8 +1,8 @@
 """Fronteira CLI para gerenciamento de contratos (RF 04 a RF 08)."""
 from functools import wraps
 from typing import TYPE_CHECKING
-from controle.contrato_controller import ContratoController
 from controle.dados_cadastro_contrato import DadosCadastroContrato
+from controle.contrato_controller import ITENS_POR_PAGINA
 from controle.sessao import Sessao
 from controle.utils.datas import formatar_data
 from entidade.usuario import Usuario
@@ -30,7 +30,7 @@ def _mostrando_acesso_negado(acao):
 class ContratoFronteira:
     """Interface de usuário no terminal para operações de contrato."""
 
-    def __init__(self, controller: "FacadeSingletonController | ContratoController", sessao: Sessao):
+    def __init__(self, controller: "FacadeSingletonController", sessao: Sessao):
         self._controller = controller
         self._sessao = sessao
 
@@ -58,7 +58,7 @@ class ContratoFronteira:
         )
 
         try:
-            contrato = self._controller.adicionar(
+            contrato = self._controller.adicionar_contrato(
                 self._solicitante,
                 dados
             )
@@ -81,13 +81,16 @@ class ContratoFronteira:
         pagina = 1
         while True:
             try:
-                resultado = self._controller.listar(
+                resultado = self._controller.listar_contratos(
                     self._solicitante,
                     busca=busca,
                     situacao=situacao,
                     pagina=pagina,
-                    por_pagina=20,
+                    por_pagina=ITENS_POR_PAGINA,
                 )
+            except ValidacaoError as erro:
+                print(f"\nErro ao listar contratos: {erro}")
+                return
             except PersistenciaError as erro:
                 print(f"\nErro de armazenamento: {erro}")
                 return
@@ -96,7 +99,9 @@ class ContratoFronteira:
                 print("\nNenhum contrato encontrado.")
                 return
 
-            self._exibir_tabela(resultado.itens, resultado.pagina_atual, resultado.total_paginas, resultado.total_itens)
+            self._exibir_tabela(
+                resultado.itens, resultado.pagina_atual,
+                resultado.total_paginas, resultado.total_itens)
 
             if resultado.total_paginas <= 1:
                 break
@@ -118,7 +123,7 @@ class ContratoFronteira:
     def editar_contrato(self) -> None:
         print("\n--- Edição de Contrato ---")
         numero_atual = input("Número do contrato que deseja editar: ").strip()
-        contrato = self._controller.buscar_por_numero(self._solicitante, numero_atual)
+        contrato = self._controller.buscar_contrato_por_numero(self._solicitante, numero_atual)
         if not contrato:
             print(f"\nContrato '{numero_atual}' não encontrado.")
             return
@@ -153,7 +158,7 @@ class ContratoFronteira:
         )
 
         try:
-            atualizado = self._controller.atualizar(
+            atualizado = self._controller.atualizar_contrato(
                 self._solicitante,
                 numero_atual,
                 dados
@@ -169,7 +174,7 @@ class ContratoFronteira:
     def encerrar_contrato(self) -> None:
         print("\n--- Encerramento de Contrato ---")
         numero = input("Número do contrato a encerrar: ").strip()
-        contrato = self._controller.buscar_por_numero(self._solicitante, numero)
+        contrato = self._controller.buscar_contrato_por_numero(self._solicitante, numero)
         if not contrato:
             print(f"\nContrato '{numero}' não encontrado.")
             return
@@ -180,7 +185,7 @@ class ContratoFronteira:
             return
 
         try:
-            encerrado = self._controller.encerrar(
+            encerrado = self._controller.encerrar_contrato(
                 self._solicitante,
                 numero
             )
@@ -195,18 +200,19 @@ class ContratoFronteira:
     def remover_contrato(self) -> None:
         print("\n--- Remoção de Contrato ---")
         numero = input("Número do contrato que deseja remover: ").strip()
-        contrato = self._controller.buscar_por_numero(self._solicitante, numero)
+        contrato = self._controller.buscar_contrato_por_numero(self._solicitante, numero)
         if not contrato:
             print(f"\nContrato '{numero}' não encontrado.")
             return
 
         confirmacao = input(
-            f"Atenção: deseja realmente remover o contrato {numero}? Esta ação não pode ser desfeita (s/n): "
+            f"Atenção: deseja realmente remover o contrato {numero}? "
+            "Esta ação não pode ser desfeita (s/n): "
         ).strip().lower()
         confirmado = confirmacao in ("s", "sim")
 
         try:
-            removido = self._controller.remover(
+            removido = self._controller.remover_contrato(
                 self._solicitante,
                 numero,
                 confirmado=confirmado
@@ -230,7 +236,7 @@ class ContratoFronteira:
             return
 
         try:
-            self._controller.vincular(
+            self._controller.vincular_usuario_contrato(
                 self._solicitante,
                 numero,
                 int(id_str)
@@ -251,7 +257,7 @@ class ContratoFronteira:
             return
 
         try:
-            self._controller.desvincular(
+            self._controller.desvincular_usuario_contrato(
                 self._solicitante,
                 numero,
                 int(id_str)
@@ -275,5 +281,6 @@ class ContratoFronteira:
             inicio = formatar_data(c.vigencia_inicio)
             fim = formatar_data(c.vigencia_fim)
             vigencia = f"{inicio} até {fim}"
-            print(f"{c.numero:<18} {c.empresa_contratada[:26]:<28} {vigencia:<25} {c.situacao.value:<10}")
+            print(f"{c.numero:<18} {c.empresa_contratada[:26]:<28} "
+                  f"{vigencia:<25} {c.situacao.value:<10}")
         print(f"\nTotal: {total_itens} contrato(s) | Página {pagina_atual} de {total_paginas}")

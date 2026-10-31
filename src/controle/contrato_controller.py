@@ -8,16 +8,17 @@ from controle.acesso.operacao import Operacao
 from controle.dados_cadastro_contrato import DadosCadastroContrato
 from controle.utils.datas import formatar_data
 from controle.validacao.validador_cadastro_contrato import ValidadorCadastroContrato
-from controle.validacao.validador_vigencia import ValidadorVigencia
 from entidade.contrato import Contrato
 from entidade.perfil import Perfil
 from entidade.situacao_contrato import SituacaoContrato
 from entidade.usuario import Usuario
 from excecao.validacao_error import (
+    ContratoJaEncerradoError,
     ContratoComEvidenciasError,
     ContratoNaoEncontradoError,
     ContratoNumeroJaCadastradoError,
     PerfilNaoVinculavelError,
+    SituacaoInvalidaError,
     UltimoFiscalError,
     ValidacaoError,
 )
@@ -27,6 +28,9 @@ from log.registro_log import RegistroLog
 from persistencia.contrato_repositorio import ContratoRepositorio
 from persistencia.evidencia_repositorio import EvidenciaRepositorio
 from persistencia.usuario_repositorio import UsuarioRepositorio
+
+
+ITENS_POR_PAGINA = 20  # RN05.4
 
 
 @dataclass
@@ -106,10 +110,11 @@ class ContratoController:
         busca: str | None = None,
         situacao: str | SituacaoContrato | None = None,
         pagina: int = 1,
-        por_pagina: int = 20,
+        por_pagina: int = ITENS_POR_PAGINA,
         id_usuario: int | None = None,
     ) -> ResultadoPaginado:
-        """Lista contratos com ordenação, busca, filtro por situação, perfil e paginação (RF 05 e RF 08)."""
+        """Lista contratos com ordenação, busca, filtro por situação, perfil e
+        paginação (RF 05 e RF 08)."""
         self._controle_acesso.verificar(solicitante, Operacao.LISTAR_CONTRATOS)
         contratos = self._repositorio.listar()
 
@@ -131,7 +136,7 @@ class ContratoController:
         # RN05.3: Filtro por situação (ATIVO, ENCERRADO ou todos)
         if situacao:
             if isinstance(situacao, str) and situacao.strip().upper() != "TODOS":
-                situacao_enum = SituacaoContrato.de_texto(situacao)
+                situacao_enum = self._situacao_do_texto(situacao)
                 contratos = [c for c in contratos if c.situacao == situacao_enum]
             elif isinstance(situacao, SituacaoContrato):
                 contratos = [c for c in contratos if c.situacao == situacao]
@@ -197,7 +202,7 @@ class ContratoController:
 
         if nova_situacao is not None:
             if isinstance(nova_situacao, str):
-                contrato.situacao = SituacaoContrato.de_texto(nova_situacao)
+                contrato.situacao = self._situacao_do_texto(nova_situacao)
             else:
                 contrato.situacao = nova_situacao
 
@@ -223,7 +228,8 @@ class ContratoController:
                     usuario=solicitante.login,
                     operacao=OperacaoLog.EDICAO,
                     data_hora=self._relogio(),
-                    detalhes=f"Contrato {numero_atual} alterado: anterior={{{anterior}}} | novo={{{novo}}}",
+                    detalhes=(f"Contrato {numero_atual} alterado: "
+                              f"anterior={{{anterior}}} | novo={{{novo}}}"),
                 )
             )
 
@@ -239,6 +245,8 @@ class ContratoController:
         contrato = self._repositorio.buscar_por_numero(numero)
         if not contrato:
             raise ContratoNaoEncontradoError(f"Contrato '{numero}' não encontrado")
+        if contrato.situacao == SituacaoContrato.ENCERRADO:
+            raise ContratoJaEncerradoError()
 
         dados = DadosCadastroContrato(
             numero=contrato.numero,
@@ -253,6 +261,10 @@ class ContratoController:
             dados,
             nova_situacao=SituacaoContrato.ENCERRADO,
         )
+
+    def contar(self) -> int:
+        """Quantidade de contratos cadastrados (contagem agregada)."""
+        return len(self._repositorio.listar())
 
     def validar_recebimento_evidencia(self, numero: str) -> None:
         """Verifica se o contrato pode receber evidências (RN06.2)."""
@@ -337,7 +349,8 @@ class ContratoController:
         numero: str,
         id_usuario: int,
     ) -> None:
-        """Desvincula um usuário de um contrato, respeitando o mínimo de 1 fiscal em contratos ativos (RF 08)."""
+        """Desvincula um usuário de um contrato, respeitando o mínimo de 1 fiscal
+        em contratos ativos (RF 08)."""
         self._controle_acesso.verificar(
             solicitante, Operacao.VINCULAR_USUARIO_CONTRATO)
         contrato = self._repositorio.buscar_por_numero(numero)
@@ -390,3 +403,10 @@ class ContratoController:
                     detalhes=f"Usuário {id_usuario} {acao} contrato {numero}",
                 )
             )
+
+    @staticmethod
+    def _situacao_do_texto(texto: str) -> SituacaoContrato:
+        try:
+            return SituacaoContrato.de_texto(texto)
+        except ValueError:
+            raise SituacaoInvalidaError(SituacaoContrato.valores_validos())

@@ -21,9 +21,10 @@ class ValidadorArquivoContrato:
                 "Arquivo inválido. Formato e tamanho aceitos: PDF ou DOCX com até 30 MB"
             )
 
-        if os.path.exists(caminho):
-            tamanho = os.path.getsize(caminho)
-            if tamanho > TAMANHO_MAXIMO_BYTES:
-                raise ArquivoInvalidoError(
-                    "Arquivo excede 30 MB. Formato e tamanho aceitos: PDF ou DOCX com até 30 MB"
-                )
+        if not os.path.isfile(caminho):
+            raise ArquivoInvalidoError(f"Arquivo não encontrado: {caminho}")
+
+        if os.path.getsize(caminho) > TAMANHO_MAXIMO_BYTES:
+            raise ArquivoInvalidoError(
+                "Arquivo excede 30 MB. Formato e tamanho aceitos: PDF ou DOCX com até 30 MB"
+            )

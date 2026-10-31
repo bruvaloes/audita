@@ -152,3 +152,41 @@ def test_todos_os_erros_de_cadastro_herdam_de_validacao_error():
     for erro in (CampoObrigatorioError, CpfInvalidoError, EmailInvalidoError,
                  PerfilInvalidoError, UsuarioDuplicadoError):
         assert issubclass(erro, ValidacaoError)
+
+
+def test_email_gravado_em_minusculas(controller, dados_validos):
+    usuario = controller.adicionar(
+        replace(dados_validos, email="  Maria@Email.COM "))
+
+    assert usuario.email == "maria@email.com"
+
+
+def test_email_duplicado_com_maiusculas_diferentes(controller, dados_validos):
+    controller.adicionar(dados_validos)
+    outro = replace(dados_validos, cpf="11144477735",
+                    email="Maria@Email.com", login="outro")
+
+    with pytest.raises(UsuarioDuplicadoError) as erro:
+        controller.adicionar(outro)
+
+    assert str(erro.value) == "E-mail já cadastrado"
+
+
+def test_login_duplicado_com_maiusculas_diferentes(controller, dados_validos):
+    controller.adicionar(dados_validos)
+    outro = replace(dados_validos, cpf="11144477735",
+                    email="outro@email.com", login="MARIA")
+
+    with pytest.raises(UsuarioDuplicadoError) as erro:
+        controller.adicionar(outro)
+
+    assert str(erro.value) == "Login já cadastrado"
+
+
+def test_contar_deve_devolver_a_quantidade_de_usuarios(
+        controller, dados_validos):
+    assert controller.contar() == 0
+
+    controller.adicionar(dados_validos)
+
+    assert controller.contar() == 1

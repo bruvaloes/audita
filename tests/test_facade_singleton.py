@@ -331,17 +331,8 @@ def test_contar_entidades_soma_usuarios_contratos_e_evidencias(
     mock_contrato_controller,
     mock_evidencia_repositorio,
 ):
-    mock_usuario_controller.listar_todos.return_value = [
-        MagicMock(spec=Usuario),
-        MagicMock(spec=Usuario),
-        MagicMock(spec=Usuario),
-    ]  # 3 usuários
-    mock_contrato_controller.listar.return_value = ResultadoPaginado(
-        itens=[],
-        pagina_atual=1,
-        total_paginas=1,
-        total_itens=4,
-    )  # 4 contratos
+    mock_usuario_controller.contar.return_value = 3
+    mock_contrato_controller.contar.return_value = 4
     mock_evidencia_repositorio.listar.return_value = [
         MagicMock(),
         MagicMock(),
@@ -365,13 +356,8 @@ def test_contar_entidades_sem_evidencia_repositorio_retorna_soma(
     mock_usuario_controller,
     mock_contrato_controller,
 ):
-    mock_usuario_controller.listar_todos.return_value = [MagicMock()]
-    mock_contrato_controller.listar.return_value = ResultadoPaginado(
-        itens=[],
-        pagina_atual=1,
-        total_paginas=1,
-        total_itens=2,
-    )
+    mock_usuario_controller.contar.return_value = 1
+    mock_contrato_controller.contar.return_value = 2
     fachada = FacadeSingletonController(
         usuario_controller=mock_usuario_controller,
         contrato_controller=mock_contrato_controller,

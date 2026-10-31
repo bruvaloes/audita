@@ -13,7 +13,11 @@ from controle.acesso.controle_acesso import ControleAcesso
 from controle.contrato_controller import ContratoController
 from controle.dados_cadastro_contrato import DadosCadastroContrato
 from entidade.situacao_contrato import SituacaoContrato
-from excecao.validacao_error import ContratoNumeroJaCadastradoError, ValidacaoError
+from excecao.validacao_error import (
+    ContratoJaEncerradoError,
+    ContratoNumeroJaCadastradoError,
+    ValidacaoError,
+)
 from log.log_auditoria_memoria import LogAuditoriaMemoria
 from log.operacao_log import OperacaoLog
 from persistencia.contrato_repositorio_memoria import ContratoRepositorioMemoria
@@ -129,3 +133,18 @@ def test_c3_encerramento_impede_novas_evidencias(controller, gestor):
         controller.validar_recebimento_evidencia("CT-2026-001")
 
     assert "encerrado" in str(exc_info.value).lower()
+
+
+def test_encerrar_contrato_ja_encerrado_deve_ser_recusado_sem_novo_registro_no_log(
+        controller, gestor, log):
+    controller.adicionar(gestor, DadosCadastroContrato(
+        numero="CT-1", empresa_contratada="Empresa Alpha",
+        vigencia_inicio="01/01/2026", vigencia_fim="31/12/2026"))
+    controller.encerrar(gestor, "CT-1")
+    registros_antes = len(log.listar())
+
+    with pytest.raises(ContratoJaEncerradoError) as erro:
+        controller.encerrar(gestor, "CT-1")
+
+    assert str(erro.value) == "Contrato já está encerrado"
+    assert len(log.listar()) == registros_antes

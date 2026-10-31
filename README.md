@@ -132,7 +132,7 @@ A opção **3 - Entrar (login)** do menu pede o identificador, a senha e o perfi
 
 | Regra | Comportamento |
 |-------|---------------|
-| RN02.1 | O identificador é o login, o CPF (**só números**, sem pontuação) ou o e-mail (qualquer texto com `@`). A senha é sempre exigida e conferida pelo hash. |
+| RN02.1 | O identificador é o login, o CPF (com ou sem pontuação) ou o e-mail (qualquer texto com `@`, sem diferenciar maiúsculas de minúsculas). A senha é sempre exigida e conferida pelo hash. |
 | RN02.2 | O perfil informado deve ser o do cadastro. |
 | RN02.3 | Qualquer falha mostra apenas `Credenciais inválidas` (`CredenciaisInvalidasError`), sem revelar o motivo. |
 | RN02.6 | Usuário inativo não autentica. |

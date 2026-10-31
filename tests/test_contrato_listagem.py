@@ -155,3 +155,24 @@ def test_c4_busca_sem_resultado(controller, repo, gestor):
     assert len(resultado.itens) == 0
     assert resultado.total_itens == 0
     assert resultado.total_paginas == 0
+
+
+def test_c5_situacao_invalida_deve_levantar_erro_de_validacao(controller, gestor):
+    from excecao.validacao_error import SituacaoInvalidaError, ValidacaoError
+
+    with pytest.raises(SituacaoInvalidaError) as erro:
+        controller.listar(gestor, situacao="XYZ")
+
+    assert isinstance(erro.value, ValidacaoError)
+    assert str(erro.value) == "Situação: use um destes valores: ATIVO, ENCERRADO"
+
+
+def test_contar_deve_devolver_a_quantidade_de_contratos(controller, gestor):
+    assert controller.contar() == 0
+
+    for numero in ("CT-1", "CT-2", "CT-3"):
+        controller.adicionar(gestor, DadosCadastroContrato(
+            numero=numero, empresa_contratada="Empresa",
+            vigencia_inicio="01/01/2026", vigencia_fim="31/12/2026"))
+
+    assert controller.contar() == 3

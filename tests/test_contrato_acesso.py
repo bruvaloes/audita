@@ -7,6 +7,7 @@ import pytest
 from controle.acesso.controle_acesso import ControleAcesso
 from controle.acesso.operacao import Operacao
 from controle.contrato_controller import ContratoController
+from controle.facade_singleton_controller import FacadeSingletonController
 from controle.dados_cadastro_contrato import DadosCadastroContrato
 from entidade.perfil import Perfil
 from entidade.usuario import Usuario
@@ -96,8 +97,16 @@ def test_log_deve_registrar_o_login_de_quem_cadastrou(
 
 # --- Fronteira: o painel só oferece contratos a quem tem permissão ----------
 
+@pytest.fixture(autouse=True)
+def limpar_singleton():
+    FacadeSingletonController.resetar_instancia()
+    yield
+    FacadeSingletonController.resetar_instancia()
+
+
 def _painel_com_contratos(controller, sessao):
-    fronteira = ContratoFronteira(controller, sessao)
+    fronteira = ContratoFronteira(
+        FacadeSingletonController(contrato_controller=controller), sessao)
     painel = PainelFronteira(sessao, ControleAcesso())
     painel.registrar(AcaoDoPainel(
         Operacao.CADASTRAR_CONTRATO, "Cadastrar contrato",
