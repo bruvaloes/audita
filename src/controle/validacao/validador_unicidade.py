@@ -27,5 +27,9 @@ class ValidadorUnicidade(Validador):
         return cls("CPF", consulta.buscar_por_cpf)
 
     @classmethod
+    def para_login(cls, consulta: ConsultaUsuarios) -> "ValidadorUnicidade":
+        return cls("Login", consulta.buscar_por_login)
+
+    @classmethod
     def para_email(cls, consulta: ConsultaUsuarios) -> "ValidadorUnicidade":
-        return cls("e-mail", consulta.buscar_por_email)
+        return cls("E-mail", consulta.buscar_por_email)

@@ -9,4 +9,6 @@ class DadosCadastroUsuario:
     email: str
     login: str
     senha: str
+    confirmacao_senha: str
     perfil: str
+    aceite_termos: str

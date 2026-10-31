@@ -51,7 +51,7 @@ def test_erros_de_login_herdam_de_login_invalido_error(
 
 
 def test_nao_deve_salvar_usuario_quando_login_invalido(
-        controller, dados_validos):
+        controller, dados_validos, repositorio):
     with pytest.raises(LoginInvalidoError):
         adicionar_com_login(controller, dados_validos, "maria1")
-    assert controller.listar_todos() == []
+    assert repositorio.listar_todos() == []

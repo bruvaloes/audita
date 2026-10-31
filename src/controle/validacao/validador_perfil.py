@@ -9,4 +9,4 @@ class ValidadorPerfil(Validador):
         try:
             Perfil.de_texto(valor)
         except ValueError:
-            raise PerfilInvalidoError(valor, Perfil.nomes_validos())
+            raise PerfilInvalidoError(Perfil.nomes_validos())

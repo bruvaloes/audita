@@ -1,5 +1,7 @@
 from dataclasses import dataclass
+from datetime import datetime
 
+from entidade.cpf import mascarar_cpf
 from entidade.perfil import Perfil
 
 
@@ -10,9 +12,10 @@ class Usuario:
     cpf: str
     email: str
     login: str
-    senha: str
+    senha_hash: str
     perfil: Perfil
     ativo: bool = True
+    aceite_termos_em: datetime | None = None
 
     @property
     def situacao(self) -> str:
@@ -23,7 +26,8 @@ class Usuario:
         Representação geral do Usuário, sem printar a senha por questões
         de segurança.
         """
-        return (f"Usuario(id={self.id}, nome='{self.nome}', cpf='{self.cpf}', "
+        return (f"Usuario(id={self.id}, nome='{self.nome}', "
+                f"cpf='{mascarar_cpf(self.cpf)}', "
                 f"email='{self.email}', login='{self.login}', "
                 f"perfil={self.perfil.name}, ativo={self.ativo})")
 
