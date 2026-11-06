@@ -175,7 +175,7 @@ Renumerar um contrato com evidências é recusado, porque as evidências apontam
 
 ## Fachada e log de auditoria
 
-- **Fachada.** `FacadeSingletonController` (Facade + Singleton) é o ponto único de acesso das telas aos controllers de autenticação, de usuários e de contratos. Ela também informa a quantidade de entidades cadastradas (`contar_entidades()` e `contar_entidades_detalhado()`), uma consulta pública que não traz dados pessoais. Veja o [ADR 0002](docs/adr/0002-fachada-unica.md).
+- **Fachada.** `FacadeSingletonController` (Facade + Singleton) é o ponto único de acesso das telas aos controllers de autenticação, de usuários e de contratos. Ela também informa a quantidade de entidades cadastradas (`contar_entidades()` e `contar_entidades_detalhado()`), uma consulta pública que não traz dados pessoais, disponível na opção **4** do menu. Veja o [ADR 0002](docs/adr/0002-fachada-unica.md).
 - **Log de auditoria.** O cadastro de usuário e o cadastro, a edição, a remoção e os vínculos de contrato geram um registro com usuário, operação, data e hora e detalhes. A interface `LogAuditoria` só permite registrar e consultar, e o `LogAuditoriaAdapter` isola a biblioteca `logging`. No SQLite os registros ficam em `auditoria.log`.
 
 ## Persistência
@@ -197,6 +197,7 @@ Cada entidade tem uma interface de repositório, dividida em consulta e persist�
 - [Visão](docs/01-visao.md), [glossário](docs/02-glossario.md) e [elicitação](docs/03-elicitacao.md)
 - [Casos de uso](docs/04-casos-de-uso/README.md) e [casos de uso do sistema](docs/04-casos-de-uso/casos-de-uso-completo.md)
 - [Análise](docs/05-analise.md), [interface](docs/06-interface/README.md), [arquitetura](docs/07-arquitetura/README.md) e [projeto](docs/08-projeto.md)
+- [Revisões de código](docs/09-revisoes-de-codigo.md)
 - Decisões de arquitetura: [ADR 0001](docs/adr/0001-persistencia-substituivel.md) e [ADR 0002](docs/adr/0002-fachada-unica.md)
 - Especificações em [`openspec/specs`](openspec/specs) (usuários, contratos e fachada)
 - [Board do projeto (GitHub Projects)](https://github.com/users/bruvaloes/projects/1)

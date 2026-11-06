@@ -4,7 +4,7 @@
 
 ![Diagrama de casos de uso do Audita](../diagramas/casos-de-uso.png)
 
-O diagrama traz todos os casos de uso do sistema ([lista completa](casos-de-uso-completo.md)). Os casos de uso do gerenciamento de usuários são Cadastrar usuário, Fazer login, Selecionar perfil de acesso e Aceitar Termos de Uso, descritos abaixo.
+O diagrama traz todos os casos de uso do sistema ([lista completa](casos-de-uso-completo.md)). Os casos de uso do gerenciamento de usuários são os descritos abaixo.
 
 ### Atores
 
@@ -15,9 +15,10 @@ O diagrama traz todos os casos de uso do sistema ([lista completa](casos-de-uso-
 
 | Caso de uso | Descrição | Relações |
 |-------------|-----------|----------|
-| Realizar Cadastro | O usuário cria a conta informando nome, CPF, e-mail, login, senha, confirmação da senha e perfil. As regras de login e senha estão em [`openspec/specs/usuarios`](../../openspec/specs/usuarios/spec.md). | `<<include>>` Selecionar Perfil de Acesso |
-| Selecionar Perfil de Acesso | O usuário escolhe um dos perfis (Funcionário, Fiscal ou Gestor). | Incluído pelo cadastro e pelo login |
-| Fazer Login | O usuário entra no sistema. | `<<include>>` Selecionar Perfil de Acesso |
-| Aceitar Termos de Uso | O usuário aceita os Termos de Uso e a Política de Privacidade. Só é exigido no primeiro acesso ao sistema. | `<<extend>>` Fazer Login |
-
-A listagem de usuários e a escolha do mecanismo de persistência são requisitos da spec de usuários e, nesta etapa, não têm caso de uso próprio no diagrama.
+| Cadastrar usuário | O usuário cria a conta informando nome, CPF, e-mail, login, senha, confirmação da senha e perfil. As regras de login e senha estão em [`openspec/specs/usuarios`](../../openspec/specs/usuarios/spec.md). | `<<include>>` Selecionar perfil de acesso e Aceitar Termos de Uso |
+| Selecionar perfil de acesso | O usuário escolhe um dos perfis (Funcionário, Fiscal ou Gestor). | Incluído pelo cadastro e pelo login |
+| Fazer login | O usuário entra no sistema. | `<<include>>` Selecionar perfil de acesso |
+| Aceitar Termos de Uso | O usuário aceita os Termos de Uso e a Política de Privacidade. O aceite é exigido no cadastro (RF 01). | Incluído pelo cadastro |
+| Listar usuários | O gestor vê os usuários cadastrados (RF 13). | |
+| Escolher mecanismo de armazenamento | Ao iniciar, o usuário escolhe entre SQLite e memória (RF 14). | |
+| Consultar quantidade de entidades | O usuário vê o total e a quantidade de cada tipo de entidade, sem precisar de login (RF 16). | |
