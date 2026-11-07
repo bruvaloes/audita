@@ -32,6 +32,7 @@ class UsuarioFronteira:
             "1": self.cadastrar_usuario,
             "2": self.exibir_termos,
             "3": autenticacao_fronteira.entrar,
+            "4": self.exibir_quantidade_entidades,
         }
 
     def menu(self) -> None:
@@ -85,11 +86,25 @@ class UsuarioFronteira:
     def exibir_termos(self) -> None:
         print(f"\n{TERMOS_DE_USO}\n\n{POLITICA_DE_PRIVACIDADE}")
 
+    def exibir_quantidade_entidades(self) -> None:
+        try:
+            quantidade = self._controller.contar_entidades_detalhado()
+        except PersistenciaError as erro:
+            print(f"\nErro de armazenamento: {erro}")
+            return
+
+        print("\n--- Entidades cadastradas ---")
+        print(f"Usuários: {quantidade['usuarios']}")
+        print(f"Contratos: {quantidade['contratos']}")
+        print(f"Evidências: {quantidade['evidencias']}")
+        print(f"Total: {quantidade['total']}")
+
     def _exibir_menu(self) -> None:
         print("\n===== GERENCIAMENTO DE USUÁRIOS =====")
         print("1 - Cadastrar usuário")
         print("2 - Ver Termos de Uso e Política de Privacidade")
         print("3 - Entrar (login)")
+        print("4 - Ver quantidade de entidades cadastradas")
         print("0 - Sair")
 
     def _ler_dados_cadastro(self) -> DadosCadastroUsuario:

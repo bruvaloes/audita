@@ -23,8 +23,15 @@ Usando: Banco de dados (SQLite)
 1 - Cadastrar usuário
 2 - Ver Termos de Uso e Política de Privacidade
 3 - Entrar (login)
+4 - Ver quantidade de entidades cadastradas
 0 - Sair
-Escolha uma opção: >
+Escolha uma opção: > 4
+
+--- Entidades cadastradas ---
+Usuários: 2
+Contratos: 1
+Evidências: 0
+Total: 3
 ```
 
 ## Tela 1 · Cadastro de usuário

@@ -33,3 +33,7 @@ A fachada SHALL informar a quantidade de entidades cadastradas: o total e a de c
 #### Scenario: Sem nenhum registro
 - **WHEN** não há nenhuma entidade cadastrada
 - **THEN** a fachada devolve 0 no total e em cada tipo
+
+#### Scenario: Consulta pelo menu principal
+- **WHEN** o usuário escolhe "Ver quantidade de entidades cadastradas" no menu principal, sem login
+- **THEN** o sistema exibe a quantidade de usuários, de contratos, de evidências e o total

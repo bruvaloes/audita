@@ -23,7 +23,7 @@ src/
 
 ![Diagrama de classes de projeto do gerenciamento de usuários](diagramas/classes-projeto-usuarios.png)
 
-O diagrama mostra as camadas, os validadores com as exceções que cada um lança, a hierarquia de exceções de validação e os dois mecanismos de persistência com as exceções de armazenamento.
+O diagrama mostra as camadas, os validadores com as exceções que cada um lança, a hierarquia de exceções de validação, os dois mecanismos de persistência com as exceções de armazenamento, e a autenticação com o controle de acesso.
 
 As duas partes que mais importam estão também abaixo, para leitura no GitHub.
 
@@ -48,15 +48,19 @@ classDiagram
     ValidacaoError <|-- ArquivoInvalidoError
     ValidacaoError <|-- PerfilNaoVinculavelError
     ValidacaoError <|-- UltimoFiscalError
+    ValidacaoError <|-- ContratoJaEncerradoError
+    ValidacaoError <|-- SituacaoInvalidaError
     Exception <|-- AcessoNegadoError
+    Exception <|-- CredenciaisInvalidasError
     ValidacaoError <|-- LoginInvalidoError
     ValidacaoError <|-- SenhaInvalidaError
     LoginInvalidoError <|-- LoginVazioError
     LoginInvalidoError <|-- LoginMuitoLongoError
     LoginInvalidoError <|-- LoginComNumerosError
-    SenhaInvalidaError <|-- SenhaMuitoCurtaError
-    SenhaInvalidaError <|-- SenhaMuitoLongaError
-    SenhaInvalidaError <|-- SenhaComPoucosTiposError
+    SenhaInvalidaError <|-- SenhaForaDaPoliticaError
+    SenhaForaDaPoliticaError <|-- SenhaMuitoCurtaError
+    SenhaForaDaPoliticaError <|-- SenhaMuitoLongaError
+    SenhaForaDaPoliticaError <|-- SenhaComPoucosTiposError
     SenhaInvalidaError <|-- SenhaIgualLoginError
     SenhaInvalidaError <|-- SenhasDiferentesError
     PersistenciaError <|-- ConexaoPersistenciaError
@@ -74,6 +78,7 @@ classDiagram
         <<interface>>
         +listar_todos() list
         +buscar_por_cpf(cpf) Usuario
+        +buscar_por_login(login) Usuario
         +buscar_por_email(email) Usuario
     }
     class PersistenciaUsuarios {
@@ -101,6 +106,13 @@ A mesma estrutura, em Mermaid, para leitura direta no GitHub:
 
 ```mermaid
 classDiagram
+    class Usuario {
+        <<Entity>>
+    }
+    class Evidencia {
+        <<Entity>>
+        numero_contrato
+    }
     class Contrato {
         <<Entity>>
         id
@@ -135,11 +147,13 @@ classDiagram
         <<Control>>
         +adicionar(solicitante, dados) Contrato
         +listar(solicitante, busca, situacao, pagina) ResultadoPaginado
-        +atualizar(solicitante, numero, dados) Contrato
+        +buscar_por_numero(solicitante, numero) Contrato
+        +atualizar(solicitante, numero_atual, dados, nova_situacao) Contrato
         +encerrar(solicitante, numero) Contrato
         +remover(solicitante, numero, confirmado) bool
         +vincular(solicitante, numero, id_usuario)
         +desvincular(solicitante, numero, id_usuario)
+        +contar() int
     }
     class ValidadorCadastroContrato {
         <<Control>>
@@ -166,8 +180,25 @@ classDiagram
     }
     class UsuarioController
     class AutenticacaoController
+    class ContratoFronteira
+    class UsuarioFronteira
+    class AutenticacaoFronteira
+    class EvidenciaRepositorio {
+        <<interface>>
+    }
+    class UsuarioRepositorio {
+        <<interface>>
+    }
 
     Contrato --> SituacaoContrato
+    Contrato --> "0..*" Usuario : usuarios_vinculados
+    Evidencia --> Contrato : numero_contrato
+    ContratoFronteira --> FacadeSingletonController
+    UsuarioFronteira --> FacadeSingletonController
+    AutenticacaoFronteira --> FacadeSingletonController
+    FacadeSingletonController --> EvidenciaRepositorio
+    ContratoController --> EvidenciaRepositorio
+    ContratoController --> UsuarioRepositorio
     ConsultaContratos <|-- ContratoRepositorio
     PersistenciaContratos <|-- ContratoRepositorio
     ContratoRepositorio <|.. ContratoRepositorioMemoria
