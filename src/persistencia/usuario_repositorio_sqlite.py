@@ -3,7 +3,7 @@ from datetime import datetime
 
 from entidade.usuario import Usuario
 from entidade.perfil import Perfil
-from persistencia.usuario_repositorio import UsuarioRepositorio
+from negocio.usuario_repositorio import UsuarioRepositorio
 from excecao.persistencia_error import (
     ConexaoPersistenciaError,
     EscritaPersistenciaError,

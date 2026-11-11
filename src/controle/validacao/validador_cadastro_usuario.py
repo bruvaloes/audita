@@ -20,7 +20,7 @@ from controle.validacao.validador_senha_diferente_do_login import (
     ValidadorSenhaDiferenteDoLogin,
 )
 from controle.validacao.validador_unicidade import ValidadorUnicidade
-from persistencia.usuario_repositorio import ConsultaUsuarios
+from negocio.usuario_repositorio import ConsultaUsuarios
 
 
 class ValidadorCadastroUsuario:

@@ -1,5 +1,5 @@
 from entidade.acesso import Acesso
-from persistencia.acesso_repositorio import AcessoRepositorio
+from negocio.acesso_repositorio import AcessoRepositorio
 
 
 class AcessoRepositorioMemoria(AcessoRepositorio):

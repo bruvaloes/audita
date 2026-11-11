@@ -1,6 +1,6 @@
 from entidade.contrato import Contrato
 from excecao.persistencia_error import EscritaPersistenciaError
-from persistencia.contrato_repositorio import ContratoRepositorio
+from negocio.contrato_repositorio import ContratoRepositorio
 
 
 class ContratoRepositorioMemoria(ContratoRepositorio):

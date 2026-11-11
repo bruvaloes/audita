@@ -5,7 +5,7 @@ from datetime import date
 
 from entidade.contrato import Contrato
 from entidade.situacao_contrato import SituacaoContrato
-from persistencia.contrato_repositorio import ContratoRepositorio
+from negocio.contrato_repositorio import ContratoRepositorio
 from excecao.persistencia_error import (
     ConexaoPersistenciaError,
     EscritaPersistenciaError,

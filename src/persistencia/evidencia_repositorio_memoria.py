@@ -1,6 +1,6 @@
 from entidade.evidencia import Evidencia
 from entidade.situacao_validacao import SituacaoValidacao
-from persistencia.evidencia_repositorio import EvidenciaRepositorio
+from negocio.evidencia_repositorio import EvidenciaRepositorio
 
 
 class EvidenciaRepositorioMemoria(EvidenciaRepositorio):

@@ -1,6 +1,6 @@
 from entidade.usuario import Usuario
 from excecao.persistencia_error import EscritaPersistenciaError
-from persistencia.usuario_repositorio import UsuarioRepositorio
+from negocio.usuario_repositorio import UsuarioRepositorio
 
 
 class UsuarioRepositorioMemoria(UsuarioRepositorio):
