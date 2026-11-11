@@ -230,7 +230,7 @@ Tabela preenchida a cada sprint, conforme os padrões entram no código.
 | DTO | `DadosCadastroUsuario` e `DadosCadastroContrato` | Levar os dados da fronteira ao controle |
 | Facade (GoF) | `FacadeSingletonController` | Ponto único de acesso da fronteira aos controllers |
 | Singleton (GoF) | `FacadeSingletonController` | Uma só instância da fachada em toda a aplicação |
-| Adapter (GoF) | `LogAuditoriaAdapter` | Isolar a biblioteca `logging` atrás da interface `LogAuditoria` |
+| Adapter (GoF) | `src/log/log_auditoria_adapter.py` (`LogAuditoriaAdapter`) | Isolar a biblioteca `logging` atrás da interface `LogAuditoria` |
 | Repository (GoF) | `src/negocio/usuario_repositorio.py`, `src/negocio/contrato_repositorio.py`, `src/negocio/evidencia_repositorio.py`, `src/negocio/acesso_repositorio.py` | Separar a regra de negócio do mecanismo de persistência; qualquer implementação (memória ou SQLite) é substituível sem alterar os controllers |
 | Factory Method (GoF) | `src/infraestrutura/repositorio_factory.py` (`RepositorioFactory`, `RepositorioFactoryMemoria`, `RepositorioFactorySQLite`); instanciado em `src/main.py` | Encapsular a criação da implementação concreta; a escolha do mecanismo (memória ou SQLite) não vaza para os controllers |
 | Template Method (GoF) | `src/controle/relatorio/relatorio_acessos.py` (`RelatorioAcessos`); subclasse `relatorio_acessos_pdf.py` | Definir o esqueleto da geração do relatório uma vez (`gerar`) e variar apenas a renderização (`_formatar`) por subclasse |
