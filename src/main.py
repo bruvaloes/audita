@@ -3,6 +3,8 @@ from controle.acesso.operacao import Operacao
 from controle.autenticacao_controller import AutenticacaoController
 from controle.contrato_controller import ContratoController
 from controle.facade_singleton_controller import FacadeSingletonController
+from controle.relatorio.relatorio_acessos_pdf import RelatorioAcessosPdf
+from controle.relatorio_controller import RelatorioController
 from controle.seguranca.hash_senha_argon2 import HashSenhaArgon2
 from controle.sessao import Sessao
 from controle.usuario_controller import UsuarioController
@@ -13,6 +15,7 @@ from excecao.persistencia_error import PersistenciaError
 from fronteira.autenticacao_fronteira import AutenticacaoFronteira
 from fronteira.contrato_fronteira import ContratoFronteira
 from fronteira.painel_fronteira import AcaoDoPainel, PainelFronteira
+from fronteira.relatorio_fronteira import RelatorioFronteira
 from fronteira.usuario_fronteira import UsuarioFronteira
 from log.log_auditoria import LogAuditoria
 from log.log_auditoria_adapter import LogAuditoriaAdapter
@@ -120,14 +123,20 @@ def main():
         usuario_repositorio=usuario_repo,
         log=log_auditoria,
     )
+    # O formato do relatório é escolhido aqui; outro formato é outra
+    # subclasse de RelatorioAcessos (Template Method).
+    relatorio_controller = RelatorioController(
+        RelatorioAcessosPdf(acesso_repo), controle_acesso)
     fachada = FacadeSingletonController(
         usuario_controller=controller_usuario,
         autenticacao_controller=autenticacao,
         contrato_controller=contrato_controller,
         evidencia_repositorio=evidencia_repo,
+        relatorio_controller=relatorio_controller,
     )
 
     contrato_fronteira = ContratoFronteira(fachada, sessao)
+    relatorio_fronteira = RelatorioFronteira(fachada, sessao)
     painel = PainelFronteira(sessao, controle_acesso)
 
     fronteira = UsuarioFronteira(
@@ -151,6 +160,8 @@ def main():
          contrato_fronteira.vincular_usuario),
         (Operacao.VINCULAR_USUARIO_CONTRATO, "Desvincular usuário de contrato",
          contrato_fronteira.desvincular_usuario),
+        (Operacao.GERAR_RELATORIO_ACESSOS, "Gerar relatório de acessos",
+         relatorio_fronteira.gerar_relatorio_acessos),
     ):
         painel.registrar(AcaoDoPainel(operacao, rotulo, acao))
     fronteira.menu()

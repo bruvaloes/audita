@@ -18,6 +18,9 @@ env/
 *.sqlite3
 *.db
 
+# Relatórios gerados pelo sistema
+relatorios/
+
 # Testes e cobertura
 .pytest_cache/
 .coverage
