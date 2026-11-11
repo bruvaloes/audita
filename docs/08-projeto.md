@@ -231,6 +231,7 @@ Tabela preenchida a cada sprint, conforme os padrões entram no código.
 | Facade (GoF) | `FacadeSingletonController` | Ponto único de acesso da fronteira aos controllers |
 | Singleton (GoF) | `FacadeSingletonController` | Uma só instância da fachada em toda a aplicação |
 | Adapter (GoF) | `LogAuditoriaAdapter` | Isolar a biblioteca `logging` atrás da interface `LogAuditoria` |
+| Repository (GoF) | `src/negocio/usuario_repositorio.py`, `src/negocio/contrato_repositorio.py`, `src/negocio/evidencia_repositorio.py`, `src/negocio/acesso_repositorio.py` | Separar a regra de negócio do mecanismo de persistência; qualquer implementação (memória ou SQLite) é substituível sem alterar os controllers |
 | Template Method (GoF) | `RelatorioAcessos` e `RelatorioAcessosPdf` | Fixar o passo a passo do relatório de acessos (coletar, calcular, formatar e salvar) e deixar cada formato numa subclasse |
 
 Os demais padrões GoF (Repository, Factory, Command e Memento) entram nesta tabela nas sprints em que forem implementados.
