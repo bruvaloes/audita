@@ -235,4 +235,4 @@ Tabela preenchida a cada sprint, conforme os padrões entram no código.
 | Factory Method (GoF) | `src/infraestrutura/repositorio_factory.py` (`RepositorioFactory`, `RepositorioFactoryMemoria`, `RepositorioFactorySQLite`); instanciado em `src/main.py` | Encapsular a criação da implementação concreta; a escolha do mecanismo (memória ou SQLite) não vaza para os controllers |
 | Template Method (GoF) | `src/controle/relatorio/relatorio_acessos.py` (`RelatorioAcessos`); subclasse `relatorio_acessos_pdf.py` | Definir o esqueleto da geração do relatório uma vez (`gerar`) e variar apenas a renderização (`_formatar`) por subclasse |
 
-Os demais padrões GoF (Repository, Factory, Command e Memento) entram nesta tabela nas sprints em que forem implementados.
+Os demais padrões GoF (Command e Memento) entram nesta tabela nas sprints em que forem implementados.
