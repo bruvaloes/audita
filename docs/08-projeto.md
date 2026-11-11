@@ -4,9 +4,10 @@
 
 ```
 src/
-├── fronteira/     # Telas de console (usuários, login, painel por perfil, contratos)
+├── fronteira/     # Telas de console (usuários, login, painel por perfil, contratos, relatórios)
 ├── controle/      # Regras de negócio
 │   ├── acesso/    # Controle de acesso por perfil
+│   ├── relatorio/ # Relatório de acessos (Template Method e formato PDF)
 │   ├── seguranca/ # Hash de senha
 │   ├── utils/     # Datas no padrão brasileiro
 │   └── validacao/ # Um validador por regra
@@ -230,5 +231,6 @@ Tabela preenchida a cada sprint, conforme os padrões entram no código.
 | Facade (GoF) | `FacadeSingletonController` | Ponto único de acesso da fronteira aos controllers |
 | Singleton (GoF) | `FacadeSingletonController` | Uma só instância da fachada em toda a aplicação |
 | Adapter (GoF) | `LogAuditoriaAdapter` | Isolar a biblioteca `logging` atrás da interface `LogAuditoria` |
+| Template Method (GoF) | `RelatorioAcessos` e `RelatorioAcessosPdf` | Fixar o passo a passo do relatório de acessos (coletar, calcular, formatar e salvar) e deixar cada formato numa subclasse |
 
-Os demais padrões GoF (Repository, Factory, Template Method, Command e Memento) entram nesta tabela nas sprints em que forem implementados.
+Os demais padrões GoF (Repository, Factory, Command e Memento) entram nesta tabela nas sprints em que forem implementados.

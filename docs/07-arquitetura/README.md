@@ -11,12 +11,15 @@ flowchart TB
         AF[AutenticacaoFronteira]
         CF[ContratoFronteira]
         PF[PainelFronteira]
+        RF[RelatorioFronteira]
     end
     subgraph Controle
         FA[FacadeSingletonController]
         UC[UsuarioController]
         AC[AutenticacaoController]
         CC[ContratoController]
+        RC[RelatorioController]
+        RA[RelatorioAcessos<br/>Template Method · PDF]
         CA[ControleAcesso]
         VA[Validadores]
     end
@@ -31,7 +34,9 @@ flowchart TB
     LOG[Log de auditoria<br/>Adapter sobre logging]
 
     Fronteira --> FA
-    FA --> UC & AC & CC
+    FA --> UC & AC & CC & RC
+    RC --> CA & RA
+    RA --> RI
     UC & CC --> VA
     UC & CC --> CA
     UC & AC & CC --> RI
@@ -44,7 +49,7 @@ flowchart TB
 | Camada | Responsabilidade | Pacote |
 |--------|------------------|--------|
 | Fronteira | Telas de console e painel por perfil | `fronteira/` |
-| Controle | Regras de negócio, validação, controle de acesso e a fachada | `controle/` |
+| Controle | Regras de negócio, validação, controle de acesso, relatórios e a fachada | `controle/` |
 | Entidade | Dados do domínio | `entidade/` |
 | Persistência | Repositórios (interface, memória e SQLite) | `persistencia/` |
 | Exceção | Exceções de validação, de acesso e de persistência | `excecao/` |
@@ -62,6 +67,7 @@ flowchart LR
     T --> P[Processo Python<br/>src/main.py]
     P --> D[(usuarios.db<br/>contratos.db<br/>evidencias.db<br/>SQLite)]
     P --> L[/auditoria.log/]
+    P --> R[/relatorios/*.pdf/]
     P --> M[(Memória<br/>RAM)]
 ```
 
@@ -73,6 +79,7 @@ flowchart LR
 | `contratos.db` | Arquivo SQLite com os contratos e os vínculos (se o SQLite for escolhido) |
 | `evidencias.db` | Arquivo SQLite com as evidências (se o SQLite for escolhido) |
 | `auditoria.log` | Arquivo do log de auditoria (se o SQLite for escolhido) |
+| `relatorios/` | Relatórios de acessos em PDF, gerados pelo Gestor (com qualquer mecanismo) |
 | Memória | Mecanismo alternativo; os dados somem ao encerrar |
 
 A plataforma mobile e web do produto completo, e os serviços externos (IA, armazenamento em nuvem, notificações), não fazem parte desta etapa.
@@ -110,7 +117,7 @@ Numeração do documento de requisitos, por categoria.
 |-----------|-----------------|----------|
 | NF001 · Autenticação segura | Senha só como hash Argon2id (`HashSenhaArgon2`), com salt por senha; senha conferida mesmo quando o usuário não existe | Atendido |
 | NF002 · Comunicação criptografada | Não há tráfego de rede nesta etapa | Versão futura |
-| NF003 · Controle de acesso no servidor | `ControleAcesso` conferido nos controllers, com a matriz perfil × operação (`PERMISSOES_PADRAO`), e não só no menu; sem login, tudo é negado | Atendido |
+| NF003 · Controle de acesso no servidor | `ControleAcesso` conferido nos controllers (inclusive no `RelatorioController`), com a matriz perfil × operação (`PERMISSOES_PADRAO`), e não só no menu; sem login, tudo é negado | Atendido |
 | NF004 · Log de auditoria imutável | `LogAuditoria` só tem `registrar` e `listar`; `RegistroLog` é imutável (`frozen`); escrita com `flush` imediato; data e hora em dd/mm/aaaa hh:mm:ss | Atendido |
 
 ### Adequação a padrões
@@ -122,4 +129,4 @@ Numeração do documento de requisitos, por categoria.
 | NF003 · Informação ao titular | Termos de Uso e Política de Privacidade na opção 2 do menu, com resumo antes do aceite; o aceite é gravado com data e hora | Atendido |
 | NF004 · Direitos do titular | Fora do escopo desta etapa | Versão futura |
 | NF005 · Conservação dos registros de auditoria | Fora do escopo desta etapa | Versão futura |
-| NF006 · Formato de datas e horários | Módulo `utils/datas` com dd/mm/aaaa e hh:mm no fuso de Brasília | Atendido (listagem de contratos e relatório) |
+| NF006 · Formato de datas e horários | Módulo `utils/datas` com dd/mm/aaaa e hh:mm no fuso de Brasília, usado também no relatório de acessos em PDF | Atendido (listagem de contratos e relatório de acessos) |
