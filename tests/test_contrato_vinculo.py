@@ -1,4 +1,4 @@
-"""Testes de vínculo e desvínculo de usuários a contratos (RF 08).
+﻿"""Testes de vínculo e desvínculo de usuários a contratos (RF 08).
 
 Cobre os cenários de aceite C1 a C3 e regras RN08.1 a RN08.4:
 - C1: Vínculo válido (contrato ATIVO e funcionário ATIVO) -> contrato passa a aparecer para o funcionário
@@ -20,8 +20,8 @@ from excecao.validacao_error import (
     UltimoFiscalError,
     ValidacaoError,
 )
-from persistencia.contrato_repositorio_memoria import ContratoRepositorioMemoria
-from persistencia.usuario_repositorio_memoria import UsuarioRepositorioMemoria
+from infraestrutura.contrato_repositorio_memoria import ContratoRepositorioMemoria
+from infraestrutura.usuario_repositorio_memoria import UsuarioRepositorioMemoria
 
 
 @pytest.fixture
@@ -185,3 +185,4 @@ def test_rn08_3_usuario_em_mais_de_um_contrato(
     assert len(resultado.itens) == 2
     numeros = {c.numero for c in resultado.itens}
     assert numeros == {"CT-2026-001", "CT-2026-002"}
+

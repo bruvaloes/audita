@@ -1,4 +1,4 @@
-from datetime import datetime
+﻿from datetime import datetime
 
 import pytest
 
@@ -14,8 +14,8 @@ from controle.sessao import Sessao
 from entidade.perfil import Perfil
 from entidade.usuario import Usuario
 from fronteira.painel_fronteira import PainelFronteira
-from persistencia.acesso_repositorio_memoria import AcessoRepositorioMemoria
-from persistencia.usuario_repositorio_memoria import UsuarioRepositorioMemoria
+from infraestrutura.acesso_repositorio_memoria import AcessoRepositorioMemoria
+from infraestrutura.usuario_repositorio_memoria import UsuarioRepositorioMemoria
 
 
 @pytest.fixture
@@ -86,3 +86,4 @@ def dados_validos():
         perfil="GESTOR",
         aceite_termos="s",
     )
+

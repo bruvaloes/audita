@@ -1,4 +1,4 @@
-"""NF001 de Desempenho: cadastro, listagem, edição e remoção respondem em até
+﻿"""NF001 de Desempenho: cadastro, listagem, edição e remoção respondem em até
 1 segundo na maioria das requisições, com o volume de referência carregado.
 
 Métrica do documento de requisitos: pelo menos 95% das requisições em até
@@ -22,12 +22,12 @@ from controle.validacao.validador_cadastro_usuario import (
 )
 from entidade.perfil import Perfil
 from entidade.usuario import Usuario
-from persistencia.contrato_repositorio_memoria import ContratoRepositorioMemoria
-from persistencia.contrato_repositorio_sqlite import ContratoRepositorioSQLite
-from persistencia.evidencia_repositorio_memoria import EvidenciaRepositorioMemoria
-from persistencia.evidencia_repositorio_sqlite import EvidenciaRepositorioSQLite
-from persistencia.usuario_repositorio_memoria import UsuarioRepositorioMemoria
-from persistencia.usuario_repositorio_sqlite import UsuarioRepositorioSQLite
+from infraestrutura.contrato_repositorio_memoria import ContratoRepositorioMemoria
+from infraestrutura.contrato_repositorio_sqlite import ContratoRepositorioSQLite
+from infraestrutura.evidencia_repositorio_memoria import EvidenciaRepositorioMemoria
+from infraestrutura.evidencia_repositorio_sqlite import EvidenciaRepositorioSQLite
+from infraestrutura.usuario_repositorio_memoria import UsuarioRepositorioMemoria
+from infraestrutura.usuario_repositorio_sqlite import UsuarioRepositorioSQLite
 
 USUARIOS_DE_REFERENCIA = 100
 CONTRATOS_DE_REFERENCIA = 50
@@ -148,3 +148,4 @@ def test_cadastrar_usuario_deve_responder_dentro_do_limite(sistema):
     base = USUARIOS_DE_REFERENCIA
     conferir("cadastrar usuário", medir(
         lambda i: usuarios.adicionar(dados_usuario(base + i))))
+

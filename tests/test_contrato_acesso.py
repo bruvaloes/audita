@@ -1,4 +1,4 @@
-"""RF 03 nas operações de contrato: o controller confere o perfil, e não só o
+﻿"""RF 03 nas operações de contrato: o controller confere o perfil, e não só o
 menu."""
 from datetime import datetime
 
@@ -15,9 +15,9 @@ from excecao.acesso_negado_error import AcessoNegadoError
 from fronteira.contrato_fronteira import ContratoFronteira
 from fronteira.painel_fronteira import AcaoDoPainel, PainelFronteira
 from log.log_auditoria_memoria import LogAuditoriaMemoria
-from persistencia.contrato_repositorio_memoria import ContratoRepositorioMemoria
-from persistencia.evidencia_repositorio_memoria import EvidenciaRepositorioMemoria
-from persistencia.usuario_repositorio_memoria import UsuarioRepositorioMemoria
+from infraestrutura.contrato_repositorio_memoria import ContratoRepositorioMemoria
+from infraestrutura.evidencia_repositorio_memoria import EvidenciaRepositorioMemoria
+from infraestrutura.usuario_repositorio_memoria import UsuarioRepositorioMemoria
 
 
 def dados(numero="CT-1"):
@@ -133,3 +133,4 @@ def test_painel_do_funcionario_nao_deve_oferecer_contratos(
     _painel_com_contratos(controller, sessao).abrir(usuario(Perfil.FUNCIONARIO))
 
     assert "Cadastrar contrato" not in capsys.readouterr().out
+

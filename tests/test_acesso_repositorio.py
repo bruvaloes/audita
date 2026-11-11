@@ -1,4 +1,4 @@
-"""Contrato de AcessoRepositorio.
+﻿"""Contrato de AcessoRepositorio.
 
 Toda implementação deve passar nestes testes (Liskov): para cobrir uma nova,
 basta incluí-la na fixture `repositorio_implementacao`.
@@ -10,9 +10,9 @@ import pytest
 from entidade.acesso import Acesso
 from entidade.perfil import Perfil
 from entidade.resultado_acesso import ResultadoAcesso
-from persistencia.acesso_repositorio import AcessoRepositorio
-from persistencia.acesso_repositorio_memoria import AcessoRepositorioMemoria
-from persistencia.acesso_repositorio_sqlite import AcessoRepositorioSQLite
+from negocio.acesso_repositorio import AcessoRepositorio
+from infraestrutura.acesso_repositorio_memoria import AcessoRepositorioMemoria
+from infraestrutura.acesso_repositorio_sqlite import AcessoRepositorioSQLite
 
 MOMENTO = datetime(2026, 10, 28, 14, 30, 5)
 
@@ -67,3 +67,4 @@ def test_deve_aceitar_acesso_sem_usuario_e_sem_perfil(
     acesso = repositorio_implementacao.listar_todos()[0]
 
     assert (acesso.usuario_id, acesso.perfil) == (None, None)
+

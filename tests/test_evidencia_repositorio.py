@@ -1,4 +1,4 @@
-"""Contrato de EvidenciaRepositorio.
+﻿"""Contrato de EvidenciaRepositorio.
 
 Toda implementação deve passar nestes testes (Liskov): para cobrir uma nova,
 basta incluí-la na fixture `repositorio_implementacao`.
@@ -16,9 +16,9 @@ from excecao.persistencia_error import (
     EscritaPersistenciaError,
     LeituraPersistenciaError,
 )
-from persistencia.evidencia_repositorio import EvidenciaRepositorio
-from persistencia.evidencia_repositorio_memoria import EvidenciaRepositorioMemoria
-from persistencia.evidencia_repositorio_sqlite import EvidenciaRepositorioSQLite
+from negocio.evidencia_repositorio import EvidenciaRepositorio
+from infraestrutura.evidencia_repositorio_memoria import EvidenciaRepositorioMemoria
+from infraestrutura.evidencia_repositorio_sqlite import EvidenciaRepositorioSQLite
 
 
 @pytest.fixture(params=["memoria", "sqlite"])
@@ -174,3 +174,4 @@ def test_tabela_inexistente_lanca_escrita_persistencia_error_ao_atualizar(tmp_pa
         conn.execute("DROP TABLE evidencias")
     with pytest.raises(EscritaPersistenciaError):
         repo.atualizar_situacao(1, SituacaoValidacao.APROVADA)
+

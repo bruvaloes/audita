@@ -1,4 +1,4 @@
-"""RF 16: a quantidade de entidades no menu principal, com a fachada real."""
+﻿"""RF 16: a quantidade de entidades no menu principal, com a fachada real."""
 from unittest.mock import MagicMock
 
 import pytest
@@ -17,10 +17,10 @@ from entidade.usuario import Usuario
 from excecao.persistencia_error import LeituraPersistenciaError
 from fronteira.autenticacao_fronteira import AutenticacaoFronteira
 from fronteira.usuario_fronteira import UsuarioFronteira
-from persistencia.acesso_repositorio_memoria import AcessoRepositorioMemoria
-from persistencia.contrato_repositorio_memoria import ContratoRepositorioMemoria
-from persistencia.evidencia_repositorio_memoria import EvidenciaRepositorioMemoria
-from persistencia.usuario_repositorio_memoria import UsuarioRepositorioMemoria
+from infraestrutura.acesso_repositorio_memoria import AcessoRepositorioMemoria
+from infraestrutura.contrato_repositorio_memoria import ContratoRepositorioMemoria
+from infraestrutura.evidencia_repositorio_memoria import EvidenciaRepositorioMemoria
+from infraestrutura.usuario_repositorio_memoria import UsuarioRepositorioMemoria
 
 
 @pytest.fixture(autouse=True)
@@ -108,3 +108,4 @@ def test_deve_mostrar_erro_de_armazenamento_sem_encerrar(
 
     assert ("Erro de armazenamento: banco indisponível"
             in capsys.readouterr().out)
+

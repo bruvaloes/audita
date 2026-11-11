@@ -1,4 +1,4 @@
-"""Testes de remoção de contrato (RF 07).
+﻿"""Testes de remoção de contrato (RF 07).
 
 Cobre os cenários de aceite C1 a C3 e regras RN07.1 a RN07.3:
 - C1: Remoção permitida (sem evidências e confirmada) -> some da listagem
@@ -18,8 +18,8 @@ from entidade.situacao_validacao import SituacaoValidacao
 from excecao.validacao_error import ContratoComEvidenciasError
 from log.log_auditoria_memoria import LogAuditoriaMemoria
 from log.operacao_log import OperacaoLog
-from persistencia.contrato_repositorio_memoria import ContratoRepositorioMemoria
-from persistencia.evidencia_repositorio_memoria import EvidenciaRepositorioMemoria
+from infraestrutura.contrato_repositorio_memoria import ContratoRepositorioMemoria
+from infraestrutura.evidencia_repositorio_memoria import EvidenciaRepositorioMemoria
 
 
 @pytest.fixture
@@ -118,3 +118,4 @@ def test_c3_remocao_bloqueada_com_evidencias(
     # Confere que o contrato continua intacto no repositório
     itens, _ = controller.listar(gestor)
     assert len(itens) == 1
+

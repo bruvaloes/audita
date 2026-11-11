@@ -1,4 +1,4 @@
-import sqlite3
+﻿import sqlite3
 
 import pytest
 
@@ -18,7 +18,7 @@ from excecao.persistencia_error import (
 from entidade.perfil import Perfil
 from entidade.usuario import Usuario
 from excecao.validacao_error import UsuarioDuplicadoError
-from persistencia.usuario_repositorio_sqlite import UsuarioRepositorioSQLite
+from infraestrutura.usuario_repositorio_sqlite import UsuarioRepositorioSQLite
 
 
 @pytest.fixture
@@ -80,3 +80,4 @@ def test_tabela_inexistente_lanca_leitura_persistencia_error(tmp_path):
 ])
 def test_excecoes_herdam_de_persistencia_error(excecao):
     assert issubclass(excecao, PersistenciaError)
+

@@ -1,16 +1,4 @@
-from entidade.acesso import Acesso
-from negocio.acesso_repositorio import AcessoRepositorio
+"""Compatibilidade temporária: implementação foi movida para infraestrutura."""
+from infraestrutura.acesso_repositorio_memoria import AcessoRepositorioMemoria
 
-
-class AcessoRepositorioMemoria(AcessoRepositorio):
-
-    def __init__(self):
-        self._acessos: list[Acesso] = []
-
-    def salvar(self, acesso: Acesso) -> Acesso:
-        acesso.id = len(self._acessos) + 1
-        self._acessos.append(acesso)
-        return acesso
-
-    def listar_todos(self) -> list[Acesso]:
-        return list(self._acessos)
+__all__ = ["AcessoRepositorioMemoria"]
