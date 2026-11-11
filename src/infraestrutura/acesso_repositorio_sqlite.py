@@ -9,7 +9,7 @@ from excecao.persistencia_error import (
     EscritaPersistenciaError,
     LeituraPersistenciaError,
 )
-from persistencia.acesso_repositorio import AcessoRepositorio
+from negocio.acesso_repositorio import AcessoRepositorio
 
 COLUNAS_ACESSO = "id, usuario_id, perfil, data_hora, resultado"
 
@@ -84,3 +84,4 @@ class AcessoRepositorioSQLite(AcessoRepositorio):
             data_hora=datetime.fromisoformat(linha[3]),
             resultado=ResultadoAcesso(linha[4]),
         )
+

@@ -5,7 +5,7 @@ from datetime import datetime
 from entidade.evidencia import Evidencia
 from entidade.origem_evidencia import OrigemEvidencia
 from entidade.situacao_validacao import SituacaoValidacao
-from persistencia.evidencia_repositorio import EvidenciaRepositorio
+from negocio.evidencia_repositorio import EvidenciaRepositorio
 from excecao.persistencia_error import (
     ConexaoPersistenciaError,
     EscritaPersistenciaError,
@@ -153,3 +153,4 @@ class EvidenciaRepositorioSQLite(EvidenciaRepositorio):
             numero_contrato=row[7],
             nome_tarefa=row[8],
         )
+

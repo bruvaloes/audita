@@ -15,7 +15,7 @@ from entidade.usuario import Usuario
 from log.log_auditoria import LogAuditoria
 from log.operacao_log import OperacaoLog
 from log.registro_log import RegistroLog
-from persistencia.usuario_repositorio import UsuarioRepositorio
+from negocio.usuario_repositorio import UsuarioRepositorio
 
 
 class UsuarioController:

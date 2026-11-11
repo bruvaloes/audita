@@ -10,8 +10,8 @@ from entidade.perfil import Perfil
 from entidade.resultado_acesso import ResultadoAcesso
 from entidade.usuario import Usuario
 from excecao.credenciais_invalidas_error import CredenciaisInvalidasError
-from persistencia.acesso_repositorio import PersistenciaAcessos
-from persistencia.usuario_repositorio import ConsultaUsuarios
+from negocio.acesso_repositorio import PersistenciaAcessos
+from negocio.usuario_repositorio import ConsultaUsuarios
 
 # Senha sem valor: só dá trabalho ao verificador quando o usuário não existe.
 SENHA_FICTICIA = "senha-ficticia-sem-usuario"

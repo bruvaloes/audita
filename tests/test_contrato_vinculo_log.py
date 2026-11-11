@@ -1,4 +1,4 @@
-"""Vincular e desvincular usuário são alterações do contrato e entram no log
+﻿"""Vincular e desvincular usuário são alterações do contrato e entram no log
 de auditoria (NF004)."""
 import pytest
 
@@ -9,8 +9,8 @@ from entidade.perfil import Perfil
 from entidade.usuario import Usuario
 from log.log_auditoria_memoria import LogAuditoriaMemoria
 from log.operacao_log import OperacaoLog
-from persistencia.contrato_repositorio_memoria import ContratoRepositorioMemoria
-from persistencia.usuario_repositorio_memoria import UsuarioRepositorioMemoria
+from infraestrutura.contrato_repositorio_memoria import ContratoRepositorioMemoria
+from infraestrutura.usuario_repositorio_memoria import UsuarioRepositorioMemoria
 
 
 @pytest.fixture
@@ -67,3 +67,4 @@ def test_vincular_de_novo_o_mesmo_usuario_nao_deve_duplicar_o_registro(
     controller.vincular(gestor, "CT-1", funcionario.id)
 
     assert len(log.listar()) == 2  # o cadastro e um único vínculo
+

@@ -35,3 +35,4 @@ class UsuarioRepositorio(ConsultaUsuarios, PersistenciaUsuarios, ABC):
     """Contrato completo de repositório; qualquer mecanismo de persistência
     (memória, arquivo, banco) deve poder substituí-lo sem alterar o
     comportamento descrito acima."""
+

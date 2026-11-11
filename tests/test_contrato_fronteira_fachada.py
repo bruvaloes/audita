@@ -1,4 +1,4 @@
-"""A fronteira de contrato ligada à fachada real, com os controllers e os
+﻿"""A fronteira de contrato ligada à fachada real, com os controllers e os
 repositórios reais (e não mocks): o caminho que o main.py monta.
 
 Cada nome da fachada que a fronteira chama precisa existir e ter a assinatura
@@ -19,10 +19,10 @@ from controle.validacao.validador_cadastro_usuario import (
 from entidade.perfil import Perfil
 from entidade.usuario import Usuario
 from fronteira.contrato_fronteira import ContratoFronteira
-from persistencia.acesso_repositorio_memoria import AcessoRepositorioMemoria
-from persistencia.contrato_repositorio_memoria import ContratoRepositorioMemoria
-from persistencia.evidencia_repositorio_memoria import EvidenciaRepositorioMemoria
-from persistencia.usuario_repositorio_memoria import UsuarioRepositorioMemoria
+from infraestrutura.acesso_repositorio_memoria import AcessoRepositorioMemoria
+from infraestrutura.contrato_repositorio_memoria import ContratoRepositorioMemoria
+from infraestrutura.evidencia_repositorio_memoria import EvidenciaRepositorioMemoria
+from infraestrutura.usuario_repositorio_memoria import UsuarioRepositorioMemoria
 
 
 @pytest.fixture(autouse=True)
@@ -180,3 +180,4 @@ def test_listar_com_situacao_valida_nao_deve_dar_erro(
     fronteira.listar_contratos()
 
     assert "Erro" not in capsys.readouterr().out
+

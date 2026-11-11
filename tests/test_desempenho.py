@@ -22,12 +22,10 @@ from controle.validacao.validador_cadastro_usuario import (
 )
 from entidade.perfil import Perfil
 from entidade.usuario import Usuario
-from persistencia.contrato_repositorio_memoria import ContratoRepositorioMemoria
-from persistencia.contrato_repositorio_sqlite import ContratoRepositorioSQLite
-from persistencia.evidencia_repositorio_memoria import EvidenciaRepositorioMemoria
-from persistencia.evidencia_repositorio_sqlite import EvidenciaRepositorioSQLite
-from persistencia.usuario_repositorio_memoria import UsuarioRepositorioMemoria
-from persistencia.usuario_repositorio_sqlite import UsuarioRepositorioSQLite
+from infraestrutura.repositorio_factory import (
+    RepositorioFactoryMemoria,
+    RepositorioFactorySQLite,
+)
 
 USUARIOS_DE_REFERENCIA = 100
 CONTRATOS_DE_REFERENCIA = 50
@@ -85,14 +83,19 @@ def conferir(nome: str, tempos: list[float]) -> None:
 @pytest.fixture(params=["memoria", "sqlite"])
 def sistema(request, tmp_path):
     if request.param == "memoria":
-        usuarios = UsuarioRepositorioMemoria()
-        contratos = ContratoRepositorioMemoria()
-        evidencias = EvidenciaRepositorioMemoria()
+        factory = RepositorioFactoryMemoria()
     else:
         banco = str(tmp_path / "desempenho.db")
-        usuarios = UsuarioRepositorioSQLite(banco)
-        contratos = ContratoRepositorioSQLite(banco)
-        evidencias = EvidenciaRepositorioSQLite(banco)
+        factory = RepositorioFactorySQLite(
+            db_usuarios=banco,
+            db_contratos=banco,
+            db_evidencias=banco,
+            caminho_log=str(tmp_path / "auditoria.log"),
+        )
+    usuarios = factory.criar_usuario_repositorio()
+    contratos = factory.criar_contrato_repositorio()
+    evidencias = factory.criar_evidencia_repositorio()
+    log_auditoria = factory.criar_log_auditoria()
     controle = ControleAcesso()
     # Custo de produção do hash, para o cadastro de usuário ser medido de verdade.
     hash_senha = HashSenhaArgon2()
@@ -148,3 +151,4 @@ def test_cadastrar_usuario_deve_responder_dentro_do_limite(sistema):
     base = USUARIOS_DE_REFERENCIA
     conferir("cadastrar usuário", medir(
         lambda i: usuarios.adicionar(dados_usuario(base + i))))
+

@@ -1,4 +1,4 @@
-"""Contrato de ContratoRepositorio.
+﻿"""Contrato de ContratoRepositorio.
 
 Toda implementação deve passar nestes testes (Liskov): para cobrir uma nova,
 basta incluí-la na fixture `repositorio_implementacao`.
@@ -15,9 +15,9 @@ from excecao.persistencia_error import (
     EscritaPersistenciaError,
     LeituraPersistenciaError,
 )
-from persistencia.contrato_repositorio import ContratoRepositorio
-from persistencia.contrato_repositorio_memoria import ContratoRepositorioMemoria
-from persistencia.contrato_repositorio_sqlite import ContratoRepositorioSQLite
+from negocio.contrato_repositorio import ContratoRepositorio
+from infraestrutura.contrato_repositorio_memoria import ContratoRepositorioMemoria
+from infraestrutura.contrato_repositorio_sqlite import ContratoRepositorioSQLite
 
 
 @pytest.fixture(params=["memoria", "sqlite"])
@@ -133,3 +133,4 @@ def test_tabela_inexistente_lanca_leitura_persistencia_error(tmp_path):
         conn.execute("DROP TABLE contratos")
     with pytest.raises(LeituraPersistenciaError):
         repo.listar()
+

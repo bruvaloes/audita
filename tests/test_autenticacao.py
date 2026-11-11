@@ -1,4 +1,4 @@
-"""RF02: autenticação por login, CPF ou e-mail, com senha e perfil (RN02.1 a
+﻿"""RF02: autenticação por login, CPF ou e-mail, com senha e perfil (RN02.1 a
 RN02.3 e RN02.6), e o registro de cada tentativa como Acesso."""
 import pytest
 
@@ -11,7 +11,7 @@ from excecao.persistencia_error import EscritaPersistenciaError
 from fronteira.autenticacao_fronteira import AutenticacaoFronteira
 from fronteira.painel_fronteira import PainelFronteira
 from fronteira.usuario_fronteira import UsuarioFronteira
-from persistencia.acesso_repositorio import AcessoRepositorio
+from negocio.acesso_repositorio import AcessoRepositorio
 
 SENHA = "Senha@123"
 CPF_MARIA = "52998224725"
@@ -284,3 +284,4 @@ def test_painel_deve_ser_o_do_perfil_do_usuario(
     painel.abrir(usuario)
 
     assert titulo in capsys.readouterr().out
+

@@ -23,3 +23,4 @@ class AcessoRepositorio(ConsultaAcessos, PersistenciaAcessos, ABC):
     """Contrato completo de repositório de acessos; qualquer mecanismo de
     persistência deve poder substituí-lo sem alterar o comportamento descrito
     acima."""
+

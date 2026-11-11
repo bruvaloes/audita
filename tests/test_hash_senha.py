@@ -1,9 +1,9 @@
-import sqlite3
+﻿import sqlite3
 
 import pytest
 
 from controle.seguranca.hash_senha_argon2 import HashSenhaArgon2
-from persistencia.usuario_repositorio_sqlite import UsuarioRepositorioSQLite
+from infraestrutura.usuario_repositorio_sqlite import UsuarioRepositorioSQLite
 
 SENHA = "Senha@123"
 
@@ -98,3 +98,4 @@ def test_cadastro_nao_deve_registrar_a_senha_nem_o_hash_em_logs(
         usuario = controller.adicionar(dados_validos)
     assert dados_validos.senha not in caplog.text
     assert usuario.senha_hash not in caplog.text
+

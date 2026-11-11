@@ -1,4 +1,4 @@
-"""Testes de edição e encerramento de contrato (RF 06).
+﻿"""Testes de edição e encerramento de contrato (RF 06).
 
 Cobre os cenários de aceite C1 a C3 e regras RN06.1 a RN06.3:
 - C1: Edição válida -> a listagem mostra o novo valor e log registra a alteração
@@ -20,7 +20,7 @@ from excecao.validacao_error import (
 )
 from log.log_auditoria_memoria import LogAuditoriaMemoria
 from log.operacao_log import OperacaoLog
-from persistencia.contrato_repositorio_memoria import ContratoRepositorioMemoria
+from infraestrutura.contrato_repositorio_memoria import ContratoRepositorioMemoria
 
 
 @pytest.fixture
@@ -148,3 +148,4 @@ def test_encerrar_contrato_ja_encerrado_deve_ser_recusado_sem_novo_registro_no_l
 
     assert str(erro.value) == "Contrato já está encerrado"
     assert len(log.listar()) == registros_antes
+

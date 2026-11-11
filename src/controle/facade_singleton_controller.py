@@ -20,7 +20,7 @@ from controle.usuario_controller import UsuarioController
 from entidade.contrato import Contrato
 from entidade.situacao_contrato import SituacaoContrato
 from entidade.usuario import Usuario
-from persistencia.evidencia_repositorio import EvidenciaRepositorio
+from negocio.evidencia_repositorio import EvidenciaRepositorio
 
 
 class FacadeSingletonController:

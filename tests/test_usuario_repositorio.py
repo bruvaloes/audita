@@ -1,4 +1,4 @@
-"""Contrato de UsuarioRepositorio.
+﻿"""Contrato de UsuarioRepositorio.
 
 Toda implementação deve passar nestes testes (Liskov): para cobrir uma nova,
 basta incluí-la na fixture `repositorio_implementacao`.
@@ -10,9 +10,9 @@ import pytest
 from entidade.perfil import Perfil
 from entidade.usuario import Usuario
 from excecao.persistencia_error import EscritaPersistenciaError
-from persistencia.usuario_repositorio import UsuarioRepositorio
-from persistencia.usuario_repositorio_memoria import UsuarioRepositorioMemoria
-from persistencia.usuario_repositorio_sqlite import UsuarioRepositorioSQLite
+from negocio.usuario_repositorio import UsuarioRepositorio
+from infraestrutura.usuario_repositorio_memoria import UsuarioRepositorioMemoria
+from infraestrutura.usuario_repositorio_sqlite import UsuarioRepositorioSQLite
 
 
 @pytest.fixture(params=["memoria", "sqlite"])
@@ -99,3 +99,4 @@ def test_deve_recusar_cpf_email_ou_login_repetido(
         repositorio_implementacao.salvar(novo_usuario(**outro))
 
     assert len(repositorio_implementacao.listar_todos()) == 1
+

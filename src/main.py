@@ -17,84 +17,55 @@ from fronteira.contrato_fronteira import ContratoFronteira
 from fronteira.painel_fronteira import AcaoDoPainel, PainelFronteira
 from fronteira.relatorio_fronteira import RelatorioFronteira
 from fronteira.usuario_fronteira import UsuarioFronteira
+from infraestrutura.repositorio_factory import (
+    RepositorioFactory,
+    RepositorioFactoryMemoria,
+    RepositorioFactorySQLite,
+)
 from log.log_auditoria import LogAuditoria
-from log.log_auditoria_adapter import LogAuditoriaAdapter
-from log.log_auditoria_memoria import LogAuditoriaMemoria
-from persistencia.acesso_repositorio import AcessoRepositorio
-from persistencia.acesso_repositorio_memoria import AcessoRepositorioMemoria
-from persistencia.acesso_repositorio_sqlite import AcessoRepositorioSQLite
-from persistencia.contrato_repositorio import ContratoRepositorio
-from persistencia.contrato_repositorio_memoria import ContratoRepositorioMemoria
-from persistencia.contrato_repositorio_sqlite import ContratoRepositorioSQLite
-from persistencia.evidencia_repositorio import EvidenciaRepositorio
-from persistencia.evidencia_repositorio_memoria import EvidenciaRepositorioMemoria
-from persistencia.evidencia_repositorio_sqlite import EvidenciaRepositorioSQLite
-from persistencia.usuario_repositorio import UsuarioRepositorio
-from persistencia.usuario_repositorio_memoria import UsuarioRepositorioMemoria
-from persistencia.usuario_repositorio_sqlite import UsuarioRepositorioSQLite
+from negocio.acesso_repositorio import AcessoRepositorio
+from negocio.contrato_repositorio import ContratoRepositorio
+from negocio.evidencia_repositorio import EvidenciaRepositorio
+from negocio.usuario_repositorio import UsuarioRepositorio
 
-# Para oferecer outro mecanismo de armazenamento, basta incluir uma entrada:
-# opção -> (descrição no menu, fábrica do repositório de usuários, fábrica do
-# repositório de acessos, fábrica do repositório de contratos, fábrica do repositório
-# de evidências, fábrica do log de auditoria).
 MECANISMOS_ARMAZENAMENTO = {
-    "1": (
-        "Banco de dados (SQLite)",
-        UsuarioRepositorioSQLite,
-        AcessoRepositorioSQLite,
-        ContratoRepositorioSQLite,
-        EvidenciaRepositorioSQLite,
-        lambda: LogAuditoriaAdapter("auditoria.log"),
-    ),
-    "2": (
-        "Em memória",
-        UsuarioRepositorioMemoria,
-        AcessoRepositorioMemoria,
-        ContratoRepositorioMemoria,
-        EvidenciaRepositorioMemoria,
-        LogAuditoriaMemoria,
-    ),
+    "1": ("Banco de dados (SQLite)", RepositorioFactorySQLite),
+    "2": ("Em memória", RepositorioFactoryMemoria),
 }
 
 
-def escolher_repositorios() -> tuple[
+def escolher_repositorio(entrada=None) -> tuple[
     UsuarioRepositorio,
     AcessoRepositorio,
     ContratoRepositorio,
     EvidenciaRepositorio,
     LogAuditoria,
 ]:
+    if entrada is None:
+        entrada = input
+
     print("===== CONFIGURAÇÃO DE PERSISTÊNCIA =====")
-    for opcao, (descricao, *_) in MECANISMOS_ARMAZENAMENTO.items():
+    for opcao, (descricao, _) in MECANISMOS_ARMAZENAMENTO.items():
         print(f"{opcao} - {descricao}")
 
     while True:
-        opcao = input("Escolha o mecanismo de armazenamento: ").strip()
+        opcao = entrada("Escolha o mecanismo de armazenamento: ").strip()
         if opcao not in MECANISMOS_ARMAZENAMENTO:
             print("\nOpção inválida. Tente novamente.")
             continue
 
-        (
-            descricao,
-            criar_usuarios,
-            criar_acessos,
-            criar_contratos,
-            criar_evidencias,
-            criar_log,
-        ) = MECANISMOS_ARMAZENAMENTO[opcao]
+        descricao, factory_cls = MECANISMOS_ARMAZENAMENTO[opcao]
         try:
-            repositorios = (
-                criar_usuarios(),
-                criar_acessos(),
-                criar_contratos(),
-                criar_evidencias(),
-                criar_log(),
-            )
+            factory: RepositorioFactory = factory_cls()
+            repositorios = factory.criar_todos()
         except PersistenciaError as erro:
             print(f"\n{erro}\nEscolha outro mecanismo de armazenamento.")
             continue
         print(f"Usando: {descricao}\n")
         return repositorios
+
+
+escolher_repositorios = escolher_repositorio
 
 
 def main():

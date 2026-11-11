@@ -1,4 +1,4 @@
-from datetime import datetime
+﻿from datetime import datetime
 from unittest.mock import MagicMock
 import pytest
 
@@ -23,11 +23,11 @@ from fronteira.autenticacao_fronteira import AutenticacaoFronteira
 from fronteira.contrato_fronteira import ContratoFronteira
 from fronteira.painel_fronteira import PainelFronteira
 from fronteira.usuario_fronteira import UsuarioFronteira
-from persistencia.acesso_repositorio_memoria import AcessoRepositorioMemoria
-from persistencia.contrato_repositorio_memoria import ContratoRepositorioMemoria
-from persistencia.evidencia_repositorio import EvidenciaRepositorio
-from persistencia.evidencia_repositorio_memoria import EvidenciaRepositorioMemoria
-from persistencia.usuario_repositorio_memoria import UsuarioRepositorioMemoria
+from infraestrutura.acesso_repositorio_memoria import AcessoRepositorioMemoria
+from infraestrutura.contrato_repositorio_memoria import ContratoRepositorioMemoria
+from negocio.evidencia_repositorio import EvidenciaRepositorio
+from infraestrutura.evidencia_repositorio_memoria import EvidenciaRepositorioMemoria
+from infraestrutura.usuario_repositorio_memoria import UsuarioRepositorioMemoria
 
 
 @pytest.fixture(autouse=True)
@@ -498,3 +498,4 @@ def test_fluxo_integracao_completo_via_fachada():
         "evidencias": 1,
         "total": 3,
     }
+

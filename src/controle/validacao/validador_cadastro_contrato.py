@@ -5,7 +5,7 @@ from controle.validacao.validador_arquivo_contrato import ValidadorArquivoContra
 from controle.validacao.validador_empresa_contratada import ValidadorEmpresaContratada
 from controle.validacao.validador_numero_contrato import ValidadorNumeroContrato
 from controle.validacao.validador_vigencia import ValidadorVigencia
-from persistencia.contrato_repositorio import ConsultaContratos
+from negocio.contrato_repositorio import ConsultaContratos
 
 
 class ValidadorCadastroContrato:
