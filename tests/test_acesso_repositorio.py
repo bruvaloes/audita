@@ -4,12 +4,18 @@ Toda implementação deve passar nestes testes (Liskov): para cobrir uma nova,
 basta incluí-la na fixture `repositorio_implementacao`.
 """
 from datetime import datetime
+import sqlite3
 
 import pytest
 
 from entidade.acesso import Acesso
 from entidade.perfil import Perfil
 from entidade.resultado_acesso import ResultadoAcesso
+from excecao.persistencia_error import (
+    ConexaoPersistenciaError,
+    EscritaPersistenciaError,
+    LeituraPersistenciaError,
+)
 from negocio.acesso_repositorio import AcessoRepositorio
 from infraestrutura.acesso_repositorio_memoria import AcessoRepositorioMemoria
 from infraestrutura.acesso_repositorio_sqlite import AcessoRepositorioSQLite
@@ -68,3 +74,26 @@ def test_deve_aceitar_acesso_sem_usuario_e_sem_perfil(
 
     assert (acesso.usuario_id, acesso.perfil) == (None, None)
 
+
+# Testes específicos de persistência e exceções para SQLite
+def test_banco_inacessivel_lanca_conexao_persistencia_error(tmp_path):
+    with pytest.raises(ConexaoPersistenciaError):
+        AcessoRepositorioSQLite(str(tmp_path / "inexistente" / "teste.db"))
+
+
+def test_tabela_inexistente_lanca_leitura_persistencia_error(tmp_path):
+    caminho = str(tmp_path / "teste.db")
+    repo = AcessoRepositorioSQLite(caminho)
+    with sqlite3.connect(caminho) as conn:
+        conn.execute("DROP TABLE acessos")
+    with pytest.raises(LeituraPersistenciaError):
+        repo.listar_todos()
+
+
+def test_tabela_inexistente_lanca_escrita_persistencia_error_ao_salvar(tmp_path):
+    caminho = str(tmp_path / "teste.db")
+    repo = AcessoRepositorioSQLite(caminho)
+    with sqlite3.connect(caminho) as conn:
+        conn.execute("DROP TABLE acessos")
+    with pytest.raises(EscritaPersistenciaError):
+        repo.salvar(novo_acesso())
