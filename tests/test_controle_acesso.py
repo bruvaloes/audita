@@ -21,6 +21,7 @@ ESPERADO = {
         Operacao.LISTAR_CONTRATOS, Operacao.EDITAR_CONTRATO,
         Operacao.REMOVER_CONTRATO, Operacao.VINCULAR_USUARIO_CONTRATO,
         Operacao.LISTAR_EVIDENCIAS, Operacao.VALIDAR_EVIDENCIA,
+        Operacao.GERAR_RELATORIO_ACESSOS,
     },
     Perfil.FISCAL: set(),
     Perfil.FUNCIONARIO: {
