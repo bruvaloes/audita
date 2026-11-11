@@ -31,13 +31,16 @@ MECANISMOS_ARMAZENAMENTO = {
 }
 
 
-def escolher_repositorio(entrada=input) -> tuple[
+def escolher_repositorio(entrada=None) -> tuple[
     UsuarioRepositorio,
     AcessoRepositorio,
     ContratoRepositorio,
     EvidenciaRepositorio,
     LogAuditoria,
 ]:
+    if entrada is None:
+        entrada = input
+
     print("===== CONFIGURAÇÃO DE PERSISTÊNCIA =====")
     for opcao, (descricao, _) in MECANISMOS_ARMAZENAMENTO.items():
         print(f"{opcao} - {descricao}")
