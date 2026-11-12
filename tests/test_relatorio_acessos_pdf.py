@@ -10,8 +10,8 @@ from controle.relatorio.relatorio_acessos_pdf import RelatorioAcessosPdf
 from entidade.acesso import Acesso
 from entidade.perfil import Perfil
 from entidade.resultado_acesso import ResultadoAcesso
-from persistencia.acesso_repositorio_memoria import AcessoRepositorioMemoria
-from persistencia.acesso_repositorio_sqlite import AcessoRepositorioSQLite
+from infraestrutura.acesso_repositorio_memoria import AcessoRepositorioMemoria
+from infraestrutura.acesso_repositorio_sqlite import AcessoRepositorioSQLite
 
 GERADO_EM = datetime(2026, 11, 11, 9, 5, 7)
 DATA_ISO = re.compile(r"\d{4}-\d{2}-\d{2}")
