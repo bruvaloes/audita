@@ -51,7 +51,8 @@ flowchart TB
 | Fronteira | Telas de console e painel por perfil | `fronteira/` |
 | Controle | Regras de negócio, validação, controle de acesso, relatórios e a fachada | `controle/` |
 | Entidade | Dados do domínio | `entidade/` |
-| Persistência | Repositórios (interface, memória e SQLite) | `persistencia/` |
+| Negócio | Interfaces dos repositórios, de que os controllers dependem | `negocio/` |
+| Infraestrutura | Repositórios em memória e SQLite e as fábricas de cada mecanismo | `infraestrutura/` |
 | Exceção | Exceções de validação, de acesso e de persistência | `excecao/` |
 | Log | Interface do log de auditoria e seu adaptador | `log/` |
 

@@ -228,7 +228,8 @@ audita/
 │   ├── entidade/                # Entidades de domínio
 │   ├── excecao/                 # Exceções de validação, de acesso, de autenticação e de persistência
 │   ├── log/                     # Log de auditoria
-│   ├── persistencia/            # Repositórios (memória e SQLite)
+│   ├── negocio/                 # Interfaces dos repositórios
+│   ├── infraestrutura/          # Repositórios (memória e SQLite) e fábricas
 │   └── main.py                  # Ponto de entrada da aplicação
 ├── tests/                       # Testes unitários e de integração
 └── requirements.txt             # Dependências
