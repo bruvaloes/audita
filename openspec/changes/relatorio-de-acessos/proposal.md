@@ -10,6 +10,27 @@ Os gestores precisam saber como o sistema está sendo usado: quantas tentativas 
 - **Template Method:** a classe abstrata `RelatorioAcessos` fixa o passo a passo (coletar, calcular, formatar e salvar), e a subclasse `RelatorioAcessosPdf` implementa o formato. Outro formato é outra subclasse (RN15.5).
 - **Controle de acesso:** nova operação `GERAR_RELATORIO_ACESSOS`, só do Gestor, conferida no `RelatorioController` (RN15.1).
 - **Datas no padrão brasileiro** no relatório, com a função `formatar_data_hora` da #18 (RN15.4).
+
+## Formato
+
+O formato implementado na Sprint 4 é o **PDF**. A estrutura em Template Method já fica preparada para novos formatos, como HTML: cada um é uma nova subclasse de `RelatorioAcessos`, sem mudar a classe abstrata nem o PDF.
+
+## Dados do relatório
+
+O relatório traz, obrigatoriamente:
+
+| Dado | Origem |
+|------|--------|
+| Total de acessos | Todos os `Acesso` gravados no login |
+| Total de sucessos | Acessos com `ResultadoAcesso.SUCESSO` |
+| Total de falhas | Acessos com `ResultadoAcesso.CREDENCIAIS_INVALIDAS` (e `BLOQUEADO`, sempre 0 até a #57) |
+| Data e hora dos registros de acesso | Período do primeiro ao último `Acesso` e data de geração do relatório |
+
+As datas e os horários seguem o padrão brasileiro, `dd/mm/aaaa` e `hh:mm` em 24 horas, sem formato ISO (NF006 de Adequação a padrões). O relatório traz também a quantidade por resultado e por perfil informado.
+
+## Controle de acesso
+
+A geração do relatório é uma operação **só do Gestor**. Funcionário e Fiscal não veem a opção no painel e, se a geração for acionada por eles, recebem "Acesso negado" sem arquivo gerado.
 - **Fachada:** passa a delegar a geração do relatório ao `RelatorioController`.
 - **Dependência nova:** `fpdf2` para gerar o PDF; `pypdf` só nos testes, para ler o PDF gerado.
 
