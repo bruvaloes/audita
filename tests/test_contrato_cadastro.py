@@ -1,4 +1,4 @@
-"""Testes de cadastro de contrato (RF 04).
+﻿"""Testes de cadastro de contrato (RF 04).
 
 Cobre os cenários de aceite C1 a C5 e auditoria RN04.5:
 - C1: Cadastro válido (criado ATIVO e aparece na listagem)
@@ -24,7 +24,7 @@ from excecao.validacao_error import (
 )
 from log.log_auditoria_memoria import LogAuditoriaMemoria
 from log.operacao_log import OperacaoLog
-from persistencia.contrato_repositorio_memoria import ContratoRepositorioMemoria
+from infraestrutura.contrato_repositorio_memoria import ContratoRepositorioMemoria
 
 
 @pytest.fixture
@@ -172,3 +172,4 @@ def test_data_fora_do_formato_deve_citar_o_campo_com_o_mesmo_nome_da_tela(
         controller.adicionar(gestor, dados_validos)
 
     assert str(erro.value) == f"O campo '{rotulo}' deve estar no formato dd/mm/aaaa"
+

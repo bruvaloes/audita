@@ -1,4 +1,4 @@
-"""Renumerar um contrato não pode deixar evidências sem contrato: as
+﻿"""Renumerar um contrato não pode deixar evidências sem contrato: as
 evidências apontam para o número (RF 06)."""
 from datetime import datetime
 
@@ -13,8 +13,8 @@ from entidade.situacao_validacao import SituacaoValidacao
 from excecao.validacao_error import ContratoComEvidenciasError
 from log.log_auditoria_memoria import LogAuditoriaMemoria
 from log.operacao_log import OperacaoLog
-from persistencia.contrato_repositorio_memoria import ContratoRepositorioMemoria
-from persistencia.evidencia_repositorio_memoria import EvidenciaRepositorioMemoria
+from infraestrutura.contrato_repositorio_memoria import ContratoRepositorioMemoria
+from infraestrutura.evidencia_repositorio_memoria import EvidenciaRepositorioMemoria
 
 
 def dados(numero="CT-1"):
@@ -73,3 +73,4 @@ def test_numero_pode_mudar_sem_evidencias_e_mantem_os_vinculos(
     assert renomeado.usuarios_vinculados == [7]
     assert controller.buscar_por_numero(gestor, "CT-1") is None
     assert log.listar()[-1].operacao == OperacaoLog.EDICAO
+

@@ -25,9 +25,9 @@ from excecao.validacao_error import (
 from log.log_auditoria import LogAuditoria
 from log.operacao_log import OperacaoLog
 from log.registro_log import RegistroLog
-from persistencia.contrato_repositorio import ContratoRepositorio
-from persistencia.evidencia_repositorio import EvidenciaRepositorio
-from persistencia.usuario_repositorio import UsuarioRepositorio
+from negocio.contrato_repositorio import ContratoRepositorio
+from negocio.evidencia_repositorio import EvidenciaRepositorio
+from negocio.usuario_repositorio import UsuarioRepositorio
 
 
 ITENS_POR_PAGINA = 20  # RN05.4

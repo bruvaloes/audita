@@ -1,4 +1,4 @@
-"""Testes unitários dos validadores do cadastro, isolados do controller."""
+﻿"""Testes unitários dos validadores do cadastro, isolados do controller."""
 import pytest
 
 from controle.validacao.validador_aceite_termos import ValidadorAceiteTermos
@@ -25,7 +25,7 @@ from excecao.validacao_error import (
     TermosNaoAceitosError,
     UsuarioDuplicadoError,
 )
-from persistencia.usuario_repositorio_memoria import UsuarioRepositorioMemoria
+from infraestrutura.usuario_repositorio_memoria import UsuarioRepositorioMemoria
 
 
 class TestCampoObrigatorio:
@@ -144,3 +144,4 @@ class TestUnicidade:
     ])
     def test_deve_aceitar_valor_novo(self, repositorio, fabrica, valor):
         fabrica(repositorio).validar(valor)
+

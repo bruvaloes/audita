@@ -1,6 +1,6 @@
 from entidade.contrato import Contrato
 from excecao.persistencia_error import EscritaPersistenciaError
-from persistencia.contrato_repositorio import ContratoRepositorio
+from negocio.contrato_repositorio import ContratoRepositorio
 
 
 class ContratoRepositorioMemoria(ContratoRepositorio):
@@ -29,3 +29,4 @@ class ContratoRepositorioMemoria(ContratoRepositorio):
 
     def remover(self, numero: str) -> None:
         self._contratos.pop(numero, None)
+

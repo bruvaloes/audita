@@ -1,9 +1,10 @@
 """Fachada única com os padrões Facade e Singleton (Issue #19).
 
 Centraliza o acesso das camadas de fronteira às operações de negócio
-(usuários, autenticação e contratos) e garante uma instância única
+(usuários, autenticação, contratos e relatórios) e garante uma instância única
 para coordenação dos controladores e contagem global de entidades.
 """
+from pathlib import Path
 from typing import ClassVar
 
 from controle.autenticacao_controller import AutenticacaoController
@@ -14,18 +15,19 @@ from controle.contrato_controller import (
 )
 from controle.dados_cadastro_contrato import DadosCadastroContrato
 from controle.dados_cadastro_usuario import DadosCadastroUsuario
+from controle.relatorio_controller import RelatorioController
 from controle.usuario_controller import UsuarioController
 from entidade.contrato import Contrato
 from entidade.situacao_contrato import SituacaoContrato
 from entidade.usuario import Usuario
-from persistencia.evidencia_repositorio import EvidenciaRepositorio
+from negocio.evidencia_repositorio import EvidenciaRepositorio
 
 
 class FacadeSingletonController:
     """Fachada única do sistema implementada com o padrão Singleton.
 
-    Concentra os controladores de negócio (UsuarioController, AutenticacaoController
-    e ContratoController), provendo um ponto único de entrada para a camada de
+    Concentra os controladores de negócio (UsuarioController, AutenticacaoController,
+    ContratoController e RelatorioController), provendo um ponto único de entrada para a camada de
     fronteira e garantindo uma única instância ativa.
     """
 
@@ -43,6 +45,7 @@ class FacadeSingletonController:
         autenticacao_controller: AutenticacaoController | None = None,
         contrato_controller: ContratoController | None = None,
         evidencia_repositorio: EvidenciaRepositorio | None = None,
+        relatorio_controller: RelatorioController | None = None,
     ) -> None:
         if not getattr(self, "_inicializado", False) or usuario_controller is not None:
             if usuario_controller is not None:
@@ -55,6 +58,8 @@ class FacadeSingletonController:
                 self._evidencia_repositorio = evidencia_repositorio
             elif not hasattr(self, "_evidencia_repositorio"):
                 self._evidencia_repositorio = None
+            if relatorio_controller is not None:
+                self._relatorio_controller = relatorio_controller
 
             self._inicializado = True
 
@@ -92,6 +97,10 @@ class FacadeSingletonController:
     @property
     def evidencia_repositorio(self) -> EvidenciaRepositorio | None:
         return self._evidencia_repositorio
+
+    @property
+    def relatorio_controller(self) -> RelatorioController:
+        return self._relatorio_controller
 
     # =========================================================================
     # Operações de Autenticação (RF 02 / #56)
@@ -314,6 +323,15 @@ class FacadeSingletonController:
             numero=numero,
             id_usuario=id_usuario,
         )
+
+    # =========================================================================
+    # Relatórios (RF 15 / #22)
+    # =========================================================================
+
+    def gerar_relatorio_acessos(self, solicitante: Usuario | None) -> Path:
+        """Gera o relatório de estatísticas de acesso e devolve onde o
+        arquivo foi salvo (RF 15)."""
+        return self._relatorio_controller.gerar_relatorio_acessos(solicitante)
 
     # =========================================================================
     # Contagem de Entidades (Issue #19)

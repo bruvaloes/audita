@@ -1,4 +1,4 @@
-"""Testes de listagem de contratos (RF 05).
+﻿"""Testes de listagem de contratos (RF 05).
 
 Cobre os critérios de aceite C1 a C4 e regras RN05.1 a RN05.4:
 - C1: 45 contratos -> mostra os 20 mais recentes (ordem decrescente) e navegação para pág 2 e 3
@@ -15,7 +15,7 @@ from controle.contrato_controller import ContratoController
 from controle.dados_cadastro_contrato import DadosCadastroContrato
 from entidade.contrato import Contrato
 from entidade.situacao_contrato import SituacaoContrato
-from persistencia.contrato_repositorio_memoria import ContratoRepositorioMemoria
+from infraestrutura.contrato_repositorio_memoria import ContratoRepositorioMemoria
 
 
 @pytest.fixture
@@ -176,3 +176,4 @@ def test_contar_deve_devolver_a_quantidade_de_contratos(controller, gestor):
             vigencia_inicio="01/01/2026", vigencia_fim="31/12/2026"))
 
     assert controller.contar() == 3
+

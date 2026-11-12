@@ -23,6 +23,7 @@ Aplicação para registro e gestão de vistorias de serviços terceirizados.
   - [Autenticação](#autenticação)
   - [Contratos](#contratos)
   - [Fachada e log de auditoria](#fachada-e-log-de-auditoria)
+  - [Relatório de acessos](#relatório-de-acessos)
   - [Persistência](#persistência)
   - [Repositório](#repositório)
   - [Documentação](#documentação)
@@ -41,6 +42,7 @@ O Audita apoia a fiscalização de contratos públicos terceirizados: o gestor c
 - **Cadastro e login de usuários**, com perfil (Gestor, Fiscal ou Funcionário) e controle de acesso por perfil.
 - **Cadastro e gestão de contratos**: cadastrar, listar (com busca, filtro e paginação), editar, encerrar, remover e vincular usuários.
 - **Log de auditoria** das ações críticas e **fachada única** que concentra o acesso aos controllers.
+- **Relatório de estatísticas de acesso em PDF**, gerado pelo Gestor.
 
 O registro fotográfico de tarefas e a validação manual das evidências fazem parte do produto completo e ainda não foram implementados.
 
@@ -53,14 +55,14 @@ O registro fotográfico de tarefas e a validação manual das evidências fazem 
 - Controle de acesso por perfil nos controllers e painel por perfil.
 - CRUD de contratos e vínculo de fiscais e funcionários (veja [Contratos](#contratos)).
 - Log de auditoria e fachada única, com a contagem de entidades cadastradas (veja [Fachada e log de auditoria](#fachada-e-log-de-auditoria)).
+- Relatório de acessos em PDF, com Template Method (veja [Relatório de acessos](#relatório-de-acessos)).
 - Persistência em memória ou em SQLite, escolhida no início da execução (veja [Persistência](#persistência)).
 
 **Planejado**
 
 - Bloqueio após tentativas de login falhas e expiração de sessão.
-- Relatório de acessos.
 - Registro fotográfico de tarefas e validação das evidências.
-- Repository com Factory, Template Method, Command e Memento (próximas sprints).
+- Repository com Factory, Command e Memento (próximas sprints).
 
 ## Integrantes
 
@@ -75,6 +77,7 @@ O registro fotográfico de tarefas e a validação manual das evidências fazem 
 - **Python 3.10+**
 - **SQLite** e memória como mecanismos de persistência, escolhidos ao iniciar
 - **argon2-cffi** para o hash das senhas (Argon2id)
+- **fpdf2** para o relatório de acessos em PDF (e **pypdf** nos testes, para ler o PDF gerado)
 - **pytest** para testes
 - Interface de console
 
@@ -178,6 +181,12 @@ Renumerar um contrato com evidências é recusado, porque as evidências apontam
 - **Fachada.** `FacadeSingletonController` (Facade + Singleton) é o ponto único de acesso das telas aos controllers de autenticação, de usuários e de contratos. Ela também informa a quantidade de entidades cadastradas (`contar_entidades()` e `contar_entidades_detalhado()`), uma consulta pública que não traz dados pessoais, disponível na opção **4** do menu. Veja o [ADR 0002](docs/adr/0002-fachada-unica.md).
 - **Log de auditoria.** O cadastro de usuário e o cadastro, a edição, a remoção e os vínculos de contrato geram um registro com usuário, operação, data e hora e detalhes. A interface `LogAuditoria` só permite registrar e consultar, e o `LogAuditoriaAdapter` isola a biblioteca `logging`. No SQLite os registros ficam em `auditoria.log`.
 
+## Relatório de acessos
+
+No painel do Gestor, **Gerar relatório de acessos** cria um PDF com as estatísticas das tentativas de login: o total, os sucessos e as falhas, a quantidade por resultado (`SUCESSO`, `CREDENCIAIS_INVALIDAS` e `BLOQUEADO`, este sempre 0 nesta etapa) e por perfil informado. Datas e horários saem em `dd/mm/aaaa hh:mm`. O arquivo é salvo em `relatorios/`, na pasta de execução, e a tela mostra o caminho. Fiscal e Funcionário não veem a opção, e o `RelatorioController` responde `Acesso negado` se ela for acionada por eles.
+
+O relatório segue o padrão **Template Method**: a classe abstrata `RelatorioAcessos` fixa o passo a passo (coletar, calcular, formatar e salvar), e `RelatorioAcessosPdf` implementa só o formato. Outro formato, como HTML, é uma nova subclasse, sem mudar as existentes.
+
 ## Persistência
 
 Ao iniciar, o programa pergunta onde guardar os dados:
@@ -199,7 +208,7 @@ Cada entidade tem uma interface de repositório, dividida em consulta e persist�
 - [Análise](docs/05-analise.md), [interface](docs/06-interface/README.md), [arquitetura](docs/07-arquitetura/README.md) e [projeto](docs/08-projeto.md)
 - [Revisões de código](docs/09-revisoes-de-codigo.md)
 - Decisões de arquitetura: [ADR 0001](docs/adr/0001-persistencia-substituivel.md) e [ADR 0002](docs/adr/0002-fachada-unica.md)
-- Especificações em [`openspec/specs`](openspec/specs) (usuários, contratos e fachada)
+- Especificações em [`openspec/specs`](openspec/specs) (usuários, contratos e fachada) e mudanças em andamento em [`openspec/changes`](openspec/changes) (relatório de acessos)
 - [Board do projeto (GitHub Projects)](https://github.com/users/bruvaloes/projects/1)
 - [Guia de contribuição](CONTRIBUTING.md)
 
@@ -215,11 +224,12 @@ audita/
 │   └── changes/archive/         # Mudanças já concluídas
 ├── src/
 │   ├── fronteira/               # Telas de console e painel por perfil
-│   ├── controle/                # Regras de negócio, validações, acesso, autenticação e fachada
+│   ├── controle/                # Regras de negócio, validações, acesso, autenticação, relatórios e fachada
 │   ├── entidade/                # Entidades de domínio
 │   ├── excecao/                 # Exceções de validação, de acesso, de autenticação e de persistência
 │   ├── log/                     # Log de auditoria
-│   ├── persistencia/            # Repositórios (memória e SQLite)
+│   ├── negocio/                 # Interfaces dos repositórios
+│   ├── infraestrutura/          # Repositórios (memória e SQLite) e fábricas
 │   └── main.py                  # Ponto de entrada da aplicação
 ├── tests/                       # Testes unitários e de integração
 └── requirements.txt             # Dependências

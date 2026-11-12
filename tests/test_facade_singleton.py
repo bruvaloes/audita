@@ -1,4 +1,4 @@
-from datetime import datetime
+﻿from datetime import datetime
 from unittest.mock import MagicMock
 import pytest
 
@@ -8,6 +8,7 @@ from controle.contrato_controller import ContratoController, ResultadoPaginado
 from controle.dados_cadastro_contrato import DadosCadastroContrato
 from controle.dados_cadastro_usuario import DadosCadastroUsuario
 from controle.facade_singleton_controller import FacadeSingletonController
+from controle.relatorio_controller import RelatorioController
 from controle.seguranca.hash_senha_argon2 import HashSenhaArgon2
 from controle.sessao import Sessao
 from controle.usuario_controller import UsuarioController
@@ -22,11 +23,11 @@ from fronteira.autenticacao_fronteira import AutenticacaoFronteira
 from fronteira.contrato_fronteira import ContratoFronteira
 from fronteira.painel_fronteira import PainelFronteira
 from fronteira.usuario_fronteira import UsuarioFronteira
-from persistencia.acesso_repositorio_memoria import AcessoRepositorioMemoria
-from persistencia.contrato_repositorio_memoria import ContratoRepositorioMemoria
-from persistencia.evidencia_repositorio import EvidenciaRepositorio
-from persistencia.evidencia_repositorio_memoria import EvidenciaRepositorioMemoria
-from persistencia.usuario_repositorio_memoria import UsuarioRepositorioMemoria
+from infraestrutura.acesso_repositorio_memoria import AcessoRepositorioMemoria
+from infraestrutura.contrato_repositorio_memoria import ContratoRepositorioMemoria
+from negocio.evidencia_repositorio import EvidenciaRepositorio
+from infraestrutura.evidencia_repositorio_memoria import EvidenciaRepositorioMemoria
+from infraestrutura.usuario_repositorio_memoria import UsuarioRepositorioMemoria
 
 
 @pytest.fixture(autouse=True)
@@ -65,17 +66,24 @@ def mock_evidencia_repositorio():
 
 
 @pytest.fixture
+def mock_relatorio_controller():
+    return MagicMock(spec=RelatorioController)
+
+
+@pytest.fixture
 def fachada(
     mock_usuario_controller,
     mock_autenticacao_controller,
     mock_contrato_controller,
     mock_evidencia_repositorio,
+    mock_relatorio_controller,
 ):
     return FacadeSingletonController(
         usuario_controller=mock_usuario_controller,
         autenticacao_controller=mock_autenticacao_controller,
         contrato_controller=mock_contrato_controller,
         evidencia_repositorio=mock_evidencia_repositorio,
+        relatorio_controller=mock_relatorio_controller,
     )
 
 
@@ -320,6 +328,21 @@ def test_vincular_e_desvincular_usuario_delega(fachada, mock_contrato_controller
     )
 
 
+def test_gerar_relatorio_acessos_delega_para_relatorio_controller(
+    fachada, mock_relatorio_controller, tmp_path
+):
+    solicitante = MagicMock(spec=Usuario)
+    mock_relatorio_controller.gerar_relatorio_acessos.return_value = (
+        tmp_path / "relatorio.pdf")
+
+    caminho = fachada.gerar_relatorio_acessos(solicitante)
+
+    mock_relatorio_controller.gerar_relatorio_acessos.assert_called_once_with(
+        solicitante)
+    assert caminho == tmp_path / "relatorio.pdf"
+    assert fachada.relatorio_controller is mock_relatorio_controller
+
+
 # =============================================================================
 # Testes do Método de Contagem de Entidades
 # =============================================================================
@@ -475,3 +498,4 @@ def test_fluxo_integracao_completo_via_fachada():
         "evidencias": 1,
         "total": 3,
     }
+

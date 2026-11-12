@@ -3,7 +3,7 @@ from typing import Callable
 from controle.validacao.validador import Validador
 from entidade.usuario import Usuario
 from excecao.validacao_error import UsuarioDuplicadoError
-from persistencia.usuario_repositorio import ConsultaUsuarios
+from negocio.usuario_repositorio import ConsultaUsuarios
 
 
 class ValidadorUnicidade(Validador):

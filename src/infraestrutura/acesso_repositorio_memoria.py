@@ -1,5 +1,5 @@
 from entidade.acesso import Acesso
-from persistencia.acesso_repositorio import AcessoRepositorio
+from negocio.acesso_repositorio import AcessoRepositorio
 
 
 class AcessoRepositorioMemoria(AcessoRepositorio):
@@ -14,3 +14,4 @@ class AcessoRepositorioMemoria(AcessoRepositorio):
 
     def listar_todos(self) -> list[Acesso]:
         return list(self._acessos)
+

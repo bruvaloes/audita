@@ -6,8 +6,9 @@ from entidade.perfil import Perfil
 # RF 03 da v2.0. Um novo perfil ou uma nova permissão é uma linha aqui; os
 # controllers não mudam.
 PERMISSOES_PADRAO: Mapping[Perfil, frozenset[Operacao]] = {
-    # RN03.2: gerenciar contratos (RF 04 a RF 08) e validar evidências
-    # (RF 10 e RF 11). Listar usuários apoia o vínculo ao contrato (RF 08).
+    # RN03.2: gerenciar contratos (RF 04 a RF 08), validar evidências
+    # (RF 10 e RF 11) e gerar o relatório de acessos (RN15.1). Listar
+    # usuários apoia o vínculo ao contrato (RF 08).
     Perfil.GESTOR: frozenset({
         Operacao.LISTAR_USUARIOS,
         Operacao.CADASTRAR_CONTRATO,
@@ -17,6 +18,7 @@ PERMISSOES_PADRAO: Mapping[Perfil, frozenset[Operacao]] = {
         Operacao.VINCULAR_USUARIO_CONTRATO,
         Operacao.LISTAR_EVIDENCIAS,
         Operacao.VALIDAR_EVIDENCIA,
+        Operacao.GERAR_RELATORIO_ACESSOS,
     }),
     # RN03.3: nesta etapa o fiscal só se autentica.
     Perfil.FISCAL: frozenset(),

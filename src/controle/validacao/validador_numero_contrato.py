@@ -4,7 +4,7 @@ from excecao.validacao_error import (
     ContratoNumeroJaCadastradoError,
     ValidacaoError,
 )
-from persistencia.contrato_repositorio import ConsultaContratos
+from negocio.contrato_repositorio import ConsultaContratos
 
 
 class ValidadorNumeroContrato(Validador):
