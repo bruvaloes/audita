@@ -20,6 +20,8 @@ env/
 
 # Relatórios gerados pelo sistema
 relatorios/
+# A capacidade relatorios do OpenSpec não é relatório gerado
+!openspec/**/relatorios/
 
 # Testes e cobertura
 .pytest_cache/
