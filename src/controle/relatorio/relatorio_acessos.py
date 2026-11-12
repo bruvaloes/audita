@@ -8,7 +8,7 @@ from entidade.acesso import Acesso
 from entidade.perfil import Perfil
 from entidade.resultado_acesso import ResultadoAcesso
 from excecao.persistencia_error import EscritaPersistenciaError
-from persistencia.acesso_repositorio import ConsultaAcessos
+from negocio.acesso_repositorio import ConsultaAcessos
 
 PASTA_RELATORIOS = "relatorios"
 PREFIXO_ARQUIVO = "relatorio-acessos"

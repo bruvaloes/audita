@@ -13,8 +13,8 @@ from excecao.persistencia_error import (
     EscritaPersistenciaError,
     LeituraPersistenciaError,
 )
-from persistencia.acesso_repositorio import ConsultaAcessos
-from persistencia.acesso_repositorio_memoria import AcessoRepositorioMemoria
+from infraestrutura.acesso_repositorio_memoria import AcessoRepositorioMemoria
+from negocio.acesso_repositorio import ConsultaAcessos
 
 GERADO_EM = datetime(2026, 11, 11, 9, 5, 7)
 
