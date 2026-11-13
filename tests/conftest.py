@@ -84,6 +84,13 @@ def autenticacao(repositorio, acessos, hash_senha, momento):
 
 
 @pytest.fixture
+def fachada(controller, autenticacao):
+    """Fachada real com os controllers de usuário e de autenticação."""
+    return FacadeSingletonController(
+        usuario_controller=controller, autenticacao_controller=autenticacao)
+
+
+@pytest.fixture
 def dados_validos():
     return DadosCadastroUsuario(
         nome="Maria",

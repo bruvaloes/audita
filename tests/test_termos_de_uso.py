@@ -17,9 +17,9 @@ RESPOSTAS_DO_CADASTRO = [
 
 
 @pytest.fixture
-def fronteira(controller, autenticacao, painel, sessao):
+def fronteira(fachada, autenticacao, painel, sessao):
     return UsuarioFronteira(
-        controller, AutenticacaoFronteira(autenticacao, painel), sessao)
+        fachada, AutenticacaoFronteira(autenticacao, painel), sessao)
 
 
 def simular_entradas(monkeypatch, *entradas):

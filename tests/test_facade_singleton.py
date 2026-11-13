@@ -8,6 +8,7 @@ from controle.contrato_controller import ContratoController, ResultadoPaginado
 from controle.dados_cadastro_contrato import DadosCadastroContrato
 from controle.dados_cadastro_usuario import DadosCadastroUsuario
 from controle.facade_singleton_controller import FacadeSingletonController
+from controle.filtro_contratos import FiltroContratos
 from controle.relatorio_controller import RelatorioController
 from controle.seguranca.hash_senha_argon2 import HashSenhaArgon2
 from controle.sessao import Sessao
@@ -162,14 +163,6 @@ def test_adicionar_usuario_delega_para_usuario_controller(
     assert resultado is usuario_esperado
 
 
-def test_alias_adicionar_compativel_com_usuario_controller(
-    fachada, mock_usuario_controller
-):
-    dados = MagicMock(spec=DadosCadastroUsuario)
-    fachada.adicionar(dados)
-    mock_usuario_controller.adicionar.assert_called_once_with(dados)
-
-
 def test_listar_usuarios_delega_para_usuario_controller(
     fachada, mock_usuario_controller
 ):
@@ -181,14 +174,6 @@ def test_listar_usuarios_delega_para_usuario_controller(
 
     mock_usuario_controller.listar_todos.assert_called_once_with(solicitante)
     assert resultado == lista_esperada
-
-
-def test_alias_listar_todos_compativel_com_usuario_controller(
-    fachada, mock_usuario_controller
-):
-    solicitante = MagicMock(spec=Usuario)
-    fachada.listar_todos(solicitante)
-    mock_usuario_controller.listar_todos.assert_called_once_with(solicitante)
 
 
 # =============================================================================
@@ -219,11 +204,13 @@ def test_listar_contratos_delega_para_contrato_controller(
 
     resultado = fachada.listar_contratos(
         solicitante,
-        busca="Tech",
-        situacao=SituacaoContrato.ATIVO,
-        pagina=2,
-        por_pagina=10,
-        id_usuario=5,
+        FiltroContratos(
+            busca="Tech",
+            situacao=SituacaoContrato.ATIVO,
+            pagina=2,
+            por_pagina=10,
+            id_usuario=5,
+        ),
     )
 
     mock_contrato_controller.listar.assert_called_once_with(
@@ -237,14 +224,14 @@ def test_listar_contratos_delega_para_contrato_controller(
     assert resultado is resultado_esperado
 
 
-def test_alias_listar_compativel_com_contrato_controller(
+def test_listar_contratos_sem_filtro_usa_a_primeira_pagina_de_todos(
     fachada, mock_contrato_controller
 ):
     solicitante = MagicMock(spec=Usuario)
-    fachada.listar(solicitante, busca="teste")
+    fachada.listar_contratos(solicitante)
     mock_contrato_controller.listar.assert_called_once_with(
         solicitante,
-        busca="teste",
+        busca=None,
         situacao=None,
         pagina=1,
         por_pagina=20,
@@ -263,21 +250,15 @@ def test_buscar_contrato_por_numero_delega(
     mock_contrato_controller.buscar_por_numero.assert_called_once_with(solicitante, "123/2026")
     assert resultado is contrato_esperado
 
-    fachada.buscar_por_numero(solicitante, "123/2026")
-    assert mock_contrato_controller.buscar_por_numero.call_count == 2
-
 
 def test_atualizar_contrato_delega(fachada, mock_contrato_controller):
     dados = MagicMock(spec=DadosCadastroContrato)
     solicitante = MagicMock(spec=Usuario)
-    fachada.atualizar_contrato(
-        solicitante, "123/2026", dados, nova_situacao=SituacaoContrato.ATIVO
-    )
+    fachada.atualizar_contrato(solicitante, "123/2026", dados)
     mock_contrato_controller.atualizar.assert_called_once_with(
         solicitante,
         numero_atual="123/2026",
         dados=dados,
-        nova_situacao=SituacaoContrato.ATIVO,
     )
 
 
@@ -355,8 +336,6 @@ def test_contar_entidades_soma_usuarios_contratos_e_evidencias(
 
     total = fachada.contar_entidades()
     assert total == 3 + 4 + 2  # 9
-
-    assert fachada.quantidade_entidades_cadastradas() == 9
 
     detalhes = fachada.contar_entidades_detalhado()
     assert detalhes == {
