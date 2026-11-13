@@ -1,24 +1,51 @@
-"""Fachada única com os padrões Facade e Singleton (Issue #19).
+"""Fachada única com os padrões Facade, Singleton (Issue #19) e Command
+(Issue #25).
 
 Centraliza o acesso das camadas de fronteira às operações de negócio
 (usuários, autenticação, contratos e relatórios) e garante uma instância única
-para coordenação dos controladores e contagem global de entidades.
+para coordenação dos controladores e contagem global de entidades. Cada
+operação é montada como um comando e executada pelo `ExecutorComandos`; os
+controllers são os receptores e continuam conferindo as permissões.
 """
 from pathlib import Path
 from typing import ClassVar
 
 from controle.autenticacao_controller import AutenticacaoController
-from controle.contrato_controller import (
-    ITENS_POR_PAGINA,
-    ContratoController,
-    ResultadoPaginado,
+from controle.comando.atualizar_contrato_comando import AtualizarContratoComando
+from controle.comando.autenticar_comando import AutenticarComando, Credenciais
+from controle.comando.buscar_contrato_comando import BuscarContratoComando
+from controle.comando.cadastrar_contrato_comando import CadastrarContratoComando
+from controle.comando.cadastrar_usuario_comando import CadastrarUsuarioComando
+from controle.comando.contar_entidades_comando import ContarEntidadesComando
+from controle.comando.dados_comando_contrato import (
+    AtualizacaoContrato,
+    RemocaoContrato,
+    VinculoContrato,
 )
+from controle.comando.desvincular_usuario_contrato_comando import (
+    DesvincularUsuarioContratoComando,
+)
+from controle.comando.encerrar_contrato_comando import EncerrarContratoComando
+from controle.comando.executor_comandos import ExecutorComandos
+from controle.comando.gerar_relatorio_acessos_comando import (
+    GerarRelatorioAcessosComando,
+)
+from controle.comando.listar_contratos_comando import ListarContratosComando
+from controle.comando.listar_usuarios_comando import ListarUsuariosComando
+from controle.comando.remover_contrato_comando import RemoverContratoComando
+from controle.comando.validar_recebimento_evidencia_comando import (
+    ValidarRecebimentoEvidenciaComando,
+)
+from controle.comando.vincular_usuario_contrato_comando import (
+    VincularUsuarioContratoComando,
+)
+from controle.contrato_controller import ContratoController, ResultadoPaginado
 from controle.dados_cadastro_contrato import DadosCadastroContrato
 from controle.dados_cadastro_usuario import DadosCadastroUsuario
+from controle.filtro_contratos import FiltroContratos
 from controle.relatorio_controller import RelatorioController
 from controle.usuario_controller import UsuarioController
 from entidade.contrato import Contrato
-from entidade.situacao_contrato import SituacaoContrato
 from entidade.usuario import Usuario
 from negocio.evidencia_repositorio import EvidenciaRepositorio
 
@@ -28,7 +55,9 @@ class FacadeSingletonController:
 
     Concentra os controladores de negócio (UsuarioController, AutenticacaoController,
     ContratoController e RelatorioController), provendo um ponto único de entrada para a camada de
-    fronteira e garantindo uma única instância ativa.
+    fronteira e garantindo uma única instância ativa. É o cliente do padrão
+    Command: cada método só monta o comando da operação e o entrega ao
+    executor, sem regra de negócio própria.
     """
 
     _instancia: ClassVar["FacadeSingletonController | None"] = None
@@ -60,6 +89,8 @@ class FacadeSingletonController:
                 self._evidencia_repositorio = None
             if relatorio_controller is not None:
                 self._relatorio_controller = relatorio_controller
+            if not hasattr(self, "_executor"):
+                self._executor = ExecutorComandos()
 
             self._inicializado = True
 
@@ -102,15 +133,20 @@ class FacadeSingletonController:
     def relatorio_controller(self) -> RelatorioController:
         return self._relatorio_controller
 
+    @property
+    def executor(self) -> ExecutorComandos:
+        return self._executor
+
     # =========================================================================
     # Operações de Autenticação (RF 02 / #56)
     # =========================================================================
 
     def autenticar(self, identificador: str, senha: str, perfil: str) -> Usuario:
         """Autentica o usuário pelo identificador, senha e perfil informado."""
-        return self._autenticacao_controller.autenticar(
-            identificador=identificador, senha=senha, perfil=perfil
-        )
+        return self._executor.executar(AutenticarComando(
+            self._autenticacao_controller,
+            Credenciais(identificador, senha, perfil),
+        ))
 
     # =========================================================================
     # Operações de Usuários (RF 01)
@@ -118,20 +154,13 @@ class FacadeSingletonController:
 
     def adicionar_usuario(self, dados: DadosCadastroUsuario) -> Usuario:
         """Cadastra um novo usuário no sistema."""
-        return self._usuario_controller.adicionar(dados)
+        return self._executor.executar(
+            CadastrarUsuarioComando(self._usuario_controller, dados))
 
     def listar_usuarios(self, solicitante: Usuario | None = None) -> list[Usuario]:
         """Lista todos os usuários cadastrados."""
-        return self._usuario_controller.listar_todos(solicitante)
-
-    # Métodos compatíveis com a interface de UsuarioController (duck typing)
-    def adicionar(self, dados: DadosCadastroUsuario) -> Usuario:
-        """Alias para adicionar_usuario, compatível com UsuarioController."""
-        return self.adicionar_usuario(dados)
-
-    def listar_todos(self, solicitante: Usuario | None = None) -> list[Usuario]:
-        """Alias para listar_usuarios, compatível com UsuarioController."""
-        return self.listar_usuarios(solicitante)
+        return self._executor.executar(
+            ListarUsuariosComando(self._usuario_controller, solicitante))
 
     # =========================================================================
     # Operações de Contratos (RF 04 a RF 08 / #65 a #70)
@@ -143,47 +172,39 @@ class FacadeSingletonController:
         dados: DadosCadastroContrato,
     ) -> Contrato:
         """Cadastra um novo contrato ativo (RF 04)."""
-        return self._contrato_controller.adicionar(solicitante, dados)
+        return self._executor.executar(CadastrarContratoComando(
+            self._contrato_controller, solicitante, dados))
 
     def listar_contratos(
         self,
         solicitante: Usuario | None,
-        busca: str | None = None,
-        situacao: str | SituacaoContrato | None = None,
-        pagina: int = 1,
-        por_pagina: int = ITENS_POR_PAGINA,
-        id_usuario: int | None = None,
+        filtro: FiltroContratos | None = None,
     ) -> ResultadoPaginado:
-        """Lista contratos com filtro, busca e paginação (RF 05 e RF 08)."""
-        return self._contrato_controller.listar(
-            solicitante,
-            busca=busca,
-            situacao=situacao,
-            pagina=pagina,
-            por_pagina=por_pagina,
-            id_usuario=id_usuario,
-        )
+        """Lista contratos com filtro, busca e paginação (RF 05 e RF 08).
+
+        Sem filtro, lista a primeira página de todos os contratos.
+        """
+        return self._executor.executar(ListarContratosComando(
+            self._contrato_controller, solicitante,
+            filtro or FiltroContratos()))
 
     def buscar_contrato_por_numero(
         self, solicitante: Usuario | None, numero: str
     ) -> Contrato | None:
         """Busca um contrato pelo seu número identificador."""
-        return self._contrato_controller.buscar_por_numero(solicitante, numero)
+        return self._executor.executar(BuscarContratoComando(
+            self._contrato_controller, solicitante, numero))
 
     def atualizar_contrato(
         self,
         solicitante: Usuario | None,
         numero_atual: str,
         dados: DadosCadastroContrato,
-        nova_situacao: SituacaoContrato | str | None = None,
     ) -> Contrato:
-        """Atualiza dados cadastrais ou situação de um contrato existente (RF 06)."""
-        return self._contrato_controller.atualizar(
-            solicitante,
-            numero_atual=numero_atual,
-            dados=dados,
-            nova_situacao=nova_situacao,
-        )
+        """Atualiza os dados cadastrais de um contrato existente (RF 06)."""
+        return self._executor.executar(AtualizarContratoComando(
+            self._contrato_controller, solicitante,
+            AtualizacaoContrato(numero_atual, dados)))
 
     def encerrar_contrato(
         self,
@@ -191,11 +212,13 @@ class FacadeSingletonController:
         numero: str,
     ) -> Contrato:
         """Encerra um contrato alterando a situação para ENCERRADO (RF 06)."""
-        return self._contrato_controller.encerrar(solicitante, numero)
+        return self._executor.executar(EncerrarContratoComando(
+            self._contrato_controller, solicitante, numero))
 
     def validar_recebimento_evidencia(self, numero: str) -> None:
         """Valida se o contrato está ativo para receber evidências (RN06.2)."""
-        return self._contrato_controller.validar_recebimento_evidencia(numero)
+        return self._executor.executar(ValidarRecebimentoEvidenciaComando(
+            self._contrato_controller, numero))
 
     def remover_contrato(
         self,
@@ -204,11 +227,9 @@ class FacadeSingletonController:
         confirmado: bool = False,
     ) -> bool:
         """Remove contrato sem evidências vinculadas após confirmação (RF 07)."""
-        return self._contrato_controller.remover(
-            solicitante=solicitante,
-            numero=numero,
-            confirmado=confirmado,
-        )
+        return self._executor.executar(RemoverContratoComando(
+            self._contrato_controller, solicitante,
+            RemocaoContrato(numero, confirmado)))
 
     def vincular_usuario_contrato(
         self,
@@ -217,11 +238,9 @@ class FacadeSingletonController:
         id_usuario: int,
     ) -> None:
         """Vincula um fiscal ou funcionário a um contrato (RF 08)."""
-        return self._contrato_controller.vincular(
-            solicitante=solicitante,
-            numero=numero,
-            id_usuario=id_usuario,
-        )
+        return self._executor.executar(VincularUsuarioContratoComando(
+            self._contrato_controller, solicitante,
+            VinculoContrato(numero, id_usuario)))
 
     def desvincular_usuario_contrato(
         self,
@@ -230,99 +249,9 @@ class FacadeSingletonController:
         id_usuario: int,
     ) -> None:
         """Desvincula um usuário de um contrato respeitando as regras de fiscais (RF 08)."""
-        return self._contrato_controller.desvincular(
-            solicitante=solicitante,
-            numero=numero,
-            id_usuario=id_usuario,
-        )
-
-    # Métodos compatíveis com a interface de ContratoController (duck typing)
-    def listar(
-        self,
-        solicitante: Usuario | None,
-        busca: str | None = None,
-        situacao: str | SituacaoContrato | None = None,
-        pagina: int = 1,
-        por_pagina: int = ITENS_POR_PAGINA,
-        id_usuario: int | None = None,
-    ) -> ResultadoPaginado:
-        """Alias para listar_contratos, compatível com ContratoController."""
-        return self.listar_contratos(
-            solicitante,
-            busca=busca,
-            situacao=situacao,
-            pagina=pagina,
-            por_pagina=por_pagina,
-            id_usuario=id_usuario,
-        )
-
-    def buscar_por_numero(
-        self, solicitante: Usuario | None, numero: str
-    ) -> Contrato | None:
-        """Alias para buscar_contrato_por_numero, compatível com ContratoController."""
-        return self.buscar_contrato_por_numero(solicitante, numero)
-
-    def atualizar(
-        self,
-        solicitante: Usuario | None,
-        numero_atual: str,
-        dados: DadosCadastroContrato,
-        nova_situacao: SituacaoContrato | str | None = None,
-    ) -> Contrato:
-        """Alias para atualizar_contrato, compatível com ContratoController."""
-        return self.atualizar_contrato(
-            solicitante,
-            numero_atual=numero_atual,
-            dados=dados,
-            nova_situacao=nova_situacao,
-        )
-
-    def encerrar(
-        self,
-        solicitante: Usuario | None,
-        numero: str,
-    ) -> Contrato:
-        """Alias para encerrar_contrato, compatível com ContratoController."""
-        return self.encerrar_contrato(solicitante, numero)
-
-    def remover(
-        self,
-        solicitante: Usuario | None,
-        numero: str,
-        confirmado: bool = False,
-    ) -> bool:
-        """Alias para remover_contrato, compatível com ContratoController."""
-        return self.remover_contrato(
-            solicitante=solicitante,
-            numero=numero,
-            confirmado=confirmado,
-        )
-
-    def vincular(
-        self,
-        solicitante: Usuario | None,
-        numero: str,
-        id_usuario: int,
-    ) -> None:
-        """Alias para vincular_usuario_contrato, compatível com ContratoController."""
-        return self.vincular_usuario_contrato(
-            solicitante=solicitante,
-            numero=numero,
-            id_usuario=id_usuario,
-        )
-
-    def desvincular(
-        self,
-        solicitante: Usuario | None,
-        numero: str,
-        id_usuario: int,
-    ) -> None:
-        """Alias para desvincular_usuario_contrato, compatível com ContratoController."""
-        return self.desvincular_usuario_contrato(
-            solicitante=solicitante,
-            numero=numero,
-            id_usuario=id_usuario,
-        )
+        return self._executor.executar(DesvincularUsuarioContratoComando(
+            self._contrato_controller, solicitante,
+            VinculoContrato(numero, id_usuario)))
 
     # =========================================================================
     # Relatórios (RF 15 / #22)
@@ -331,7 +260,8 @@ class FacadeSingletonController:
     def gerar_relatorio_acessos(self, solicitante: Usuario | None) -> Path:
         """Gera o relatório de estatísticas de acesso e devolve onde o
         arquivo foi salvo (RF 15)."""
-        return self._relatorio_controller.gerar_relatorio_acessos(solicitante)
+        return self._executor.executar(GerarRelatorioAcessosComando(
+            self._relatorio_controller, solicitante))
 
     # =========================================================================
     # Contagem de Entidades (Issue #19)
@@ -343,19 +273,10 @@ class FacadeSingletonController:
         isso não exige login."""
         return self.contar_entidades_detalhado()["total"]
 
-    def quantidade_entidades_cadastradas(self) -> int:
-        """Alias para contar_entidades."""
-        return self.contar_entidades()
-
     def contar_entidades_detalhado(self) -> dict[str, int]:
         """Quantidade de cada tipo de entidade e o total."""
-        usuarios = self._usuario_controller.contar()
-        contratos = self._contrato_controller.contar()
-        evidencias = (len(self._evidencia_repositorio.listar())
-                      if self._evidencia_repositorio is not None else 0)
-        return {
-            "usuarios": usuarios,
-            "contratos": contratos,
-            "evidencias": evidencias,
-            "total": usuarios + contratos + evidencias,
-        }
+        return self._executor.executar(ContarEntidadesComando(
+            self._usuario_controller,
+            self._contrato_controller,
+            self._evidencia_repositorio,
+        ))

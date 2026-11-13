@@ -21,13 +21,6 @@ from fronteira.usuario_fronteira import UsuarioFronteira
 ROTULO = "Gerar relatório de acessos"
 
 
-@pytest.fixture(autouse=True)
-def limpar_singleton():
-    FacadeSingletonController.resetar_instancia()
-    yield
-    FacadeSingletonController.resetar_instancia()
-
-
 @pytest.fixture
 def pasta(tmp_path):
     return tmp_path / "relatorios"

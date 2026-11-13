@@ -2,7 +2,6 @@ from typing import TYPE_CHECKING
 
 from controle.dados_cadastro_usuario import DadosCadastroUsuario
 from controle.sessao import Sessao
-from controle.usuario_controller import UsuarioController
 from entidade.perfil import Perfil
 from entidade.usuario import Usuario
 from excecao.acesso_negado_error import AcessoNegadoError
@@ -23,7 +22,7 @@ LARGURA_TABELA = 75
 
 class UsuarioFronteira:
 
-    def __init__(self, controller: "FacadeSingletonController | UsuarioController",
+    def __init__(self, controller: "FacadeSingletonController",
                  autenticacao_fronteira: AutenticacaoFronteira,
                  sessao: Sessao):
         self._controller = controller
@@ -55,7 +54,7 @@ class UsuarioFronteira:
         dados = self._ler_dados_cadastro()
 
         try:
-            usuario = self._controller.adicionar(dados)
+            usuario = self._controller.adicionar_usuario(dados)
         except ValidacaoError as erro:
             print(f"\nErro ao cadastrar: {erro}")
             return
@@ -68,7 +67,7 @@ class UsuarioFronteira:
 
     def listar_usuarios(self) -> None:
         try:
-            usuarios = self._controller.listar_todos(
+            usuarios = self._controller.listar_usuarios(
                 self._sessao.usuario_atual)
         except AcessoNegadoError as erro:
             print(f"\n{erro}")

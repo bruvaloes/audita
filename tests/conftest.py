@@ -5,6 +5,7 @@ import pytest
 from controle.acesso.controle_acesso import ControleAcesso
 from controle.autenticacao_controller import AutenticacaoController
 from controle.dados_cadastro_usuario import DadosCadastroUsuario
+from controle.facade_singleton_controller import FacadeSingletonController
 from controle.usuario_controller import UsuarioController
 from controle.validacao.validador_cadastro_usuario import (
     ValidadorCadastroUsuario,
@@ -16,6 +17,14 @@ from entidade.usuario import Usuario
 from fronteira.painel_fronteira import PainelFronteira
 from infraestrutura.acesso_repositorio_memoria import AcessoRepositorioMemoria
 from infraestrutura.usuario_repositorio_memoria import UsuarioRepositorioMemoria
+
+
+@pytest.fixture(autouse=True)
+def limpar_singleton():
+    """Cada teste começa e termina sem a instância única da fachada."""
+    FacadeSingletonController.resetar_instancia()
+    yield
+    FacadeSingletonController.resetar_instancia()
 
 
 @pytest.fixture
@@ -72,6 +81,13 @@ def momento():
 def autenticacao(repositorio, acessos, hash_senha, momento):
     return AutenticacaoController(
         repositorio, acessos, hash_senha, relogio=lambda: momento)
+
+
+@pytest.fixture
+def fachada(controller, autenticacao):
+    """Fachada real com os controllers de usuário e de autenticação."""
+    return FacadeSingletonController(
+        usuario_controller=controller, autenticacao_controller=autenticacao)
 
 
 @pytest.fixture

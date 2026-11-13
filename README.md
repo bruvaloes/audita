@@ -224,7 +224,7 @@ audita/
 │   └── changes/archive/         # Mudanças já concluídas
 ├── src/
 │   ├── fronteira/               # Telas de console e painel por perfil
-│   ├── controle/                # Regras de negócio, validações, acesso, autenticação, relatórios e fachada
+│   ├── controle/                # Regras de negócio, validações, acesso, autenticação, relatórios, fachada e comandos
 │   ├── entidade/                # Entidades de domínio
 │   ├── excecao/                 # Exceções de validação, de acesso, de autenticação e de persistência
 │   ├── log/                     # Log de auditoria
