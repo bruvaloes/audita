@@ -97,13 +97,6 @@ def test_log_deve_registrar_o_login_de_quem_cadastrou(
 
 # --- Fronteira: o painel só oferece contratos a quem tem permissão ----------
 
-@pytest.fixture(autouse=True)
-def limpar_singleton():
-    FacadeSingletonController.resetar_instancia()
-    yield
-    FacadeSingletonController.resetar_instancia()
-
-
 def _painel_com_contratos(controller, sessao):
     fronteira = ContratoFronteira(
         FacadeSingletonController(contrato_controller=controller), sessao)

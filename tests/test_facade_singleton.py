@@ -30,14 +30,6 @@ from infraestrutura.evidencia_repositorio_memoria import EvidenciaRepositorioMem
 from infraestrutura.usuario_repositorio_memoria import UsuarioRepositorioMemoria
 
 
-@pytest.fixture(autouse=True)
-def limpar_singleton():
-    """Garante que cada teste execute com a instância Singleton resetada."""
-    FacadeSingletonController.resetar_instancia()
-    yield
-    FacadeSingletonController.resetar_instancia()
-
-
 @pytest.fixture
 def mock_usuario_controller():
     return MagicMock(spec=UsuarioController)
