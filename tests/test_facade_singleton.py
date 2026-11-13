@@ -4,6 +4,29 @@ import pytest
 
 from controle.acesso.controle_acesso import ControleAcesso
 from controle.autenticacao_controller import AutenticacaoController
+from controle.comando.atualizar_contrato_comando import AtualizarContratoComando
+from controle.comando.autenticar_comando import AutenticarComando
+from controle.comando.buscar_contrato_comando import BuscarContratoComando
+from controle.comando.cadastrar_contrato_comando import CadastrarContratoComando
+from controle.comando.cadastrar_usuario_comando import CadastrarUsuarioComando
+from controle.comando.contar_entidades_comando import ContarEntidadesComando
+from controle.comando.desvincular_usuario_contrato_comando import (
+    DesvincularUsuarioContratoComando,
+)
+from controle.comando.encerrar_contrato_comando import EncerrarContratoComando
+from controle.comando.executor_comandos import ExecutorComandos
+from controle.comando.gerar_relatorio_acessos_comando import (
+    GerarRelatorioAcessosComando,
+)
+from controle.comando.listar_contratos_comando import ListarContratosComando
+from controle.comando.listar_usuarios_comando import ListarUsuariosComando
+from controle.comando.remover_contrato_comando import RemoverContratoComando
+from controle.comando.validar_recebimento_evidencia_comando import (
+    ValidarRecebimentoEvidenciaComando,
+)
+from controle.comando.vincular_usuario_contrato_comando import (
+    VincularUsuarioContratoComando,
+)
 from controle.contrato_controller import ContratoController, ResultadoPaginado
 from controle.dados_cadastro_contrato import DadosCadastroContrato
 from controle.dados_cadastro_usuario import DadosCadastroUsuario
@@ -314,6 +337,61 @@ def test_gerar_relatorio_acessos_delega_para_relatorio_controller(
         solicitante)
     assert caminho == tmp_path / "relatorio.pdf"
     assert fachada.relatorio_controller is mock_relatorio_controller
+
+
+# =============================================================================
+# Testes do Padrão Command na Fachada (Issue #25)
+# =============================================================================
+
+
+@pytest.mark.parametrize("operacao, comando_esperado", [
+    (lambda f: f.autenticar("admin", "Senha123!", "GESTOR"), AutenticarComando),
+    (lambda f: f.adicionar_usuario(MagicMock(spec=DadosCadastroUsuario)),
+     CadastrarUsuarioComando),
+    (lambda f: f.listar_usuarios(None), ListarUsuariosComando),
+    (lambda f: f.adicionar_contrato(None, MagicMock(spec=DadosCadastroContrato)),
+     CadastrarContratoComando),
+    (lambda f: f.listar_contratos(None), ListarContratosComando),
+    (lambda f: f.buscar_contrato_por_numero(None, "CT-1"), BuscarContratoComando),
+    (lambda f: f.atualizar_contrato(
+        None, "CT-1", MagicMock(spec=DadosCadastroContrato)),
+     AtualizarContratoComando),
+    (lambda f: f.encerrar_contrato(None, "CT-1"), EncerrarContratoComando),
+    (lambda f: f.validar_recebimento_evidencia("CT-1"),
+     ValidarRecebimentoEvidenciaComando),
+    (lambda f: f.remover_contrato(None, "CT-1", confirmado=True),
+     RemoverContratoComando),
+    (lambda f: f.vincular_usuario_contrato(None, "CT-1", 10),
+     VincularUsuarioContratoComando),
+    (lambda f: f.desvincular_usuario_contrato(None, "CT-1", 10),
+     DesvincularUsuarioContratoComando),
+    (lambda f: f.gerar_relatorio_acessos(None), GerarRelatorioAcessosComando),
+    (lambda f: f.contar_entidades_detalhado(), ContarEntidadesComando),
+])
+def test_fachada_deve_executar_cada_operacao_por_um_comando(
+    fachada, monkeypatch, operacao, comando_esperado
+):
+    executor = MagicMock(spec=ExecutorComandos)
+    monkeypatch.setattr(fachada, "_executor", executor)
+
+    resultado = operacao(fachada)
+
+    executor.executar.assert_called_once()
+    comando = executor.executar.call_args.args[0]
+    assert isinstance(comando, comando_esperado)
+    assert resultado is executor.executar.return_value
+
+
+def test_fachada_deve_ter_um_executor_de_comandos(fachada):
+    assert isinstance(fachada.executor, ExecutorComandos)
+
+
+def test_fachada_nao_deve_ter_os_aliases_dos_controllers(fachada):
+    aliases = ("adicionar", "listar_todos", "listar", "buscar_por_numero",
+               "atualizar", "encerrar", "remover", "vincular", "desvincular",
+               "quantidade_entidades_cadastradas")
+
+    assert not [nome for nome in aliases if hasattr(fachada, nome)]
 
 
 # =============================================================================
