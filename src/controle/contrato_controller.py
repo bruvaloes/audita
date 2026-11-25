@@ -6,6 +6,7 @@ from typing import Callable
 from controle.acesso.controle_acesso import ControleAcesso
 from controle.acesso.operacao import Operacao
 from controle.dados_cadastro_contrato import DadosCadastroContrato
+from controle.historico_atualizacao_contrato import HistoricoAtualizacaoContrato
 from controle.utils.datas import formatar_data
 from controle.validacao.validador_cadastro_contrato import ValidadorCadastroContrato
 from entidade.contrato import Contrato
@@ -17,6 +18,7 @@ from excecao.validacao_error import (
     ContratoComEvidenciasError,
     ContratoNaoEncontradoError,
     ContratoNumeroJaCadastradoError,
+    NadaParaDesfazerError,
     PerfilNaoVinculavelError,
     SituacaoInvalidaError,
     UltimoFiscalError,
@@ -69,6 +71,7 @@ class ContratoController:
         self._usuario_repositorio = usuario_repositorio
         self._relogio = relogio
         self._log = log
+        self._historico = HistoricoAtualizacaoContrato()
 
     def adicionar(
         self,
@@ -194,6 +197,7 @@ class ContratoController:
             f"vigencia={contrato.vigencia_inicio} a {contrato.vigencia_fim}, "
             f"situacao={contrato.situacao.value}"
         )
+        memento = contrato.criar_memento()
 
         contrato.empresa_contratada = dados.empresa_contratada.strip()
         contrato.vigencia_inicio = inicio
@@ -215,6 +219,8 @@ class ContratoController:
             contrato = renomeado
         else:
             self._repositorio.atualizar(contrato)
+
+        self._historico.salvar(contrato.numero, memento)
 
         novo = (
             f"numero={contrato.numero}, empresa={contrato.empresa_contratada}, "
@@ -295,6 +301,7 @@ class ContratoController:
 
         # RN07.3: Remove e desfaz vínculos
         self._repositorio.remover(numero)
+        self._historico.limpar()
 
         if self._log:
             self._log.registrar(
@@ -339,8 +346,10 @@ class ContratoController:
 
         # RN08.3: Um usuário pode estar vinculado a mais de um contrato
         if id_usuario not in contrato.usuarios_vinculados:
+            memento = contrato.criar_memento()
             contrato.usuarios_vinculados.append(id_usuario)
             self._repositorio.atualizar(contrato)
+            self._historico.salvar(contrato.numero, memento)
             self._registrar_vinculo(solicitante, "vinculado ao", numero, id_usuario)
 
     def desvincular(
@@ -380,9 +389,53 @@ class ContratoController:
             if len(fiscais_vinculados) <= 1 and id_usuario in fiscais_vinculados:
                 raise UltimoFiscalError()
 
+        memento = contrato.criar_memento()
         contrato.usuarios_vinculados.remove(id_usuario)
         self._repositorio.atualizar(contrato)
+        self._historico.salvar(contrato.numero, memento)
         self._registrar_vinculo(solicitante, "desvinculado do", numero, id_usuario)
+
+    def desfazer_ultima_atualizacao(self, solicitante: Usuario | None) -> Contrato:
+        """Desfaz a última edição, encerramento, vínculo ou desvínculo de
+        contrato, restaurando os valores anteriores (padrão Memento)."""
+        self._controle_acesso.verificar(
+            solicitante, Operacao.DESFAZER_ATUALIZACAO_CONTRATO)
+
+        entrada = self._historico.obter()
+        if entrada is None:
+            raise NadaParaDesfazerError()
+        numero_atual, memento = entrada
+
+        if memento.numero == numero_atual:
+            contrato = self._repositorio.buscar_por_numero(numero_atual)
+            contrato.restaurar(memento)
+            self._repositorio.atualizar(contrato)
+        else:
+            self._repositorio.remover(numero_atual)
+            contrato = Contrato(
+                id=0,
+                numero=memento.numero,
+                empresa_contratada=memento.empresa_contratada,
+                vigencia_inicio=memento.vigencia_inicio,
+                vigencia_fim=memento.vigencia_fim,
+                arquivo=memento.arquivo,
+                situacao=memento.situacao,
+                usuarios_vinculados=list(memento.usuarios_vinculados),
+            )
+            contrato = self._repositorio.salvar(contrato)
+
+        self._historico.limpar()
+
+        if self._log:
+            self._log.registrar(
+                RegistroLog(
+                    usuario=solicitante.login,
+                    operacao=OperacaoLog.EDICAO,
+                    data_hora=self._relogio(),
+                    detalhes=f"Desfeita a última atualização do contrato {numero_atual}",
+                )
+            )
+        return contrato
 
     def _exigir_sem_evidencias(self, numero: str, *mensagem: str) -> None:
         """As evidências apontam para o número do contrato; com elas, o

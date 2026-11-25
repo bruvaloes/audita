@@ -93,3 +93,8 @@ class ContratoNaoEncontradoError(ValidacaoError):
     def __init__(self, mensagem: str = "Contrato não encontrado"):
         super().__init__(mensagem)
 
+
+class NadaParaDesfazerError(ValidacaoError):
+    def __init__(self):
+        super().__init__("Nenhuma atualização para desfazer")
+
