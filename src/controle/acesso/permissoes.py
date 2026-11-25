@@ -16,6 +16,7 @@ PERMISSOES_PADRAO: Mapping[Perfil, frozenset[Operacao]] = {
         Operacao.EDITAR_CONTRATO,
         Operacao.REMOVER_CONTRATO,
         Operacao.VINCULAR_USUARIO_CONTRATO,
+        Operacao.DESFAZER_ATUALIZACAO_CONTRATO,
         Operacao.LISTAR_EVIDENCIAS,
         Operacao.VALIDAR_EVIDENCIA,
         Operacao.GERAR_RELATORIO_ACESSOS,

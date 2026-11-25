@@ -131,6 +131,9 @@ def main():
          contrato_fronteira.vincular_usuario),
         (Operacao.VINCULAR_USUARIO_CONTRATO, "Desvincular usuário de contrato",
          contrato_fronteira.desvincular_usuario),
+        (Operacao.DESFAZER_ATUALIZACAO_CONTRATO,
+         "Desfazer última atualização de contrato",
+         contrato_fronteira.desfazer_ultima_atualizacao),
         (Operacao.GERAR_RELATORIO_ACESSOS, "Gerar relatório de acessos",
          relatorio_fronteira.gerar_relatorio_acessos),
     ):

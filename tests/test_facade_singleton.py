@@ -10,6 +10,9 @@ from controle.comando.buscar_contrato_comando import BuscarContratoComando
 from controle.comando.cadastrar_contrato_comando import CadastrarContratoComando
 from controle.comando.cadastrar_usuario_comando import CadastrarUsuarioComando
 from controle.comando.contar_entidades_comando import ContarEntidadesComando
+from controle.comando.desfazer_atualizacao_contrato_comando import (
+    DesfazerUltimaAtualizacaoContratoComando,
+)
 from controle.comando.desvincular_usuario_contrato_comando import (
     DesvincularUsuarioContratoComando,
 )
@@ -365,6 +368,8 @@ def test_gerar_relatorio_acessos_delega_para_relatorio_controller(
      VincularUsuarioContratoComando),
     (lambda f: f.desvincular_usuario_contrato(None, "CT-1", 10),
      DesvincularUsuarioContratoComando),
+    (lambda f: f.desfazer_ultima_atualizacao_contrato(None),
+     DesfazerUltimaAtualizacaoContratoComando),
     (lambda f: f.gerar_relatorio_acessos(None), GerarRelatorioAcessosComando),
     (lambda f: f.contar_entidades_detalhado(), ContarEntidadesComando),
 ])

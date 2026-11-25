@@ -20,6 +20,9 @@ from controle.comando.dados_comando_contrato import (
     RemocaoContrato,
     VinculoContrato,
 )
+from controle.comando.desfazer_atualizacao_contrato_comando import (
+    DesfazerUltimaAtualizacaoContratoComando,
+)
 from controle.comando.desvincular_usuario_contrato_comando import (
     DesvincularUsuarioContratoComando,
 )
@@ -257,6 +260,13 @@ def test_desvincular_usuario_contrato_comando_deve_desvincular_o_usuario(
 
     contratos.desvincular.assert_called_once_with(
         solicitante=solicitante, numero="CT-1", id_usuario=10)
+
+
+def test_desfazer_atualizacao_contrato_comando_deve_desfazer(
+        contratos, solicitante):
+    DesfazerUltimaAtualizacaoContratoComando(contratos, solicitante).executar()
+
+    contratos.desfazer_ultima_atualizacao.assert_called_once_with(solicitante)
 
 
 def test_validar_recebimento_evidencia_comando_deve_validar_o_contrato(

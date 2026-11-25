@@ -266,6 +266,20 @@ class ContratoFronteira:
         except PersistenciaError as erro:
             print(f"\nErro de armazenamento: {erro}")
 
+    @_mostrando_acesso_negado
+    def desfazer_ultima_atualizacao(self) -> None:
+        print("\n--- Desfazer Última Atualização de Contrato ---")
+        try:
+            contrato = self._controller.desfazer_ultima_atualizacao_contrato(
+                self._solicitante
+            )
+            print("\nÚltima atualização desfeita com sucesso!")
+            print(f"   {contrato}")
+        except ValidacaoError as erro:
+            print(f"\nNão foi possível desfazer a atualização: {erro}")
+        except PersistenciaError as erro:
+            print(f"\nErro de armazenamento: {erro}")
+
     def _exibir_tabela(
         self,
         contratos: list,

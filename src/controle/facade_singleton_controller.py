@@ -22,6 +22,9 @@ from controle.comando.dados_comando_contrato import (
     RemocaoContrato,
     VinculoContrato,
 )
+from controle.comando.desfazer_atualizacao_contrato_comando import (
+    DesfazerUltimaAtualizacaoContratoComando,
+)
 from controle.comando.desvincular_usuario_contrato_comando import (
     DesvincularUsuarioContratoComando,
 )
@@ -252,6 +255,14 @@ class FacadeSingletonController:
         return self._executor.executar(DesvincularUsuarioContratoComando(
             self._contrato_controller, solicitante,
             VinculoContrato(numero, id_usuario)))
+
+    def desfazer_ultima_atualizacao_contrato(
+        self, solicitante: Usuario | None,
+    ) -> Contrato:
+        """Desfaz a última edição, encerramento, vínculo ou desvínculo de
+        contrato."""
+        return self._executor.executar(DesfazerUltimaAtualizacaoContratoComando(
+            self._contrato_controller, solicitante))
 
     # =========================================================================
     # Relatórios (RF 15 / #22)
