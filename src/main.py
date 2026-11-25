@@ -3,6 +3,7 @@ from controle.acesso.operacao import Operacao
 from controle.autenticacao_controller import AutenticacaoController
 from controle.contrato_controller import ContratoController
 from controle.facade_singleton_controller import FacadeSingletonController
+from controle.receptores_fachada import ReceptoresFachada
 from controle.relatorio.relatorio_acessos_pdf import RelatorioAcessosPdf
 from controle.relatorio_controller import RelatorioController
 from controle.seguranca.hash_senha_argon2 import HashSenhaArgon2
@@ -98,13 +99,13 @@ def main():
     # subclasse de RelatorioAcessos (Template Method).
     relatorio_controller = RelatorioController(
         RelatorioAcessosPdf(acesso_repo), controle_acesso)
-    fachada = FacadeSingletonController(
+    fachada = FacadeSingletonController(ReceptoresFachada(
         usuario_controller=controller_usuario,
         autenticacao_controller=autenticacao,
         contrato_controller=contrato_controller,
         evidencia_repositorio=evidencia_repo,
         relatorio_controller=relatorio_controller,
-    )
+    ))
 
     contrato_fronteira = ContratoFronteira(fachada, sessao)
     relatorio_fronteira = RelatorioFronteira(fachada, sessao)

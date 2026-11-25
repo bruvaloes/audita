@@ -8,6 +8,7 @@ from pypdf import PdfReader
 
 from controle.acesso.operacao import Operacao
 from controle.facade_singleton_controller import FacadeSingletonController
+from controle.receptores_fachada import ReceptoresFachada
 from controle.relatorio.relatorio_acessos_pdf import RelatorioAcessosPdf
 from controle.relatorio_controller import RelatorioController
 from entidade.perfil import Perfil
@@ -29,11 +30,11 @@ def pasta(tmp_path):
 @pytest.fixture
 def fachada(controller, autenticacao, acessos, controle_acesso, pasta):
     relatorio = RelatorioAcessosPdf(acessos, pasta_destino=pasta)
-    return FacadeSingletonController(
+    return FacadeSingletonController(ReceptoresFachada(
         usuario_controller=controller,
         autenticacao_controller=autenticacao,
         relatorio_controller=RelatorioController(relatorio, controle_acesso),
-    )
+    ))
 
 
 @pytest.fixture

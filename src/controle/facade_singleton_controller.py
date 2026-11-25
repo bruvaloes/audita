@@ -43,6 +43,7 @@ from controle.contrato_controller import ContratoController, ResultadoPaginado
 from controle.dados_cadastro_contrato import DadosCadastroContrato
 from controle.dados_cadastro_usuario import DadosCadastroUsuario
 from controle.filtro_contratos import FiltroContratos
+from controle.receptores_fachada import ReceptoresFachada
 from controle.relatorio_controller import RelatorioController
 from controle.usuario_controller import UsuarioController
 from entidade.contrato import Contrato
@@ -68,31 +69,32 @@ class FacadeSingletonController:
             cls._instancia._inicializado = False
         return cls._instancia
 
-    def __init__(
-        self,
-        usuario_controller: UsuarioController | None = None,
-        autenticacao_controller: AutenticacaoController | None = None,
-        contrato_controller: ContratoController | None = None,
-        evidencia_repositorio: EvidenciaRepositorio | None = None,
-        relatorio_controller: RelatorioController | None = None,
-    ) -> None:
-        if not getattr(self, "_inicializado", False) or usuario_controller is not None:
-            if usuario_controller is not None:
-                self._usuario_controller = usuario_controller
-            if autenticacao_controller is not None:
-                self._autenticacao_controller = autenticacao_controller
-            if contrato_controller is not None:
-                self._contrato_controller = contrato_controller
-            if evidencia_repositorio is not None:
-                self._evidencia_repositorio = evidencia_repositorio
-            elif not hasattr(self, "_evidencia_repositorio"):
-                self._evidencia_repositorio = None
-            if relatorio_controller is not None:
-                self._relatorio_controller = relatorio_controller
+    def __init__(self, receptores: ReceptoresFachada | None = None) -> None:
+        """Configura os receptores na primeira criação; nas seguintes, só
+        quando vier um controller de usuário, como antes do agrupamento."""
+        receptores = receptores or ReceptoresFachada()
+        if (not getattr(self, "_inicializado", False)
+                or receptores.usuario_controller is not None):
+            self._configurar_receptores(receptores)
             if not hasattr(self, "_executor"):
                 self._executor = ExecutorComandos()
 
             self._inicializado = True
+
+    def _configurar_receptores(self, receptores: ReceptoresFachada) -> None:
+        """Guarda só os receptores informados, mantendo os já configurados."""
+        if receptores.usuario_controller is not None:
+            self._usuario_controller = receptores.usuario_controller
+        if receptores.autenticacao_controller is not None:
+            self._autenticacao_controller = receptores.autenticacao_controller
+        if receptores.contrato_controller is not None:
+            self._contrato_controller = receptores.contrato_controller
+        if receptores.evidencia_repositorio is not None:
+            self._evidencia_repositorio = receptores.evidencia_repositorio
+        elif not hasattr(self, "_evidencia_repositorio"):
+            self._evidencia_repositorio = None
+        if receptores.relatorio_controller is not None:
+            self._relatorio_controller = receptores.relatorio_controller
 
     @classmethod
     def obter_instancia(cls) -> "FacadeSingletonController":
