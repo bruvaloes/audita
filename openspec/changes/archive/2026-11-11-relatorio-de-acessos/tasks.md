@@ -23,4 +23,4 @@
 - [x] 5.1 Suíte completa passando
 - [x] 5.2 Rodar o programa na mão (SQLite: login com falha, dois logins e o relatório)
 - [x] 5.3 Projeto, arquitetura e README
-- [ ] 5.4 `openspec archive relatorio-de-acessos`
+- [x] 5.4 `openspec archive relatorio-de-acessos`
