@@ -62,6 +62,7 @@ OPERACOES = {
     "remover": lambda c, u: c.remover(u, "CT-1", confirmado=True),
     "vincular": lambda c, u: c.vincular(u, "CT-1", 1),
     "desvincular": lambda c, u: c.desvincular(u, "CT-1", 1),
+    "desfazer_ultima_atualizacao": lambda c, u: c.desfazer_ultima_atualizacao(u),
 }
 
 
