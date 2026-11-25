@@ -233,9 +233,9 @@ def test_sessao_deve_acabar_mesmo_se_a_acao_falhar(
 # --- fronteira: listagem protegida e fluxo completo -------------------------
 
 @pytest.fixture
-def fronteira(controller, autenticacao, painel, sessao):
+def fronteira(fachada, autenticacao, painel, sessao):
     fronteira = UsuarioFronteira(
-        controller, AutenticacaoFronteira(
+        fachada, AutenticacaoFronteira(
             autenticacao, painel, ler_senha=lambda _: "Senha@123"), sessao)
     painel.registrar(AcaoDoPainel(
         Operacao.LISTAR_USUARIOS, "Listar usuários",

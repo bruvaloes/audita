@@ -23,13 +23,6 @@ from infraestrutura.evidencia_repositorio_memoria import EvidenciaRepositorioMem
 from infraestrutura.usuario_repositorio_memoria import UsuarioRepositorioMemoria
 
 
-@pytest.fixture(autouse=True)
-def limpar_singleton():
-    FacadeSingletonController.resetar_instancia()
-    yield
-    FacadeSingletonController.resetar_instancia()
-
-
 @pytest.fixture
 def usuarios():
     return UsuarioRepositorioMemoria()
