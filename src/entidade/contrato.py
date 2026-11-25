@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from datetime import date
 
+from entidade.contrato_memento import ContratoMemento
 from entidade.situacao_contrato import SituacaoContrato
 
 
@@ -35,3 +36,26 @@ class Contrato:
             f"[{self.situacao.name}] {self.numero} — "
             f"{self.empresa_contratada} ({inicio} ate {fim})"
         )
+
+    def criar_memento(self) -> ContratoMemento:
+        """Originator (GoF): guarda os valores atuais para um desfazer
+        futuro, sem compartilhar a lista de usuários vinculados."""
+        return ContratoMemento(
+            numero=self.numero,
+            empresa_contratada=self.empresa_contratada,
+            vigencia_inicio=self.vigencia_inicio,
+            vigencia_fim=self.vigencia_fim,
+            arquivo=self.arquivo,
+            situacao=self.situacao,
+            usuarios_vinculados=tuple(self.usuarios_vinculados),
+        )
+
+    def restaurar(self, memento: ContratoMemento) -> None:
+        """Originator (GoF): volta os valores ao estado guardado no memento."""
+        self.numero = memento.numero
+        self.empresa_contratada = memento.empresa_contratada
+        self.vigencia_inicio = memento.vigencia_inicio
+        self.vigencia_fim = memento.vigencia_fim
+        self.arquivo = memento.arquivo
+        self.situacao = memento.situacao
+        self.usuarios_vinculados = list(memento.usuarios_vinculados)
