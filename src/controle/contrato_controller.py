@@ -411,7 +411,8 @@ class ContratoController:
             contrato.restaurar(memento)
             self._repositorio.atualizar(contrato)
         else:
-            self._repositorio.remover(numero_atual)
+            # Grava o antigo antes de apagar o novo, como em `atualizar`: se a
+            # gravação falhar, o contrato continua existindo com o número novo.
             contrato = Contrato(
                 id=0,
                 numero=memento.numero,
@@ -423,6 +424,7 @@ class ContratoController:
                 usuarios_vinculados=list(memento.usuarios_vinculados),
             )
             contrato = self._repositorio.salvar(contrato)
+            self._repositorio.remover(numero_atual)
 
         self._historico.limpar()
 

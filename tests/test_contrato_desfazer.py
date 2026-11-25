@@ -24,6 +24,7 @@ from entidade.perfil import Perfil
 from entidade.situacao_contrato import SituacaoContrato
 from entidade.usuario import Usuario
 from excecao.acesso_negado_error import AcessoNegadoError
+from excecao.persistencia_error import EscritaPersistenciaError
 from excecao.validacao_error import NadaParaDesfazerError
 from infraestrutura.contrato_repositorio_memoria import ContratoRepositorioMemoria
 from infraestrutura.contrato_repositorio_sqlite import ContratoRepositorioSQLite
@@ -210,6 +211,22 @@ def test_c9_funciona_em_memoria_e_sqlite(repositorio_implementacao, gestor):
 
     assert restaurado.numero == "CT-2026-001"
     assert controller.buscar_por_numero(gestor, "CT-2026-002") is None
+
+
+def test_desfazer_renumeracao_que_falha_ao_gravar_nao_deve_perder_o_contrato(
+        repositorio_implementacao, gestor):
+    controller = ContratoController(
+        repositorio=repositorio_implementacao, controle_acesso=ControleAcesso())
+    controller.adicionar(gestor, dados())
+    controller.atualizar(gestor, "CT-2026-001", dados(numero="CT-2026-002"))
+    controller.adicionar(gestor, dados("CT-2026-001", "Outra Empresa"))
+
+    with pytest.raises(EscritaPersistenciaError):
+        controller.desfazer_ultima_atualizacao(gestor)
+
+    renumerado = controller.buscar_por_numero(gestor, "CT-2026-002")
+    assert renumerado is not None
+    assert renumerado.empresa_contratada == "Empresa Alpha Ltda"
 
 
 def test_c11_desfazer_nao_deve_criar_um_novo_ponto_de_desfazer(controller, gestor):
