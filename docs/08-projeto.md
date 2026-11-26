@@ -270,7 +270,7 @@ Tabela preenchida a cada sprint, conforme os padrões entram no código.
 | Raiz de composição | `main.py` | Único lugar que escolhe as implementações |
 | Uma regra por classe | `Validador` e seus filhos | Incluir ou mudar uma regra sem tocar nas outras |
 | DTO | `DadosCadastroUsuario` e `DadosCadastroContrato` | Levar os dados da fronteira ao controle |
-| Facade (GoF) | `FacadeSingletonController` | Ponto único de acesso da fronteira aos controllers |
+| Facade (GoF) | `FacadeSingletonController` | Ponto único de acesso da fronteira aos controllers ([ADR 0002](adr/0002-fachada-unica.md)); desde a Sprint 5, cada operação é montada como comando e executada pelo `ExecutorComandos` ([ADR 0005](adr/0005-fachada-baseada-em-command.md)) |
 | Singleton (GoF) | `FacadeSingletonController` | Uma só instância da fachada em toda a aplicação |
 | Adapter (GoF) | `src/log/log_auditoria_adapter.py` (`LogAuditoriaAdapter`) | Isolar a biblioteca `logging` atrás da interface `LogAuditoria` |
 | Repository (GoF) | `src/negocio/usuario_repositorio.py`, `src/negocio/contrato_repositorio.py`, `src/negocio/evidencia_repositorio.py`, `src/negocio/acesso_repositorio.py` | Separar a regra de negócio do mecanismo de persistência; qualquer implementação (memória ou SQLite) é substituível sem alterar os controllers |
