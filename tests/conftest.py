@@ -6,6 +6,7 @@ from controle.acesso.controle_acesso import ControleAcesso
 from controle.autenticacao_controller import AutenticacaoController
 from controle.dados_cadastro_usuario import DadosCadastroUsuario
 from controle.facade_singleton_controller import FacadeSingletonController
+from controle.receptores_fachada import ReceptoresFachada
 from controle.usuario_controller import UsuarioController
 from controle.validacao.validador_cadastro_usuario import (
     ValidadorCadastroUsuario,
@@ -86,8 +87,8 @@ def autenticacao(repositorio, acessos, hash_senha, momento):
 @pytest.fixture
 def fachada(controller, autenticacao):
     """Fachada real com os controllers de usuário e de autenticação."""
-    return FacadeSingletonController(
-        usuario_controller=controller, autenticacao_controller=autenticacao)
+    return FacadeSingletonController(ReceptoresFachada(
+        usuario_controller=controller, autenticacao_controller=autenticacao))
 
 
 @pytest.fixture

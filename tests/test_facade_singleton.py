@@ -1,4 +1,5 @@
-﻿from datetime import datetime
+﻿import inspect
+from datetime import datetime
 from unittest.mock import MagicMock
 import pytest
 
@@ -35,6 +36,7 @@ from controle.dados_cadastro_contrato import DadosCadastroContrato
 from controle.dados_cadastro_usuario import DadosCadastroUsuario
 from controle.facade_singleton_controller import FacadeSingletonController
 from controle.filtro_contratos import FiltroContratos
+from controle.receptores_fachada import ReceptoresFachada
 from controle.relatorio_controller import RelatorioController
 from controle.seguranca.hash_senha_argon2 import HashSenhaArgon2
 from controle.sessao import Sessao
@@ -97,13 +99,13 @@ def fachada(
     mock_evidencia_repositorio,
     mock_relatorio_controller,
 ):
-    return FacadeSingletonController(
+    return FacadeSingletonController(ReceptoresFachada(
         usuario_controller=mock_usuario_controller,
         autenticacao_controller=mock_autenticacao_controller,
         contrato_controller=mock_contrato_controller,
         evidencia_repositorio=mock_evidencia_repositorio,
         relatorio_controller=mock_relatorio_controller,
-    )
+    ))
 
 
 # =============================================================================
@@ -116,15 +118,44 @@ def test_garante_instancia_unica_do_singleton(
     mock_autenticacao_controller,
     mock_contrato_controller,
 ):
-    instancia_1 = FacadeSingletonController(
+    instancia_1 = FacadeSingletonController(ReceptoresFachada(
         mock_usuario_controller,
         mock_autenticacao_controller,
         mock_contrato_controller,
-    )
+    ))
     instancia_2 = FacadeSingletonController()
 
     assert instancia_1 is instancia_2
     assert FacadeSingletonController.obter_instancia() is instancia_1
+
+
+def test_nova_chamada_sem_controller_de_usuario_mantem_os_receptores(
+    fachada, mock_contrato_controller
+):
+    outro_contrato = MagicMock(spec=ContratoController)
+
+    FacadeSingletonController(
+        ReceptoresFachada(contrato_controller=outro_contrato))
+
+    assert fachada.contrato_controller is mock_contrato_controller
+
+
+def test_nova_chamada_com_controller_de_usuario_troca_so_os_informados(
+    fachada, mock_contrato_controller
+):
+    outro_usuario = MagicMock(spec=UsuarioController)
+
+    FacadeSingletonController(
+        ReceptoresFachada(usuario_controller=outro_usuario))
+
+    assert fachada.usuario_controller is outro_usuario
+    assert fachada.contrato_controller is mock_contrato_controller
+
+
+def test_construtor_da_fachada_deve_ter_no_maximo_tres_parametros():
+    parametros = inspect.signature(FacadeSingletonController.__init__).parameters
+
+    assert len([nome for nome in parametros if nome != "self"]) <= 3
 
 
 def test_obter_instancia_sem_inicializacao_previa_lanca_excecao():
@@ -137,18 +168,15 @@ def test_resetar_instancia_permite_recriar_singleton(
     mock_autenticacao_controller,
     mock_contrato_controller,
 ):
-    instancia_1 = FacadeSingletonController(
+    receptores = ReceptoresFachada(
         mock_usuario_controller,
         mock_autenticacao_controller,
         mock_contrato_controller,
     )
+    instancia_1 = FacadeSingletonController(receptores)
     FacadeSingletonController.resetar_instancia()
 
-    instancia_2 = FacadeSingletonController(
-        mock_usuario_controller,
-        mock_autenticacao_controller,
-        mock_contrato_controller,
-    )
+    instancia_2 = FacadeSingletonController(receptores)
     assert instancia_1 is not instancia_2
 
 
@@ -435,11 +463,11 @@ def test_contar_entidades_sem_evidencia_repositorio_retorna_soma(
 ):
     mock_usuario_controller.contar.return_value = 1
     mock_contrato_controller.contar.return_value = 2
-    fachada = FacadeSingletonController(
+    fachada = FacadeSingletonController(ReceptoresFachada(
         usuario_controller=mock_usuario_controller,
         contrato_controller=mock_contrato_controller,
         evidencia_repositorio=None,
-    )
+    ))
 
     assert fachada.contar_entidades() == 3
 
@@ -485,12 +513,12 @@ def test_fluxo_integracao_completo_via_fachada():
         usuario_repositorio=usuario_repo,
     )
 
-    fachada = FacadeSingletonController(
+    fachada = FacadeSingletonController(ReceptoresFachada(
         usuario_controller=controller_usuario,
         autenticacao_controller=autenticacao,
         contrato_controller=contrato_controller,
         evidencia_repositorio=evidencia_repo,
-    )
+    ))
 
     # 1. Contagem inicial vazia
     assert fachada.contar_entidades() == 0
