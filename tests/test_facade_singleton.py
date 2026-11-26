@@ -421,8 +421,24 @@ def test_fachada_deve_executar_cada_operacao_por_um_comando(
     assert resultado is executor.executar.return_value
 
 
-def test_fachada_deve_ter_um_executor_de_comandos(fachada):
-    assert isinstance(fachada.executor, ExecutorComandos)
+def test_fachada_deve_executar_as_operacoes_pelo_executor_de_comandos(
+    fachada, monkeypatch, mock_contrato_controller
+):
+    executados = []
+    executar_original = ExecutorComandos.executar
+
+    def espiar(executor, comando):
+        executados.append(comando)
+        return executar_original(executor, comando)
+
+    monkeypatch.setattr(ExecutorComandos, "executar", espiar)
+    contrato = MagicMock(spec=Contrato)
+    mock_contrato_controller.buscar_por_numero.return_value = contrato
+
+    resultado = fachada.buscar_contrato_por_numero(None, "CT-1")
+
+    assert [type(comando) for comando in executados] == [BuscarContratoComando]
+    assert resultado is contrato
 
 
 def test_fachada_nao_deve_ter_os_aliases_dos_controllers(fachada):
@@ -436,7 +452,7 @@ def test_fachada_nao_deve_ter_os_aliases_dos_controllers(fachada):
 def test_fachada_nao_deve_expor_os_controllers(fachada):
     receptores = ("usuario_controller", "autenticacao_controller",
                   "contrato_controller", "relatorio_controller",
-                  "evidencia_repositorio")
+                  "evidencia_repositorio", "executor")
 
     assert not [nome for nome in receptores if hasattr(fachada, nome)]
 

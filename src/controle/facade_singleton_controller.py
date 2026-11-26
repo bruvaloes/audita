@@ -115,10 +115,6 @@ class FacadeSingletonController:
         """
         cls._instancia = None
 
-    @property
-    def executor(self) -> ExecutorComandos:
-        return self._executor
-
     # =========================================================================
     # Operações de Autenticação (RF 02 / #56)
     # =========================================================================
