@@ -79,11 +79,13 @@ Bem-vindo(a), Maria Souza.
 6 - Remover contrato
 7 - Vincular usuário a contrato
 8 - Desvincular usuário de contrato
+9 - Desfazer última atualização de contrato
+10 - Gerar relatório de acessos
 0 - Sair
 Escolha uma opção: >
 ```
 
-Os painéis do Funcionário e do Fiscal mostram apenas `0 - Sair`, por enquanto.
+As opções seguem a ordem em que o `main.py` registra as ações no painel. Os painéis do Funcionário e do Fiscal mostram apenas `0 - Sair`, por enquanto.
 
 ```
 ===== PAINEL DO FISCAL =====
@@ -151,3 +153,48 @@ Total: 1 contrato(s) | Página 1 de 1
 ```
 
 A listagem mostra 20 contratos por página, do início de vigência mais recente para o mais antigo. Com mais de uma página, aparece a navegação: `P` próxima, `A` anterior, `V` voltar ao menu.
+
+## Tela 6 · Desfazer última atualização de contrato
+
+Opção 9 do painel do Gestor. Desfaz a última edição, encerramento, vínculo ou desvínculo de contrato, voltando os valores anteriores. Só a atualização mais recente pode ser desfeita.
+
+```
+--- Edição de Contrato ---
+Número do contrato que deseja editar: > CT-2026-001
+Editando: [ATIVO] CT-2026-001 — Limpeza Brasil Ltda (01/01/2026 ate 31/12/2026)
+(Pressione Enter para manter o valor atual entre colchetes)
+Novo número [CT-2026-001]: >
+Nova empresa contratada [Limpeza Brasil Ltda]: > Limpeza Brasil S.A.
+Nova vigência início [01/01/2026]: >
+Nova vigência fim [31/12/2026]: >
+Novo arquivo [Nenhum]: >
+
+Contrato atualizado com sucesso!
+   [ATIVO] CT-2026-001 — Limpeza Brasil S.A. (01/01/2026 ate 31/12/2026)
+
+Escolha uma opção: > 9
+
+--- Desfazer Última Atualização de Contrato ---
+
+Última atualização desfeita com sucesso!
+   [ATIVO] CT-2026-001 — Limpeza Brasil Ltda (01/01/2026 ate 31/12/2026)
+```
+
+Sem atualização para desfazer (nenhuma feita, a última já desfeita ou o contrato removido depois):
+
+```
+--- Desfazer Última Atualização de Contrato ---
+
+Não foi possível desfazer a atualização: Nenhuma atualização para desfazer
+```
+
+## Tela 7 · Gerar relatório de acessos
+
+Opção 10 do painel do Gestor. O PDF é salvo em `relatorios/`, na pasta de execução.
+
+```
+--- Relatório de Acessos ---
+
+Relatório gerado com sucesso!
+Arquivo salvo em: <pasta de execução>/relatorios/relatorio-acessos_25-11-2026_23-17-12.pdf
+```
