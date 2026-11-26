@@ -19,21 +19,24 @@ DATA_ISO = re.compile(r"\d{4}-\d{2}-\d{2}")
 
 
 class LeitorDeTexto(HTMLParser):
-    """Junta o texto visível da página, uma linha por elemento."""
+    """Junta o texto que aparece na página (o `<body>`), uma linha por
+    elemento; o `<head>` (título da aba e estilo) fica de fora."""
 
     def __init__(self):
         super().__init__()
         self.linhas: list[str] = []
-        self._dentro_de_estilo = False
+        self._no_corpo = False
 
     def handle_starttag(self, tag, attrs):
-        self._dentro_de_estilo = tag == "style"
+        if tag == "body":
+            self._no_corpo = True
 
     def handle_endtag(self, tag):
-        self._dentro_de_estilo = False
+        if tag == "body":
+            self._no_corpo = False
 
     def handle_data(self, data):
-        if not self._dentro_de_estilo and data.strip():
+        if self._no_corpo and data.strip():
             self.linhas.append(data.strip())
 
 
