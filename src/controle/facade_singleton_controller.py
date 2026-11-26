@@ -73,7 +73,8 @@ class FacadeSingletonController:
     def __init__(self, receptores: ReceptoresFachada | None = None) -> None:
         """Configura os receptores na primeira criação; nas seguintes, só
         quando vier um controller de usuário, como antes do agrupamento."""
-        receptores = receptores or ReceptoresFachada()
+        if receptores is None:
+            receptores = ReceptoresFachada()
         if (not getattr(self, "_inicializado", False)
                 or receptores.usuario_controller is not None):
             self._configurar_receptores(receptores)
