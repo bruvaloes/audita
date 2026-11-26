@@ -136,20 +136,27 @@ def test_nova_chamada_sem_controller_de_usuario_mantem_os_receptores(
 
     FacadeSingletonController(
         ReceptoresFachada(contrato_controller=outro_contrato))
+    fachada.buscar_contrato_por_numero(None, "CT-1")
 
-    assert fachada.contrato_controller is mock_contrato_controller
+    mock_contrato_controller.buscar_por_numero.assert_called_once_with(
+        None, "CT-1")
+    outro_contrato.buscar_por_numero.assert_not_called()
 
 
 def test_nova_chamada_com_controller_de_usuario_troca_so_os_informados(
-    fachada, mock_contrato_controller
+    fachada, mock_usuario_controller, mock_contrato_controller
 ):
     outro_usuario = MagicMock(spec=UsuarioController)
 
     FacadeSingletonController(
         ReceptoresFachada(usuario_controller=outro_usuario))
+    fachada.listar_usuarios(None)
+    fachada.buscar_contrato_por_numero(None, "CT-1")
 
-    assert fachada.usuario_controller is outro_usuario
-    assert fachada.contrato_controller is mock_contrato_controller
+    outro_usuario.listar_todos.assert_called_once_with(None)
+    mock_usuario_controller.listar_todos.assert_not_called()
+    mock_contrato_controller.buscar_por_numero.assert_called_once_with(
+        None, "CT-1")
 
 
 def test_construtor_da_fachada_deve_ter_no_maximo_tres_parametros():
@@ -367,7 +374,6 @@ def test_gerar_relatorio_acessos_delega_para_relatorio_controller(
     mock_relatorio_controller.gerar_relatorio_acessos.assert_called_once_with(
         solicitante)
     assert caminho == tmp_path / "relatorio.pdf"
-    assert fachada.relatorio_controller is mock_relatorio_controller
 
 
 # =============================================================================
