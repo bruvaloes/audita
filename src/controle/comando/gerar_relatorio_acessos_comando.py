@@ -7,7 +7,7 @@ from entidade.usuario import Usuario
 
 class GerarRelatorioAcessosComando(Comando[Path]):
     """Gera o relatório de estatísticas de acesso no formato pedido (ou no
-    padrão) e devolve onde o arquivo foi salvo (RF 15, Issue #119)."""
+    padrão) e devolve onde o arquivo foi salvo"""
 
     def __init__(self, relatorios: RelatorioController,
                  solicitante: Usuario | None, formato: str | None = None):

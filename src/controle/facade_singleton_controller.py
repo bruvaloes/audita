@@ -10,7 +10,6 @@ controllers são os receptores e continuam conferindo as permissões.
 from pathlib import Path
 from typing import ClassVar
 
-from controle.autenticacao_controller import AutenticacaoController
 from controle.comando.atualizar_contrato_comando import AtualizarContratoComando
 from controle.comando.autenticar_comando import AutenticarComando, Credenciais
 from controle.comando.buscar_contrato_comando import BuscarContratoComando
@@ -45,16 +44,13 @@ from controle.comando.validar_recebimento_evidencia_comando import (
 from controle.comando.vincular_usuario_contrato_comando import (
     VincularUsuarioContratoComando,
 )
-from controle.contrato_controller import ContratoController, ResultadoPaginado
+from controle.contrato_controller import ResultadoPaginado
 from controle.dados_cadastro_contrato import DadosCadastroContrato
 from controle.dados_cadastro_usuario import DadosCadastroUsuario
 from controle.filtro_contratos import FiltroContratos
 from controle.receptores_fachada import ReceptoresFachada
-from controle.relatorio_controller import RelatorioController
-from controle.usuario_controller import UsuarioController
 from entidade.contrato import Contrato
 from entidade.usuario import Usuario
-from negocio.evidencia_repositorio import EvidenciaRepositorio
 
 
 class FacadeSingletonController:
@@ -62,7 +58,9 @@ class FacadeSingletonController:
 
     Concentra os controladores de negócio (UsuarioController, AutenticacaoController,
     ContratoController e RelatorioController), provendo um ponto único de entrada para a camada de
-    fronteira e garantindo uma única instância ativa. É o cliente do padrão
+    fronteira e garantindo uma única instância ativa. Os controladores ficam
+    internos: quem tem a fachada só a usa pelos seus métodos (Issue #120).
+    É o cliente do padrão
     Command: cada método só monta o comando da operação e o entrega ao
     executor, sem regra de negócio própria.
     """
@@ -120,31 +118,6 @@ class FacadeSingletonController:
         Útil para garantir isolamento e independência entre testes automatizados.
         """
         cls._instancia = None
-
-    # Propriedades de acesso aos controllers
-    @property
-    def usuario_controller(self) -> UsuarioController:
-        return self._usuario_controller
-
-    @property
-    def autenticacao_controller(self) -> AutenticacaoController:
-        return self._autenticacao_controller
-
-    @property
-    def contrato_controller(self) -> ContratoController:
-        return self._contrato_controller
-
-    @property
-    def evidencia_repositorio(self) -> EvidenciaRepositorio | None:
-        return self._evidencia_repositorio
-
-    @property
-    def relatorio_controller(self) -> RelatorioController:
-        return self._relatorio_controller
-
-    @property
-    def executor(self) -> ExecutorComandos:
-        return self._executor
 
     # =========================================================================
     # Operações de Autenticação (RF 02 / #56)
