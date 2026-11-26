@@ -23,6 +23,9 @@ from controle.comando.gerar_relatorio_acessos_comando import (
     GerarRelatorioAcessosComando,
 )
 from controle.comando.listar_contratos_comando import ListarContratosComando
+from controle.comando.listar_formatos_relatorio_comando import (
+    ListarFormatosRelatorioComando,
+)
 from controle.comando.listar_usuarios_comando import ListarUsuariosComando
 from controle.comando.remover_contrato_comando import RemoverContratoComando
 from controle.comando.validar_recebimento_evidencia_comando import (
@@ -372,7 +375,7 @@ def test_gerar_relatorio_acessos_delega_para_relatorio_controller(
     caminho = fachada.gerar_relatorio_acessos(solicitante)
 
     mock_relatorio_controller.gerar_relatorio_acessos.assert_called_once_with(
-        solicitante)
+        solicitante, None)
     assert caminho == tmp_path / "relatorio.pdf"
 
 
@@ -405,6 +408,10 @@ def test_gerar_relatorio_acessos_delega_para_relatorio_controller(
     (lambda f: f.desfazer_ultima_atualizacao_contrato(None),
      DesfazerUltimaAtualizacaoContratoComando),
     (lambda f: f.gerar_relatorio_acessos(None), GerarRelatorioAcessosComando),
+    (lambda f: f.gerar_relatorio_acessos(None, "html"),
+     GerarRelatorioAcessosComando),
+    (lambda f: f.listar_formatos_relatorio_acessos(),
+     ListarFormatosRelatorioComando),
     (lambda f: f.contar_entidades_detalhado(), ContarEntidadesComando),
 ])
 def test_fachada_deve_executar_cada_operacao_por_um_comando(

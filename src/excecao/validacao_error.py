@@ -98,3 +98,9 @@ class NadaParaDesfazerError(ValidacaoError):
     def __init__(self):
         super().__init__("Nenhuma atualização para desfazer")
 
+
+class FormatoRelatorioInvalidoError(ValidacaoError):
+    def __init__(self, formatos_aceitos: str):
+        super().__init__(
+            f"Formato do relatório: use um destes valores: {formatos_aceitos}")
+

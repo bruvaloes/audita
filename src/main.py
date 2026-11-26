@@ -4,6 +4,7 @@ from controle.autenticacao_controller import AutenticacaoController
 from controle.contrato_controller import ContratoController
 from controle.facade_singleton_controller import FacadeSingletonController
 from controle.receptores_fachada import ReceptoresFachada
+from controle.relatorio.relatorio_acessos_html import RelatorioAcessosHtml
 from controle.relatorio.relatorio_acessos_pdf import RelatorioAcessosPdf
 from controle.relatorio_controller import RelatorioController
 from controle.seguranca.hash_senha_argon2 import HashSenhaArgon2
@@ -24,7 +25,7 @@ from infraestrutura.repositorio_factory import (
     RepositorioFactorySQLite,
 )
 from log.log_auditoria import LogAuditoria
-from negocio.acesso_repositorio import AcessoRepositorio
+from negocio.acesso_repositorio import AcessoRepositorio, ConsultaAcessos
 from negocio.contrato_repositorio import ContratoRepositorio
 from negocio.evidencia_repositorio import EvidenciaRepositorio
 from negocio.usuario_repositorio import UsuarioRepositorio
@@ -69,6 +70,17 @@ def escolher_repositorio(entrada=None) -> tuple[
 escolher_repositorios = escolher_repositorio
 
 
+def montar_relatorio_controller(
+    acessos: ConsultaAcessos, controle_acesso: ControleAcesso
+) -> RelatorioController:
+    """Os formatos do relatório de acessos são escolhidos aqui, e o primeiro
+    é o padrão; outro formato é outra subclasse de RelatorioAcessos (Template
+    Method)."""
+    return RelatorioController(
+        [RelatorioAcessosPdf(acessos), RelatorioAcessosHtml(acessos)],
+        controle_acesso)
+
+
 def main():
     """Raiz de composição: único lugar que escolhe as implementações."""
     (
@@ -95,10 +107,8 @@ def main():
         usuario_repositorio=usuario_repo,
         log=log_auditoria,
     )
-    # O formato do relatório é escolhido aqui; outro formato é outra
-    # subclasse de RelatorioAcessos (Template Method).
-    relatorio_controller = RelatorioController(
-        RelatorioAcessosPdf(acesso_repo), controle_acesso)
+    relatorio_controller = montar_relatorio_controller(
+        acesso_repo, controle_acesso)
     fachada = FacadeSingletonController(ReceptoresFachada(
         usuario_controller=controller_usuario,
         autenticacao_controller=autenticacao,

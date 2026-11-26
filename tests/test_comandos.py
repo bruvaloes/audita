@@ -32,6 +32,9 @@ from controle.comando.gerar_relatorio_acessos_comando import (
     GerarRelatorioAcessosComando,
 )
 from controle.comando.listar_contratos_comando import ListarContratosComando
+from controle.comando.listar_formatos_relatorio_comando import (
+    ListarFormatosRelatorioComando,
+)
 from controle.comando.listar_usuarios_comando import ListarUsuariosComando
 from controle.comando.remover_contrato_comando import RemoverContratoComando
 from controle.comando.validar_recebimento_evidencia_comando import (
@@ -285,8 +288,31 @@ def test_gerar_relatorio_acessos_comando_deve_devolver_o_caminho(
 
     caminho = GerarRelatorioAcessosComando(relatorios, solicitante).executar()
 
-    relatorios.gerar_relatorio_acessos.assert_called_once_with(solicitante)
+    relatorios.gerar_relatorio_acessos.assert_called_once_with(
+        solicitante, None)
     assert caminho == tmp_path / "r.pdf"
+
+
+def test_gerar_relatorio_acessos_comando_deve_repassar_o_formato(
+        solicitante, tmp_path):
+    relatorios = MagicMock(spec=RelatorioController)
+    relatorios.gerar_relatorio_acessos.return_value = tmp_path / "r.html"
+
+    caminho = GerarRelatorioAcessosComando(
+        relatorios, solicitante, "html").executar()
+
+    relatorios.gerar_relatorio_acessos.assert_called_once_with(
+        solicitante, "html")
+    assert caminho == tmp_path / "r.html"
+
+
+def test_listar_formatos_relatorio_comando_deve_devolver_os_formatos():
+    relatorios = MagicMock(spec=RelatorioController)
+    relatorios.formatos_relatorio_acessos.return_value = ["pdf", "html"]
+
+    formatos = ListarFormatosRelatorioComando(relatorios).executar()
+
+    assert formatos == ["pdf", "html"]
 
 
 def test_contar_entidades_comando_deve_somar_as_tres_entidades(

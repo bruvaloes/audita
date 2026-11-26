@@ -6,6 +6,7 @@ from controle.relatorio.relatorio_acessos import (
     ROTULOS_RESULTADO,
     TITULO_RELATORIO,
     RelatorioAcessos,
+    periodo as _periodo,
 )
 from controle.utils.datas import formatar_data_hora
 
@@ -71,10 +72,3 @@ class RelatorioAcessosPdf(RelatorioAcessos):
             pdf.set_x(pdf.l_margin + RECUO_ITEM)
             pdf.cell(0, ALTURA_LINHA, f"{rotulo}: {quantidade}",
                      new_x="LMARGIN", new_y="NEXT")
-
-
-def _periodo(estatisticas: EstatisticasAcessos) -> str:
-    if estatisticas.primeiro_acesso is None:
-        return "nenhum acesso registrado"
-    return (f"{formatar_data_hora(estatisticas.primeiro_acesso)} a "
-            f"{formatar_data_hora(estatisticas.ultimo_acesso)}")
