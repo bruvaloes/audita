@@ -40,7 +40,7 @@ O Audita apoia a fiscalização de contratos públicos terceirizados: o gestor c
 **Nesta etapa** ele é uma aplicação de console em Python, com:
 
 - **Cadastro e login de usuários**, com perfil (Gestor, Fiscal ou Funcionário) e controle de acesso por perfil.
-- **Cadastro e gestão de contratos**: cadastrar, listar (com busca, filtro e paginação), editar, encerrar, remover e vincular usuários.
+- **Cadastro e gestão de contratos**: cadastrar, listar (com busca, filtro e paginação), editar, encerrar, remover e vincular usuários, e **desfazer a última atualização**.
 - **Log de auditoria** das ações críticas e **fachada única** que concentra o acesso aos controllers.
 - **Relatório de estatísticas de acesso em PDF**, gerado pelo Gestor.
 
@@ -56,13 +56,14 @@ O registro fotográfico de tarefas e a validação manual das evidências fazem 
 - CRUD de contratos e vínculo de fiscais e funcionários (veja [Contratos](#contratos)).
 - Log de auditoria e fachada única, com a contagem de entidades cadastradas (veja [Fachada e log de auditoria](#fachada-e-log-de-auditoria)).
 - Relatório de acessos em PDF, com Template Method (veja [Relatório de acessos](#relatório-de-acessos)).
-- Persistência em memória ou em SQLite, escolhida no início da execução (veja [Persistência](#persistência)).
+- Fachada com Command: cada operação é um comando executado pelo `ExecutorComandos`.
+- Desfazer a última atualização de contrato (edição, encerramento, vínculo ou desvínculo), com Memento (veja [Contratos](#contratos)).
+- Persistência em memória ou em SQLite, escolhida no início da execução, com Repository e uma fábrica por mecanismo (veja [Persistência](#persistência)).
 
 **Planejado**
 
 - Bloqueio após tentativas de login falhas e expiração de sessão.
 - Registro fotográfico de tarefas e validação das evidências.
-- Repository com Factory, Command e Memento (próximas sprints).
 
 ## Integrantes
 
@@ -173,8 +174,11 @@ O painel do Gestor traz as ações de contrato. Cada operação confere a permis
 | Editar e encerrar | Mesmas validações do cadastro. Contrato encerrado não recebe evidências, e não se encerra um contrato já encerrado. |
 | Remover | Exige confirmação e é recusado se o contrato tem evidências (nesse caso, encerre-o). |
 | Vincular | Só usuários ativos, fiscais ou funcionários. Todo contrato ativo mantém ao menos um fiscal. |
+| Desfazer última atualização | Volta o contrato ao estado anterior à última edição, encerramento, vínculo ou desvínculo. Só a mais recente pode ser desfeita, e desfazer de novo responde `Nenhuma atualização para desfazer`. O histórico fica em memória e some ao encerrar o programa. |
 
 Renumerar um contrato com evidências é recusado, porque as evidências apontam para o número.
+
+O desfazer segue o padrão **Memento**: antes de cada atualização, o `Contrato` gera um `ContratoMemento` com os valores atuais, que o `HistoricoAtualizacaoContrato` guarda até a próxima atualização.
 
 ## Fachada e log de auditoria
 
@@ -225,6 +229,7 @@ audita/
 ├── src/
 │   ├── fronteira/               # Telas de console e painel por perfil
 │   ├── controle/                # Regras de negócio, validações, acesso, autenticação, relatórios, fachada e comandos
+│   │   └── comando/             # Command: um comando por operação da fachada e o executor
 │   ├── entidade/                # Entidades de domínio
 │   ├── excecao/                 # Exceções de validação, de acesso, de autenticação e de persistência
 │   ├── log/                     # Log de auditoria
