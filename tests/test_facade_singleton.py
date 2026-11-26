@@ -433,6 +433,14 @@ def test_fachada_nao_deve_ter_os_aliases_dos_controllers(fachada):
     assert not [nome for nome in aliases if hasattr(fachada, nome)]
 
 
+def test_fachada_nao_deve_expor_os_controllers(fachada):
+    receptores = ("usuario_controller", "autenticacao_controller",
+                  "contrato_controller", "relatorio_controller",
+                  "evidencia_repositorio")
+
+    assert not [nome for nome in receptores if hasattr(fachada, nome)]
+
+
 # =============================================================================
 # Testes do Método de Contagem de Entidades
 # =============================================================================
