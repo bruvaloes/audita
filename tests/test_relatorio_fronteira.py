@@ -1,5 +1,6 @@
 """RF 15 pelo painel: o Gestor gera o relatório de acessos e vê onde o
-arquivo foi salvo (RN15.6); os outros perfis não veem a opção (C3)."""
+arquivo foi salvo (RN15.6); os outros perfis não veem a opção (C3). O Gestor
+escolhe o formato antes de gerar (Issue #119)."""
 from dataclasses import replace
 from unittest.mock import MagicMock
 
@@ -9,6 +10,7 @@ from pypdf import PdfReader
 from controle.acesso.operacao import Operacao
 from controle.facade_singleton_controller import FacadeSingletonController
 from controle.receptores_fachada import ReceptoresFachada
+from controle.relatorio.relatorio_acessos_html import RelatorioAcessosHtml
 from controle.relatorio.relatorio_acessos_pdf import RelatorioAcessosPdf
 from controle.relatorio_controller import RelatorioController
 from entidade.perfil import Perfil
@@ -20,6 +22,7 @@ from fronteira.relatorio_fronteira import RelatorioFronteira
 from fronteira.usuario_fronteira import UsuarioFronteira
 
 ROTULO = "Gerar relatório de acessos"
+FORMATO_PADRAO = ""  # Enter na escolha do formato
 
 
 @pytest.fixture
@@ -29,11 +32,12 @@ def pasta(tmp_path):
 
 @pytest.fixture
 def fachada(controller, autenticacao, acessos, controle_acesso, pasta):
-    relatorio = RelatorioAcessosPdf(acessos, pasta_destino=pasta)
+    relatorios = [RelatorioAcessosPdf(acessos, pasta_destino=pasta),
+                  RelatorioAcessosHtml(acessos, pasta_destino=pasta)]
     return FacadeSingletonController(ReceptoresFachada(
         usuario_controller=controller,
         autenticacao_controller=autenticacao,
-        relatorio_controller=RelatorioController([relatorio], controle_acesso),
+        relatorio_controller=RelatorioController(relatorios, controle_acesso),
     ))
 
 
@@ -48,9 +52,13 @@ def fronteira(fachada, painel, sessao):
             fachada, painel, ler_senha=lambda _: "Senha@123"), sessao)
 
 
-def usar_o_menu(fronteira, monkeypatch, *entradas):
+def responder(monkeypatch, *entradas):
     fila = iter(entradas)
     monkeypatch.setattr("builtins.input", lambda _: next(fila))
+
+
+def usar_o_menu(fronteira, monkeypatch, *entradas):
+    responder(monkeypatch, *entradas)
     fronteira.menu()
 
 
@@ -66,7 +74,7 @@ def test_c1_gestor_deve_gerar_o_pdf_com_os_acessos_do_login(
         fronteira, monkeypatch,
         "3", "maria", "FISCAL",           # falha: perfil errado
         "3", "maria", "GESTOR", "0",      # sucesso; sai do painel
-        "3", "maria", "GESTOR", "1", "0",  # sucesso; gera o relatório
+        "3", "maria", "GESTOR", "1", FORMATO_PADRAO, "0",  # gera o relatório
         "0")
 
     saida = capsys.readouterr().out
@@ -82,10 +90,48 @@ def test_deve_informar_onde_o_arquivo_foi_salvo(
         fronteira, controller, dados_validos, pasta, monkeypatch, capsys):
     controller.adicionar(dados_validos)
     usar_o_menu(fronteira, monkeypatch,
-                "3", "maria", "GESTOR", "1", "0", "0")
+                "3", "maria", "GESTOR", "1", FORMATO_PADRAO, "0", "0")
 
     (arquivo,) = pasta.iterdir()
     assert f"Arquivo salvo em: {arquivo.resolve()}" in capsys.readouterr().out
+
+
+def test_deve_mostrar_os_formatos_disponiveis(
+        fronteira, controller, dados_validos, monkeypatch, capsys):
+    controller.adicionar(dados_validos)
+    usar_o_menu(fronteira, monkeypatch,
+                "3", "maria", "GESTOR", "1", FORMATO_PADRAO, "0", "0")
+
+    saida = capsys.readouterr().out
+    assert "1 - PDF" in saida
+    assert "2 - HTML" in saida
+
+
+@pytest.mark.parametrize("escolha, extensao", [
+    (FORMATO_PADRAO, ".pdf"), ("1", ".pdf"), ("2", ".html")])
+def test_gestor_deve_gerar_no_formato_escolhido(
+        fronteira, controller, dados_validos, pasta, monkeypatch,
+        escolha, extensao):
+    controller.adicionar(dados_validos)
+    usar_o_menu(fronteira, monkeypatch,
+                "3", "maria", "GESTOR", "1", escolha, "0", "0")
+
+    (arquivo,) = pasta.iterdir()
+    assert arquivo.suffix == extensao
+
+
+@pytest.mark.parametrize("escolha", ["3", "0", "html", "x"])
+def test_formato_invalido_deve_avisar_sem_gerar(
+        fronteira, controller, dados_validos, pasta, monkeypatch, capsys,
+        escolha):
+    controller.adicionar(dados_validos)
+    usar_o_menu(fronteira, monkeypatch,
+                "3", "maria", "GESTOR", "1", escolha, "0", "0")
+
+    saida = capsys.readouterr().out
+    assert "Opção de formato inválida." in saida
+    assert "Relatório gerado com sucesso!" not in saida
+    assert not pasta.exists()
 
 
 @pytest.mark.parametrize("perfil", ["FISCAL", "FUNCIONARIO"])
@@ -104,10 +150,11 @@ def test_c3_outros_perfis_nao_devem_ver_a_opcao(
 
 @pytest.mark.parametrize("perfil", [Perfil.FISCAL, Perfil.FUNCIONARIO, None])
 def test_c3_acionada_por_fora_deve_responder_acesso_negado(
-        fachada, sessao, pasta, capsys, perfil):
+        fachada, sessao, pasta, monkeypatch, capsys, perfil):
     if perfil is not None:
         sessao.iniciar(Usuario(1, "Ana", "52998224725", "ana@email.com",
                                "ana", "hash", perfil))
+    responder(monkeypatch, FORMATO_PADRAO)
 
     RelatorioFronteira(fachada, sessao).gerar_relatorio_acessos()
 
@@ -115,11 +162,14 @@ def test_c3_acionada_por_fora_deve_responder_acesso_negado(
     assert not pasta.exists()
 
 
-def test_erro_ao_gravar_deve_ser_exibido_sem_encerrar(sessao, gestor, capsys):
+def test_erro_ao_gravar_deve_ser_exibido_sem_encerrar(
+        sessao, gestor, monkeypatch, capsys):
     fachada = MagicMock(spec=FacadeSingletonController)
+    fachada.listar_formatos_relatorio_acessos.return_value = ["pdf", "html"]
     fachada.gerar_relatorio_acessos.side_effect = EscritaPersistenciaError(
         "disco cheio")
     sessao.iniciar(gestor)
+    responder(monkeypatch, FORMATO_PADRAO)
 
     RelatorioFronteira(fachada, sessao).gerar_relatorio_acessos()
 
