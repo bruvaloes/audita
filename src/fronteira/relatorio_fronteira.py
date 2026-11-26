@@ -46,6 +46,6 @@ class RelatorioFronteira:
             f"Escolha o formato (Enter para {formatos[0].upper()}): ").strip()
         if not escolha:
             return formatos[0]
-        if escolha.isdigit() and 1 <= int(escolha) <= len(formatos):
+        if escolha.isascii() and escolha.isdigit() and 1 <= int(escolha) <= len(formatos):
             return formatos[int(escolha) - 1]
         return None

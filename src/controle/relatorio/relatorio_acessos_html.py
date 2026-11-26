@@ -6,6 +6,7 @@ from controle.relatorio.relatorio_acessos import (
     ROTULOS_RESULTADO,
     TITULO_RELATORIO,
     RelatorioAcessos,
+    periodo as _periodo,
 )
 from controle.utils.datas import formatar_data_hora
 
@@ -73,10 +74,3 @@ class RelatorioAcessosHtml(RelatorioAcessos):
         itens = [f"<li>{escape(rotulo)}: {quantidade}</li>"
                  for rotulo, quantidade in quantidades.items()]
         return [f"<h2>{escape(titulo)}</h2>", "<ul>", *itens, "</ul>"]
-
-
-def _periodo(estatisticas: EstatisticasAcessos) -> str:
-    if estatisticas.primeiro_acesso is None:
-        return "nenhum acesso registrado"
-    return (f"{formatar_data_hora(estatisticas.primeiro_acesso)} a "
-            f"{formatar_data_hora(estatisticas.ultimo_acesso)}")

@@ -20,8 +20,12 @@ class RelatorioController:
                  controle_acesso: ControleAcesso):
         if not relatorios_acessos:
             raise ValueError("Informe ao menos um formato do relatório de acessos.")
-        self._relatorios_acessos = {
-            relatorio.extensao: relatorio for relatorio in relatorios_acessos}
+        self._relatorios_acessos: dict[str, RelatorioAcessos] = {}
+        for relatorio in relatorios_acessos:
+            if relatorio.extensao in self._relatorios_acessos:
+                raise ValueError(
+                    f"Extensão de relatório duplicada: {relatorio.extensao}")
+            self._relatorios_acessos[relatorio.extensao] = relatorio
         self._controle_acesso = controle_acesso
 
     def formatos_relatorio_acessos(self) -> list[str]:

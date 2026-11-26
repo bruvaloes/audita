@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Callable
 
 from controle.relatorio.estatisticas_acessos import EstatisticasAcessos
+from controle.utils.datas import formatar_data_hora
 from entidade.acesso import Acesso
 from entidade.perfil import Perfil
 from entidade.resultado_acesso import ResultadoAcesso
@@ -30,6 +31,14 @@ ROTULOS_PERFIL = {
     Perfil.FUNCIONARIO: "Funcionário",
     None: "Perfil inválido",
 }
+
+
+def periodo(estatisticas: EstatisticasAcessos) -> str:
+    """Texto do período coberto pelo relatório, comum a todos os formatos."""
+    if estatisticas.primeiro_acesso is None:
+        return "nenhum acesso registrado"
+    return (f"{formatar_data_hora(estatisticas.primeiro_acesso)} a "
+            f"{formatar_data_hora(estatisticas.ultimo_acesso)}")
 
 
 class RelatorioAcessos(ABC):
