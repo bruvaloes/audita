@@ -34,6 +34,9 @@ from controle.comando.gerar_relatorio_acessos_comando import (
     GerarRelatorioAcessosComando,
 )
 from controle.comando.listar_contratos_comando import ListarContratosComando
+from controle.comando.listar_formatos_relatorio_comando import (
+    ListarFormatosRelatorioComando,
+)
 from controle.comando.listar_usuarios_comando import ListarUsuariosComando
 from controle.comando.remover_contrato_comando import RemoverContratoComando
 from controle.comando.validar_recebimento_evidencia_comando import (
@@ -271,11 +274,19 @@ class FacadeSingletonController:
     # Relatórios (RF 15 / #22)
     # =========================================================================
 
-    def gerar_relatorio_acessos(self, solicitante: Usuario | None) -> Path:
-        """Gera o relatório de estatísticas de acesso e devolve onde o
-        arquivo foi salvo (RF 15)."""
+    def gerar_relatorio_acessos(
+        self, solicitante: Usuario | None, formato: str | None = None
+    ) -> Path:
+        """Gera o relatório de estatísticas de acesso no formato pedido (ou
+        no padrão) e devolve onde o arquivo foi salvo (RF 15, Issue #119)."""
         return self._executor.executar(GerarRelatorioAcessosComando(
-            self._relatorio_controller, solicitante))
+            self._relatorio_controller, solicitante, formato))
+
+    def listar_formatos_relatorio_acessos(self) -> list[str]:
+        """Formatos disponíveis do relatório de acessos; o primeiro é o
+        padrão (Issue #119)."""
+        return self._executor.executar(
+            ListarFormatosRelatorioComando(self._relatorio_controller))
 
     # =========================================================================
     # Contagem de Entidades (Issue #19)
