@@ -7,11 +7,12 @@ src/
 ├── fronteira/     # Telas de console (usuários, login, painel por perfil, contratos, relatórios)
 ├── controle/      # Regras de negócio
 │   ├── acesso/    # Controle de acesso por perfil
+│   ├── comando/   # Command: interface, executor e um comando por operação da fachada
 │   ├── relatorio/ # Relatório de acessos (Template Method e formato PDF)
 │   ├── seguranca/ # Hash de senha
 │   ├── utils/     # Datas no padrão brasileiro
 │   └── validacao/ # Um validador por regra
-├── entidade/      # Usuario, Perfil, Acesso, Contrato e Evidencia
+├── entidade/      # Usuario, Perfil, Acesso, Contrato (com o ContratoMemento) e Evidencia
 ├── excecao/       # Exceções de validação, de acesso e de persistência
 ├── log/           # Log de auditoria (interface, adaptador e versão em memória)
 ├── negocio/       # Interfaces dos repositórios (camada de negócio)
@@ -23,13 +24,14 @@ src/
 
 ## 2. Diagrama de classes de projeto
 
-O diagrama de projeto tem três páginas, editáveis no draw.io a partir de [`diagramas/classes-projeto.drawio`](diagramas/classes-projeto.drawio), e cada página é exportada para um PNG. Cada padrão de projeto aparece com o seu nome, no estereótipo da classe ou no título do grupo.
+O diagrama de projeto tem quatro páginas, editáveis no draw.io a partir de [`diagramas/classes-projeto.drawio`](diagramas/classes-projeto.drawio), e cada página é exportada para um PNG. Cada padrão de projeto aparece com o seu nome, no estereótipo da classe ou no título do grupo.
 
 | Página | PNG | Padrões identificados |
 |--------|-----|-----------------------|
 | Usuários | `classes-projeto-usuarios.png` | Facade e Singleton, Repository, Factory Method |
 | Contratos | `classes-projeto-contratos.png` | Facade e Singleton, Repository, Adapter, Template Method |
 | Persistência | `classes-projeto-persistencia.png` | Repository, Factory Method, Adapter |
+| Command e Memento | `classes-projeto-command-memento.png` | Facade e Singleton, Command, Memento |
 
 ### Usuários, autenticação e controle de acesso
 
@@ -62,6 +64,7 @@ classDiagram
     ValidacaoError <|-- UltimoFiscalError
     ValidacaoError <|-- ContratoJaEncerradoError
     ValidacaoError <|-- SituacaoInvalidaError
+    ValidacaoError <|-- NadaParaDesfazerError
     Exception <|-- AcessoNegadoError
     Exception <|-- CredenciaisInvalidasError
     ValidacaoError <|-- LoginInvalidoError
@@ -259,6 +262,62 @@ A fachada concentra o acesso da fronteira aos controllers ([ADR 0002](adr/0002-f
 
 A camada de negócio (`negocio/`) guarda só as interfaces dos repositórios de usuário, acesso, contrato e evidência, separadas entre consulta e gravação (Repository e ISP). A camada de infraestrutura (`infraestrutura/`) tem os dois mecanismos de persistência, em memória e SQLite, e uma fábrica para cada um (Factory Method). Os controllers e o relatório dependem só das interfaces de `negocio`, e os dois mecanismos lançam as exceções de `PersistenciaError`. O log de auditoria é criado pela mesma fábrica: `LogAuditoriaMemoria` no mecanismo em memória e `LogAuditoriaAdapter` (Adapter da biblioteca `logging`) no SQLite.
 
+### Command e Memento
+
+![Diagrama de classes de projeto: Command na fachada e Memento no desfazer de contrato](diagramas/classes-projeto-command-memento.png)
+
+**Command.** A fachada é o cliente: cada método monta o comando da operação, com o receptor e os dados do pedido, e o entrega ao `ExecutorComandos` (invoker). Os 16 comandos concretos implementam `Comando` e chamam o controller receptor, que continua conferindo a permissão. Os dados de pedidos maiores vão em dataclasses imutáveis (`Credenciais`, `FiltroContratos`, `AtualizacaoContrato`, `RemocaoContrato` e `VinculoContrato`), e a fachada recebe os receptores em `ReceptoresFachada`.
+
+**Memento.** O `Contrato` é o originator: `criar_memento()` copia os valores em um `ContratoMemento` imutável, e `restaurar(memento)` os devolve. O `ContratoController` guarda o memento no `HistoricoAtualizacaoContrato` (caretaker, com um único espaço) antes de atualizar, encerrar, vincular ou desvincular, e `desfazer_ultima_atualizacao` o restaura. Sem nada guardado, a operação levanta `NadaParaDesfazerError`.
+
+```mermaid
+classDiagram
+    class Comando {
+        <<Interface, Command>>
+        +executar() Resultado*
+    }
+    class ExecutorComandos {
+        <<Invoker>>
+        +executar(comando) Resultado
+    }
+    class FacadeSingletonController {
+        <<Facade, Singleton, Client>>
+        +desfazer_ultima_atualizacao_contrato(solicitante) Contrato
+    }
+    class DesfazerUltimaAtualizacaoContratoComando {
+        <<Command>>
+        +executar() Contrato
+    }
+    class ContratoController {
+        <<Control>>
+        +desfazer_ultima_atualizacao(solicitante) Contrato
+    }
+    class Contrato {
+        <<Entity, Originator>>
+        +criar_memento() ContratoMemento
+        +restaurar(memento)
+    }
+    class ContratoMemento {
+        <<Memento>>
+    }
+    class HistoricoAtualizacaoContrato {
+        <<Caretaker>>
+        +salvar(numero_atual, memento)
+        +obter() tuple
+        +limpar()
+    }
+    FacadeSingletonController *-- ExecutorComandos
+    FacadeSingletonController ..> DesfazerUltimaAtualizacaoContratoComando : cria
+    ExecutorComandos ..> Comando : executa
+    Comando <|.. DesfazerUltimaAtualizacaoContratoComando
+    DesfazerUltimaAtualizacaoContratoComando --> ContratoController : receptor
+    ContratoController *-- HistoricoAtualizacaoContrato
+    HistoricoAtualizacaoContrato --> "0..1" ContratoMemento
+    Contrato ..> ContratoMemento : cria
+```
+
+A escolha do Command está registrada no [ADR 0005](adr/0005-fachada-baseada-em-command.md), e o comportamento do desfazer, na change [`desfazer-atualizacao`](../openspec/changes/archive/2026-11-25-desfazer-atualizacao/proposal.md).
+
 ## 3. Padrões e princípios usados
 
 Tabela preenchida a cada sprint, conforme os padrões entram no código.
@@ -276,5 +335,7 @@ Tabela preenchida a cada sprint, conforme os padrões entram no código.
 | Repository (GoF) | `src/negocio/usuario_repositorio.py`, `src/negocio/contrato_repositorio.py`, `src/negocio/evidencia_repositorio.py`, `src/negocio/acesso_repositorio.py` | Separar a regra de negócio do mecanismo de persistência; qualquer implementação (memória ou SQLite) é substituível sem alterar os controllers |
 | Factory Method (GoF) | `src/infraestrutura/repositorio_factory.py` (`RepositorioFactory`, `RepositorioFactoryMemoria`, `RepositorioFactorySQLite`); instanciado em `src/main.py` | Encapsular a criação da implementação concreta; a escolha do mecanismo (memória ou SQLite) não vaza para os controllers |
 | Template Method (GoF) | `src/controle/relatorio/relatorio_acessos.py` (`RelatorioAcessos`); subclasse `relatorio_acessos_pdf.py` | Definir o esqueleto da geração do relatório uma vez (`gerar`) e variar apenas a renderização (`_formatar`) por subclasse |
+| Command (GoF) | `src/controle/comando/` (`Comando`, `ExecutorComandos` e um comando concreto por operação); montado pela `FacadeSingletonController` | Encapsular cada operação da fachada em um objeto com o receptor e os dados do pedido, e passar todas pelo mesmo executor |
+| Memento (GoF) | `src/entidade/contrato_memento.py` (`ContratoMemento`), `Contrato` (originator) e `src/controle/historico_atualizacao_contrato.py` (caretaker); usado pelo `ContratoController` | Desfazer a última atualização de contrato sem expor nem compartilhar o estado interno do `Contrato` |
 
-Os demais padrões GoF (Command e Memento) entram nesta tabela nas sprints em que forem implementados.
+A tabela cobre todos os padrões implementados até a Sprint 5.

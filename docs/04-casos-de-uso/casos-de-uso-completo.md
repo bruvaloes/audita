@@ -27,6 +27,7 @@ flowchart LR
         EncCon(Encerrar contrato)
         RemCon(Remover contrato)
         Vinc(Vincular usuário a contrato)
+        Desfaz(Desfazer última atualização de contrato)
         Relat(Gerar relatório de acessos)
         ListEv(Listar evidências)
         Valida(Validar evidência)
@@ -42,7 +43,7 @@ flowchart LR
     Login -.->|include| Perfil
     CadUsu -.->|include| Termos
     EncCon -.->|extend| EditCon
-    Gestor --- ListUsu & CadCon & ListCon & EditCon & RemCon & Vinc & Relat & ListEv & Valida
+    Gestor --- ListUsu & CadCon & ListCon & EditCon & RemCon & Vinc & Desfaz & Relat & ListEv & Valida
     Func --- RegEv & Envios
 ```
 
@@ -56,10 +57,13 @@ flowchart LR
 | Usuário (todos os perfis) | Consultar quantidade de entidades | RF 16 |
 | Gestor | Listar usuários | RF 13 |
 | Gestor | Cadastrar, listar, editar, encerrar e remover contrato; vincular usuário a contrato | RF 04 a RF 08 |
+| Gestor | Desfazer última atualização de contrato | Change [`desfazer-atualizacao`](../../openspec/changes/archive/2026-11-25-desfazer-atualizacao/proposal.md) (RF ainda sem número no documento de requisitos) |
 | Gestor | Listar e validar evidências | RF 10, RF 11 |
 | Gestor | Gerar relatório de acessos | RF 15 |
 | Funcionário | Registrar evidência fotográfica; consultar os próprios envios | RF 09, RF 12 |
 | Fiscal | Nesta etapa, só os casos de uso do Usuário (a abertura de chamados é versão futura) | RF 03 |
+
+Desfazer a última atualização de contrato vale para a edição, o encerramento, o vínculo e o desvínculo de usuário, e só a atualização mais recente pode ser desfeita. O fluxo está na proposta da change `desfazer-atualizacao`.
 
 O RF 03 (controle de acesso por perfil) não é um caso de uso próprio: é a regra que define qual ator liga a cada caso de uso no diagrama. Os casos de uso de evidência (RF 09 a RF 12) aparecem no diagrama porque fazem parte do escopo do documento de requisitos, mas serão detalhados quando forem implementados.
 

@@ -15,16 +15,19 @@ flowchart TB
     end
     subgraph Controle
         FA[FacadeSingletonController]
+        EX[ExecutorComandos]
+        CMD[Comandos<br/>Command · um por operação]
         UC[UsuarioController]
         AC[AutenticacaoController]
         CC[ContratoController]
+        HI[HistoricoAtualizacaoContrato<br/>Memento]
         RC[RelatorioController]
         RA[RelatorioAcessos<br/>Template Method · PDF]
         CA[ControleAcesso]
         VA[Validadores]
     end
     subgraph Entidade
-        EN[Usuario · Contrato · Evidencia · Acesso]
+        EN[Usuario · Contrato · Evidencia · Acesso<br/>ContratoMemento]
     end
     subgraph Persistencia
         RI[Interfaces dos repositórios]
@@ -34,7 +37,10 @@ flowchart TB
     LOG[Log de auditoria<br/>Adapter sobre logging]
 
     Fronteira --> FA
-    FA --> UC & AC & CC & RC
+    FA --> EX
+    EX --> CMD
+    CMD --> UC & AC & CC & RC
+    CC --> HI
     RC --> CA & RA
     RA --> RI
     UC & CC --> VA
@@ -49,7 +55,7 @@ flowchart TB
 | Camada | Responsabilidade | Pacote |
 |--------|------------------|--------|
 | Fronteira | Telas de console e painel por perfil | `fronteira/` |
-| Controle | Regras de negócio, validação, controle de acesso, relatórios e a fachada | `controle/` |
+| Controle | Regras de negócio, validação, controle de acesso, relatórios, a fachada e os comandos que ela executa | `controle/` |
 | Entidade | Dados do domínio | `entidade/` |
 | Negócio | Interfaces dos repositórios, de que os controllers dependem | `negocio/` |
 | Infraestrutura | Repositórios em memória e SQLite e as fábricas de cada mecanismo | `infraestrutura/` |
