@@ -19,5 +19,5 @@ class ReceptoresFachada:
     usuario_controller: UsuarioController | None = None
     autenticacao_controller: AutenticacaoController | None = None
     contrato_controller: ContratoController | None = None
-    relatorio_controller: RelatorioController | None = None
     evidencia_repositorio: EvidenciaRepositorio | None = None
+    relatorio_controller: RelatorioController | None = None
