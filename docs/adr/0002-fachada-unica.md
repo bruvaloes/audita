@@ -1,6 +1,6 @@
 # ADR 0002 · Fachada única (Facade + Singleton)
 
-- **Status:** aceito
+- **Status:** aceito; revisado pelo [ADR 0005](0005-fachada-baseada-em-command.md)
 - **Data:** Sprint 3
 
 ## Contexto
@@ -29,4 +29,4 @@ A conferência de permissão continua nos controllers: nenhuma operação de usu
 - Uma nova entidade entra na fronteira por um ponto só: o método da fachada.
 - A fachada pode crescer demais; quando isso ocorrer, é preciso separá-la por área.
 - O Singleton é estado global: os testes precisam chamar `resetar_instancia()` para não vazarem estado entre si.
-- Na Sprint 5, a fachada passa a usar o padrão Command (ADR próprio), e esta decisão será revista.
+- Na Sprint 5, a fachada passou a usar o padrão Command: cada método monta um comando e o entrega ao `ExecutorComandos`, em vez de delegar direto ao controller. A decisão está no [ADR 0005](0005-fachada-baseada-em-command.md); a fachada única e o Singleton descritos aqui continuam valendo.
