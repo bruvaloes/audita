@@ -266,7 +266,7 @@ A camada de negócio (`negocio/`) guarda só as interfaces dos repositórios de 
 
 ![Diagrama de classes de projeto: Command na fachada e Memento no desfazer de contrato](diagramas/classes-projeto-command-memento.png)
 
-**Command.** A fachada é o cliente: cada método monta o comando da operação, com o receptor e os dados do pedido, e o entrega ao `ExecutorComandos` (invoker). Os 15 comandos concretos implementam `Comando` e chamam o controller receptor, que continua conferindo a permissão. Os dados de pedidos maiores vão em dataclasses imutáveis (`Credenciais`, `FiltroContratos`, `AtualizacaoContrato`, `RemocaoContrato` e `VinculoContrato`), e a fachada recebe os receptores em `ReceptoresFachada`.
+**Command.** A fachada é o cliente: cada método monta o comando da operação, com o receptor e os dados do pedido, e o entrega ao `ExecutorComandos` (invoker). Os 16 comandos concretos implementam `Comando` e chamam o controller receptor, que continua conferindo a permissão. Os dados de pedidos maiores vão em dataclasses imutáveis (`Credenciais`, `FiltroContratos`, `AtualizacaoContrato`, `RemocaoContrato` e `VinculoContrato`), e a fachada recebe os receptores em `ReceptoresFachada`.
 
 **Memento.** O `Contrato` é o originator: `criar_memento()` copia os valores em um `ContratoMemento` imutável, e `restaurar(memento)` os devolve. O `ContratoController` guarda o memento no `HistoricoAtualizacaoContrato` (caretaker, com um único espaço) antes de atualizar, encerrar, vincular ou desvincular, e `desfazer_ultima_atualizacao` o restaura. Sem nada guardado, a operação levanta `NadaParaDesfazerError`.
 
@@ -316,7 +316,7 @@ classDiagram
     Contrato ..> ContratoMemento : cria
 ```
 
-A escolha do Command está registrada no ADR 0005 (#116), e o comportamento do desfazer, na change [`desfazer-atualizacao`](../openspec/changes/archive/2026-11-25-desfazer-atualizacao/proposal.md).
+A escolha do Command está registrada no [ADR 0005](adr/0005-fachada-baseada-em-command.md), e o comportamento do desfazer, na change [`desfazer-atualizacao`](../openspec/changes/archive/2026-11-25-desfazer-atualizacao/proposal.md).
 
 ## 3. Padrões e princípios usados
 
