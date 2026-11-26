@@ -95,10 +95,10 @@ def main():
         usuario_repositorio=usuario_repo,
         log=log_auditoria,
     )
-    # O formato do relatório é escolhido aqui; outro formato é outra
-    # subclasse de RelatorioAcessos (Template Method).
+    # Os formatos do relatório são escolhidos aqui, o primeiro é o padrão;
+    # outro formato é outra subclasse de RelatorioAcessos (Template Method).
     relatorio_controller = RelatorioController(
-        RelatorioAcessosPdf(acesso_repo), controle_acesso)
+        [RelatorioAcessosPdf(acesso_repo)], controle_acesso)
     fachada = FacadeSingletonController(ReceptoresFachada(
         usuario_controller=controller_usuario,
         autenticacao_controller=autenticacao,

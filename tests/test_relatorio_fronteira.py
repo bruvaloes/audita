@@ -33,7 +33,7 @@ def fachada(controller, autenticacao, acessos, controle_acesso, pasta):
     return FacadeSingletonController(ReceptoresFachada(
         usuario_controller=controller,
         autenticacao_controller=autenticacao,
-        relatorio_controller=RelatorioController(relatorio, controle_acesso),
+        relatorio_controller=RelatorioController([relatorio], controle_acesso),
     ))
 
 

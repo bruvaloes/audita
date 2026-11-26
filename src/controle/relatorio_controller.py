@@ -1,29 +1,52 @@
 from pathlib import Path
+from typing import Sequence
 
 from controle.acesso.controle_acesso import ControleAcesso
 from controle.acesso.operacao import Operacao
 from controle.relatorio.relatorio_acessos import RelatorioAcessos
 from entidade.usuario import Usuario
+from excecao.validacao_error import FormatoRelatorioInvalidoError
 
 
 class RelatorioController:
     """Gera os relatórios do sistema para quem tem permissão (RF 15).
 
-    Recebe o relatório pronto para gerar, sem saber o formato: trocar o PDF
-    por outro formato é uma mudança só na composição, em `main.py`.
+    Recebe os formatos do relatório de acessos já montados, sem conhecer
+    nenhum deles: cada um é identificado pela própria extensão, e acrescentar
+    um formato é uma mudança só na composição, em `main.py` (Issue #119).
     """
 
-    def __init__(self, relatorio_acessos: RelatorioAcessos,
+    def __init__(self, relatorios_acessos: Sequence[RelatorioAcessos],
                  controle_acesso: ControleAcesso):
-        self._relatorio_acessos = relatorio_acessos
+        if not relatorios_acessos:
+            raise ValueError("Informe ao menos um formato do relatório de acessos.")
+        self._relatorios_acessos = {
+            relatorio.extensao: relatorio for relatorio in relatorios_acessos}
         self._controle_acesso = controle_acesso
 
-    def gerar_relatorio_acessos(self, solicitante: Usuario | None) -> Path:
-        """Gera o relatório de acessos e devolve onde o arquivo foi salvo.
+    def formatos_relatorio_acessos(self) -> list[str]:
+        """Extensões dos formatos disponíveis, na ordem da composição; o
+        primeiro é o padrão."""
+        return list(self._relatorios_acessos)
 
-        Levanta AcessoNegadoError se o solicitante não for Gestor (RN15.1)
-        e PersistenciaError se não for possível ler os acessos ou gravar.
+    def gerar_relatorio_acessos(self, solicitante: Usuario | None,
+                                formato: str | None = None) -> Path:
+        """Gera o relatório de acessos no formato pedido (ou no padrão) e
+        devolve onde o arquivo foi salvo.
+
+        Levanta AcessoNegadoError se o solicitante não for Gestor (RN15.1),
+        FormatoRelatorioInvalidoError se o formato não existir e
+        PersistenciaError se não for possível ler os acessos ou gravar.
         """
         self._controle_acesso.verificar(
             solicitante, Operacao.GERAR_RELATORIO_ACESSOS)
-        return self._relatorio_acessos.gerar()
+        return self._relatorio_do_formato(formato).gerar()
+
+    def _relatorio_do_formato(self, formato: str | None) -> RelatorioAcessos:
+        if formato is None:
+            return next(iter(self._relatorios_acessos.values()))
+        relatorio = self._relatorios_acessos.get(formato.strip().lower())
+        if relatorio is None:
+            raise FormatoRelatorioInvalidoError(
+                ", ".join(self.formatos_relatorio_acessos()))
+        return relatorio
