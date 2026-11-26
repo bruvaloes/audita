@@ -2,7 +2,7 @@
 from functools import wraps
 from typing import TYPE_CHECKING
 from controle.dados_cadastro_contrato import DadosCadastroContrato
-from controle.contrato_controller import ITENS_POR_PAGINA
+from controle.filtro_contratos import FiltroContratos
 from controle.sessao import Sessao
 from controle.utils.datas import formatar_data
 from entidade.usuario import Usuario
@@ -83,10 +83,8 @@ class ContratoFronteira:
             try:
                 resultado = self._controller.listar_contratos(
                     self._solicitante,
-                    busca=busca,
-                    situacao=situacao,
-                    pagina=pagina,
-                    por_pagina=ITENS_POR_PAGINA,
+                    FiltroContratos(
+                        busca=busca, situacao=situacao, pagina=pagina),
                 )
             except ValidacaoError as erro:
                 print(f"\nErro ao listar contratos: {erro}")
@@ -265,6 +263,20 @@ class ContratoFronteira:
             print(f"\nUsuário {id_str} desvinculado do contrato {numero} com sucesso!")
         except ValidacaoError as erro:
             print(f"\nErro ao desvincular usuário: {erro}")
+        except PersistenciaError as erro:
+            print(f"\nErro de armazenamento: {erro}")
+
+    @_mostrando_acesso_negado
+    def desfazer_ultima_atualizacao(self) -> None:
+        print("\n--- Desfazer Última Atualização de Contrato ---")
+        try:
+            contrato = self._controller.desfazer_ultima_atualizacao_contrato(
+                self._solicitante
+            )
+            print("\nÚltima atualização desfeita com sucesso!")
+            print(f"   {contrato}")
+        except ValidacaoError as erro:
+            print(f"\nNão foi possível desfazer a atualização: {erro}")
         except PersistenciaError as erro:
             print(f"\nErro de armazenamento: {erro}")
 

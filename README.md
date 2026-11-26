@@ -40,7 +40,7 @@ O Audita apoia a fiscalização de contratos públicos terceirizados: o gestor c
 **Nesta etapa** ele é uma aplicação de console em Python, com:
 
 - **Cadastro e login de usuários**, com perfil (Gestor, Fiscal ou Funcionário) e controle de acesso por perfil.
-- **Cadastro e gestão de contratos**: cadastrar, listar (com busca, filtro e paginação), editar, encerrar, remover e vincular usuários.
+- **Cadastro e gestão de contratos**: cadastrar, listar (com busca, filtro e paginação), editar, encerrar, remover e vincular usuários, e **desfazer a última atualização**.
 - **Log de auditoria** das ações críticas e **fachada única** que concentra o acesso aos controllers.
 - **Relatório de estatísticas de acesso em PDF**, gerado pelo Gestor.
 
@@ -56,13 +56,14 @@ O registro fotográfico de tarefas e a validação manual das evidências fazem 
 - CRUD de contratos e vínculo de fiscais e funcionários (veja [Contratos](#contratos)).
 - Log de auditoria e fachada única, com a contagem de entidades cadastradas (veja [Fachada e log de auditoria](#fachada-e-log-de-auditoria)).
 - Relatório de acessos em PDF, com Template Method (veja [Relatório de acessos](#relatório-de-acessos)).
-- Persistência em memória ou em SQLite, escolhida no início da execução (veja [Persistência](#persistência)).
+- Fachada com Command: cada operação é um comando executado pelo `ExecutorComandos`.
+- Desfazer a última atualização de contrato (edição, encerramento, vínculo ou desvínculo), com Memento (veja [Contratos](#contratos)).
+- Persistência em memória ou em SQLite, escolhida no início da execução, com Repository e uma fábrica por mecanismo (veja [Persistência](#persistência)).
 
 **Planejado**
 
 - Bloqueio após tentativas de login falhas e expiração de sessão.
 - Registro fotográfico de tarefas e validação das evidências.
-- Repository com Factory, Command e Memento (próximas sprints).
 
 ## Integrantes
 
@@ -173,12 +174,15 @@ O painel do Gestor traz as ações de contrato. Cada operação confere a permis
 | Editar e encerrar | Mesmas validações do cadastro. Contrato encerrado não recebe evidências, e não se encerra um contrato já encerrado. |
 | Remover | Exige confirmação e é recusado se o contrato tem evidências (nesse caso, encerre-o). |
 | Vincular | Só usuários ativos, fiscais ou funcionários. Todo contrato ativo mantém ao menos um fiscal. |
+| Desfazer última atualização | Volta o contrato ao estado anterior à última edição, encerramento, vínculo ou desvínculo. Só a mais recente pode ser desfeita, e desfazer de novo responde `Nenhuma atualização para desfazer`. O histórico fica em memória e some ao encerrar o programa. |
 
 Renumerar um contrato com evidências é recusado, porque as evidências apontam para o número.
 
+O desfazer segue o padrão **Memento**: antes de cada atualização, o `Contrato` gera um `ContratoMemento` com os valores atuais, que o `HistoricoAtualizacaoContrato` guarda até a próxima atualização.
+
 ## Fachada e log de auditoria
 
-- **Fachada.** `FacadeSingletonController` (Facade + Singleton) é o ponto único de acesso das telas aos controllers de autenticação, de usuários e de contratos. Ela também informa a quantidade de entidades cadastradas (`contar_entidades()` e `contar_entidades_detalhado()`), uma consulta pública que não traz dados pessoais, disponível na opção **4** do menu. Veja o [ADR 0002](docs/adr/0002-fachada-unica.md).
+- **Fachada.** `FacadeSingletonController` (Facade + Singleton) é o ponto único de acesso das telas aos controllers de autenticação, de usuários, de contratos e de relatórios. Cada operação é montada como um comando (padrão **Command**) e executada pelo `ExecutorComandos`; os controllers continuam conferindo as permissões. Ela também informa a quantidade de entidades cadastradas (`contar_entidades()` e `contar_entidades_detalhado()`), uma consulta pública que não traz dados pessoais, disponível na opção **4** do menu. Veja o [ADR 0002](docs/adr/0002-fachada-unica.md) e o [ADR 0005](docs/adr/0005-fachada-baseada-em-command.md).
 - **Log de auditoria.** O cadastro de usuário e o cadastro, a edição, a remoção e os vínculos de contrato geram um registro com usuário, operação, data e hora e detalhes. A interface `LogAuditoria` só permite registrar e consultar, e o `LogAuditoriaAdapter` isola a biblioteca `logging`. No SQLite os registros ficam em `auditoria.log`.
 
 ## Relatório de acessos
@@ -207,7 +211,7 @@ Cada entidade tem uma interface de repositório, dividida em consulta e persist�
 - [Casos de uso](docs/04-casos-de-uso/README.md) e [casos de uso do sistema](docs/04-casos-de-uso/casos-de-uso-completo.md)
 - [Análise](docs/05-analise.md), [interface](docs/06-interface/README.md), [arquitetura](docs/07-arquitetura/README.md) e [projeto](docs/08-projeto.md)
 - [Revisões de código](docs/09-revisoes-de-codigo.md)
-- Decisões de arquitetura: [ADR 0001](docs/adr/0001-persistencia-substituivel.md) e [ADR 0002](docs/adr/0002-fachada-unica.md)
+- Decisões de arquitetura: [ADR 0001](docs/adr/0001-persistencia-substituivel.md), [ADR 0002](docs/adr/0002-fachada-unica.md), [ADR 0003](docs/adr/0003-repository-factory.md), [ADR 0004](docs/adr/0004-adapter-log.md) e [ADR 0005](docs/adr/0005-fachada-baseada-em-command.md)
 - Especificações em [`openspec/specs`](openspec/specs) (usuários, contratos e fachada) e mudanças em andamento em [`openspec/changes`](openspec/changes) (relatório de acessos)
 - [Board do projeto (GitHub Projects)](https://github.com/users/bruvaloes/projects/1)
 - [Guia de contribuição](CONTRIBUTING.md)
@@ -224,7 +228,8 @@ audita/
 │   └── changes/archive/         # Mudanças já concluídas
 ├── src/
 │   ├── fronteira/               # Telas de console e painel por perfil
-│   ├── controle/                # Regras de negócio, validações, acesso, autenticação, relatórios e fachada
+│   ├── controle/                # Regras de negócio, validações, acesso, autenticação, relatórios, fachada e comandos
+│   │   └── comando/             # Command: um comando por operação da fachada e o executor
 │   ├── entidade/                # Entidades de domínio
 │   ├── excecao/                 # Exceções de validação, de acesso, de autenticação e de persistência
 │   ├── log/                     # Log de auditoria

@@ -8,6 +8,7 @@ from controle.acesso.controle_acesso import ControleAcesso
 from controle.acesso.operacao import Operacao
 from controle.contrato_controller import ContratoController
 from controle.facade_singleton_controller import FacadeSingletonController
+from controle.receptores_fachada import ReceptoresFachada
 from controle.dados_cadastro_contrato import DadosCadastroContrato
 from entidade.perfil import Perfil
 from entidade.usuario import Usuario
@@ -62,6 +63,7 @@ OPERACOES = {
     "remover": lambda c, u: c.remover(u, "CT-1", confirmado=True),
     "vincular": lambda c, u: c.vincular(u, "CT-1", 1),
     "desvincular": lambda c, u: c.desvincular(u, "CT-1", 1),
+    "desfazer_ultima_atualizacao": lambda c, u: c.desfazer_ultima_atualizacao(u),
 }
 
 
@@ -97,16 +99,10 @@ def test_log_deve_registrar_o_login_de_quem_cadastrou(
 
 # --- Fronteira: o painel só oferece contratos a quem tem permissão ----------
 
-@pytest.fixture(autouse=True)
-def limpar_singleton():
-    FacadeSingletonController.resetar_instancia()
-    yield
-    FacadeSingletonController.resetar_instancia()
-
-
 def _painel_com_contratos(controller, sessao):
     fronteira = ContratoFronteira(
-        FacadeSingletonController(contrato_controller=controller), sessao)
+        FacadeSingletonController(
+            ReceptoresFachada(contrato_controller=controller)), sessao)
     painel = PainelFronteira(sessao, ControleAcesso())
     painel.registrar(AcaoDoPainel(
         Operacao.CADASTRAR_CONTRATO, "Cadastrar contrato",

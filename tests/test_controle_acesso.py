@@ -20,6 +20,7 @@ ESPERADO = {
         Operacao.LISTAR_USUARIOS, Operacao.CADASTRAR_CONTRATO,
         Operacao.LISTAR_CONTRATOS, Operacao.EDITAR_CONTRATO,
         Operacao.REMOVER_CONTRATO, Operacao.VINCULAR_USUARIO_CONTRATO,
+        Operacao.DESFAZER_ATUALIZACAO_CONTRATO,
         Operacao.LISTAR_EVIDENCIAS, Operacao.VALIDAR_EVIDENCIA,
         Operacao.GERAR_RELATORIO_ACESSOS,
     },
@@ -233,9 +234,9 @@ def test_sessao_deve_acabar_mesmo_se_a_acao_falhar(
 # --- fronteira: listagem protegida e fluxo completo -------------------------
 
 @pytest.fixture
-def fronteira(controller, autenticacao, painel, sessao):
+def fronteira(fachada, autenticacao, painel, sessao):
     fronteira = UsuarioFronteira(
-        controller, AutenticacaoFronteira(
+        fachada, AutenticacaoFronteira(
             autenticacao, painel, ler_senha=lambda _: "Senha@123"), sessao)
     painel.registrar(AcaoDoPainel(
         Operacao.LISTAR_USUARIOS, "Listar usuários",

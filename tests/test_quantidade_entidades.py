@@ -7,6 +7,7 @@ from controle.acesso.controle_acesso import ControleAcesso
 from controle.autenticacao_controller import AutenticacaoController
 from controle.contrato_controller import ContratoController
 from controle.facade_singleton_controller import FacadeSingletonController
+from controle.receptores_fachada import ReceptoresFachada
 from controle.sessao import Sessao
 from controle.usuario_controller import UsuarioController
 from controle.validacao.validador_cadastro_usuario import (
@@ -23,13 +24,6 @@ from infraestrutura.evidencia_repositorio_memoria import EvidenciaRepositorioMem
 from infraestrutura.usuario_repositorio_memoria import UsuarioRepositorioMemoria
 
 
-@pytest.fixture(autouse=True)
-def limpar_singleton():
-    FacadeSingletonController.resetar_instancia()
-    yield
-    FacadeSingletonController.resetar_instancia()
-
-
 @pytest.fixture
 def usuarios():
     return UsuarioRepositorioMemoria()
@@ -39,7 +33,7 @@ def usuarios():
 def fachada(usuarios, hash_senha):
     controle_acesso = ControleAcesso()
     evidencias = EvidenciaRepositorioMemoria()
-    return FacadeSingletonController(
+    return FacadeSingletonController(ReceptoresFachada(
         usuario_controller=UsuarioController(
             usuarios, ValidadorCadastroUsuario(usuarios), hash_senha,
             controle_acesso),
@@ -52,7 +46,7 @@ def fachada(usuarios, hash_senha):
             usuario_repositorio=usuarios,
         ),
         evidencia_repositorio=evidencias,
-    )
+    ))
 
 
 @pytest.fixture

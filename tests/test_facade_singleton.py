@@ -1,13 +1,45 @@
-﻿from datetime import datetime
+﻿import inspect
+from datetime import datetime
 from unittest.mock import MagicMock
 import pytest
 
 from controle.acesso.controle_acesso import ControleAcesso
 from controle.autenticacao_controller import AutenticacaoController
+from controle.comando.atualizar_contrato_comando import AtualizarContratoComando
+from controle.comando.autenticar_comando import AutenticarComando
+from controle.comando.buscar_contrato_comando import BuscarContratoComando
+from controle.comando.cadastrar_contrato_comando import CadastrarContratoComando
+from controle.comando.cadastrar_usuario_comando import CadastrarUsuarioComando
+from controle.comando.contar_entidades_comando import ContarEntidadesComando
+from controle.comando.desfazer_atualizacao_contrato_comando import (
+    DesfazerUltimaAtualizacaoContratoComando,
+)
+from controle.comando.desvincular_usuario_contrato_comando import (
+    DesvincularUsuarioContratoComando,
+)
+from controle.comando.encerrar_contrato_comando import EncerrarContratoComando
+from controle.comando.executor_comandos import ExecutorComandos
+from controle.comando.gerar_relatorio_acessos_comando import (
+    GerarRelatorioAcessosComando,
+)
+from controle.comando.listar_contratos_comando import ListarContratosComando
+from controle.comando.listar_formatos_relatorio_comando import (
+    ListarFormatosRelatorioComando,
+)
+from controle.comando.listar_usuarios_comando import ListarUsuariosComando
+from controle.comando.remover_contrato_comando import RemoverContratoComando
+from controle.comando.validar_recebimento_evidencia_comando import (
+    ValidarRecebimentoEvidenciaComando,
+)
+from controle.comando.vincular_usuario_contrato_comando import (
+    VincularUsuarioContratoComando,
+)
 from controle.contrato_controller import ContratoController, ResultadoPaginado
 from controle.dados_cadastro_contrato import DadosCadastroContrato
 from controle.dados_cadastro_usuario import DadosCadastroUsuario
 from controle.facade_singleton_controller import FacadeSingletonController
+from controle.filtro_contratos import FiltroContratos
+from controle.receptores_fachada import ReceptoresFachada
 from controle.relatorio_controller import RelatorioController
 from controle.seguranca.hash_senha_argon2 import HashSenhaArgon2
 from controle.sessao import Sessao
@@ -28,14 +60,6 @@ from infraestrutura.contrato_repositorio_memoria import ContratoRepositorioMemor
 from negocio.evidencia_repositorio import EvidenciaRepositorio
 from infraestrutura.evidencia_repositorio_memoria import EvidenciaRepositorioMemoria
 from infraestrutura.usuario_repositorio_memoria import UsuarioRepositorioMemoria
-
-
-@pytest.fixture(autouse=True)
-def limpar_singleton():
-    """Garante que cada teste execute com a instância Singleton resetada."""
-    FacadeSingletonController.resetar_instancia()
-    yield
-    FacadeSingletonController.resetar_instancia()
 
 
 @pytest.fixture
@@ -78,13 +102,13 @@ def fachada(
     mock_evidencia_repositorio,
     mock_relatorio_controller,
 ):
-    return FacadeSingletonController(
+    return FacadeSingletonController(ReceptoresFachada(
         usuario_controller=mock_usuario_controller,
         autenticacao_controller=mock_autenticacao_controller,
         contrato_controller=mock_contrato_controller,
         evidencia_repositorio=mock_evidencia_repositorio,
         relatorio_controller=mock_relatorio_controller,
-    )
+    ))
 
 
 # =============================================================================
@@ -97,15 +121,51 @@ def test_garante_instancia_unica_do_singleton(
     mock_autenticacao_controller,
     mock_contrato_controller,
 ):
-    instancia_1 = FacadeSingletonController(
+    instancia_1 = FacadeSingletonController(ReceptoresFachada(
         mock_usuario_controller,
         mock_autenticacao_controller,
         mock_contrato_controller,
-    )
+    ))
     instancia_2 = FacadeSingletonController()
 
     assert instancia_1 is instancia_2
     assert FacadeSingletonController.obter_instancia() is instancia_1
+
+
+def test_nova_chamada_sem_controller_de_usuario_mantem_os_receptores(
+    fachada, mock_contrato_controller
+):
+    outro_contrato = MagicMock(spec=ContratoController)
+
+    FacadeSingletonController(
+        ReceptoresFachada(contrato_controller=outro_contrato))
+    fachada.buscar_contrato_por_numero(None, "CT-1")
+
+    mock_contrato_controller.buscar_por_numero.assert_called_once_with(
+        None, "CT-1")
+    outro_contrato.buscar_por_numero.assert_not_called()
+
+
+def test_nova_chamada_com_controller_de_usuario_troca_so_os_informados(
+    fachada, mock_usuario_controller, mock_contrato_controller
+):
+    outro_usuario = MagicMock(spec=UsuarioController)
+
+    FacadeSingletonController(
+        ReceptoresFachada(usuario_controller=outro_usuario))
+    fachada.listar_usuarios(None)
+    fachada.buscar_contrato_por_numero(None, "CT-1")
+
+    outro_usuario.listar_todos.assert_called_once_with(None)
+    mock_usuario_controller.listar_todos.assert_not_called()
+    mock_contrato_controller.buscar_por_numero.assert_called_once_with(
+        None, "CT-1")
+
+
+def test_construtor_da_fachada_deve_ter_no_maximo_tres_parametros():
+    parametros = inspect.signature(FacadeSingletonController.__init__).parameters
+
+    assert len([nome for nome in parametros if nome != "self"]) <= 3
 
 
 def test_obter_instancia_sem_inicializacao_previa_lanca_excecao():
@@ -118,18 +178,15 @@ def test_resetar_instancia_permite_recriar_singleton(
     mock_autenticacao_controller,
     mock_contrato_controller,
 ):
-    instancia_1 = FacadeSingletonController(
+    receptores = ReceptoresFachada(
         mock_usuario_controller,
         mock_autenticacao_controller,
         mock_contrato_controller,
     )
+    instancia_1 = FacadeSingletonController(receptores)
     FacadeSingletonController.resetar_instancia()
 
-    instancia_2 = FacadeSingletonController(
-        mock_usuario_controller,
-        mock_autenticacao_controller,
-        mock_contrato_controller,
-    )
+    instancia_2 = FacadeSingletonController(receptores)
     assert instancia_1 is not instancia_2
 
 
@@ -170,14 +227,6 @@ def test_adicionar_usuario_delega_para_usuario_controller(
     assert resultado is usuario_esperado
 
 
-def test_alias_adicionar_compativel_com_usuario_controller(
-    fachada, mock_usuario_controller
-):
-    dados = MagicMock(spec=DadosCadastroUsuario)
-    fachada.adicionar(dados)
-    mock_usuario_controller.adicionar.assert_called_once_with(dados)
-
-
 def test_listar_usuarios_delega_para_usuario_controller(
     fachada, mock_usuario_controller
 ):
@@ -189,14 +238,6 @@ def test_listar_usuarios_delega_para_usuario_controller(
 
     mock_usuario_controller.listar_todos.assert_called_once_with(solicitante)
     assert resultado == lista_esperada
-
-
-def test_alias_listar_todos_compativel_com_usuario_controller(
-    fachada, mock_usuario_controller
-):
-    solicitante = MagicMock(spec=Usuario)
-    fachada.listar_todos(solicitante)
-    mock_usuario_controller.listar_todos.assert_called_once_with(solicitante)
 
 
 # =============================================================================
@@ -227,11 +268,13 @@ def test_listar_contratos_delega_para_contrato_controller(
 
     resultado = fachada.listar_contratos(
         solicitante,
-        busca="Tech",
-        situacao=SituacaoContrato.ATIVO,
-        pagina=2,
-        por_pagina=10,
-        id_usuario=5,
+        FiltroContratos(
+            busca="Tech",
+            situacao=SituacaoContrato.ATIVO,
+            pagina=2,
+            por_pagina=10,
+            id_usuario=5,
+        ),
     )
 
     mock_contrato_controller.listar.assert_called_once_with(
@@ -245,14 +288,14 @@ def test_listar_contratos_delega_para_contrato_controller(
     assert resultado is resultado_esperado
 
 
-def test_alias_listar_compativel_com_contrato_controller(
+def test_listar_contratos_sem_filtro_usa_a_primeira_pagina_de_todos(
     fachada, mock_contrato_controller
 ):
     solicitante = MagicMock(spec=Usuario)
-    fachada.listar(solicitante, busca="teste")
+    fachada.listar_contratos(solicitante)
     mock_contrato_controller.listar.assert_called_once_with(
         solicitante,
-        busca="teste",
+        busca=None,
         situacao=None,
         pagina=1,
         por_pagina=20,
@@ -271,21 +314,15 @@ def test_buscar_contrato_por_numero_delega(
     mock_contrato_controller.buscar_por_numero.assert_called_once_with(solicitante, "123/2026")
     assert resultado is contrato_esperado
 
-    fachada.buscar_por_numero(solicitante, "123/2026")
-    assert mock_contrato_controller.buscar_por_numero.call_count == 2
-
 
 def test_atualizar_contrato_delega(fachada, mock_contrato_controller):
     dados = MagicMock(spec=DadosCadastroContrato)
     solicitante = MagicMock(spec=Usuario)
-    fachada.atualizar_contrato(
-        solicitante, "123/2026", dados, nova_situacao=SituacaoContrato.ATIVO
-    )
+    fachada.atualizar_contrato(solicitante, "123/2026", dados)
     mock_contrato_controller.atualizar.assert_called_once_with(
         solicitante,
         numero_atual="123/2026",
         dados=dados,
-        nova_situacao=SituacaoContrato.ATIVO,
     )
 
 
@@ -338,9 +375,93 @@ def test_gerar_relatorio_acessos_delega_para_relatorio_controller(
     caminho = fachada.gerar_relatorio_acessos(solicitante)
 
     mock_relatorio_controller.gerar_relatorio_acessos.assert_called_once_with(
-        solicitante)
+        solicitante, None)
     assert caminho == tmp_path / "relatorio.pdf"
-    assert fachada.relatorio_controller is mock_relatorio_controller
+
+
+# =============================================================================
+# Testes do Padrão Command na Fachada (Issue #25)
+# =============================================================================
+
+
+@pytest.mark.parametrize("operacao, comando_esperado", [
+    (lambda f: f.autenticar("admin", "Senha123!", "GESTOR"), AutenticarComando),
+    (lambda f: f.adicionar_usuario(MagicMock(spec=DadosCadastroUsuario)),
+     CadastrarUsuarioComando),
+    (lambda f: f.listar_usuarios(None), ListarUsuariosComando),
+    (lambda f: f.adicionar_contrato(None, MagicMock(spec=DadosCadastroContrato)),
+     CadastrarContratoComando),
+    (lambda f: f.listar_contratos(None), ListarContratosComando),
+    (lambda f: f.buscar_contrato_por_numero(None, "CT-1"), BuscarContratoComando),
+    (lambda f: f.atualizar_contrato(
+        None, "CT-1", MagicMock(spec=DadosCadastroContrato)),
+     AtualizarContratoComando),
+    (lambda f: f.encerrar_contrato(None, "CT-1"), EncerrarContratoComando),
+    (lambda f: f.validar_recebimento_evidencia("CT-1"),
+     ValidarRecebimentoEvidenciaComando),
+    (lambda f: f.remover_contrato(None, "CT-1", confirmado=True),
+     RemoverContratoComando),
+    (lambda f: f.vincular_usuario_contrato(None, "CT-1", 10),
+     VincularUsuarioContratoComando),
+    (lambda f: f.desvincular_usuario_contrato(None, "CT-1", 10),
+     DesvincularUsuarioContratoComando),
+    (lambda f: f.desfazer_ultima_atualizacao_contrato(None),
+     DesfazerUltimaAtualizacaoContratoComando),
+    (lambda f: f.gerar_relatorio_acessos(None), GerarRelatorioAcessosComando),
+    (lambda f: f.gerar_relatorio_acessos(None, "html"),
+     GerarRelatorioAcessosComando),
+    (lambda f: f.listar_formatos_relatorio_acessos(),
+     ListarFormatosRelatorioComando),
+    (lambda f: f.contar_entidades_detalhado(), ContarEntidadesComando),
+])
+def test_fachada_deve_executar_cada_operacao_por_um_comando(
+    fachada, monkeypatch, operacao, comando_esperado
+):
+    executor = MagicMock(spec=ExecutorComandos)
+    monkeypatch.setattr(fachada, "_executor", executor)
+
+    resultado = operacao(fachada)
+
+    executor.executar.assert_called_once()
+    comando = executor.executar.call_args.args[0]
+    assert isinstance(comando, comando_esperado)
+    assert resultado is executor.executar.return_value
+
+
+def test_fachada_deve_executar_as_operacoes_pelo_executor_de_comandos(
+    fachada, monkeypatch, mock_contrato_controller
+):
+    executados = []
+    executar_original = ExecutorComandos.executar
+
+    def espiar(executor, comando):
+        executados.append(comando)
+        return executar_original(executor, comando)
+
+    monkeypatch.setattr(ExecutorComandos, "executar", espiar)
+    contrato = MagicMock(spec=Contrato)
+    mock_contrato_controller.buscar_por_numero.return_value = contrato
+
+    resultado = fachada.buscar_contrato_por_numero(None, "CT-1")
+
+    assert [type(comando) for comando in executados] == [BuscarContratoComando]
+    assert resultado is contrato
+
+
+def test_fachada_nao_deve_ter_os_aliases_dos_controllers(fachada):
+    aliases = ("adicionar", "listar_todos", "listar", "buscar_por_numero",
+               "atualizar", "encerrar", "remover", "vincular", "desvincular",
+               "quantidade_entidades_cadastradas")
+
+    assert not [nome for nome in aliases if hasattr(fachada, nome)]
+
+
+def test_fachada_nao_deve_expor_os_controllers(fachada):
+    receptores = ("usuario_controller", "autenticacao_controller",
+                  "contrato_controller", "relatorio_controller",
+                  "evidencia_repositorio", "executor")
+
+    assert not [nome for nome in receptores if hasattr(fachada, nome)]
 
 
 # =============================================================================
@@ -364,8 +485,6 @@ def test_contar_entidades_soma_usuarios_contratos_e_evidencias(
     total = fachada.contar_entidades()
     assert total == 3 + 4 + 2  # 9
 
-    assert fachada.quantidade_entidades_cadastradas() == 9
-
     detalhes = fachada.contar_entidades_detalhado()
     assert detalhes == {
         "usuarios": 3,
@@ -381,11 +500,11 @@ def test_contar_entidades_sem_evidencia_repositorio_retorna_soma(
 ):
     mock_usuario_controller.contar.return_value = 1
     mock_contrato_controller.contar.return_value = 2
-    fachada = FacadeSingletonController(
+    fachada = FacadeSingletonController(ReceptoresFachada(
         usuario_controller=mock_usuario_controller,
         contrato_controller=mock_contrato_controller,
         evidencia_repositorio=None,
-    )
+    ))
 
     assert fachada.contar_entidades() == 3
 
@@ -431,12 +550,12 @@ def test_fluxo_integracao_completo_via_fachada():
         usuario_repositorio=usuario_repo,
     )
 
-    fachada = FacadeSingletonController(
+    fachada = FacadeSingletonController(ReceptoresFachada(
         usuario_controller=controller_usuario,
         autenticacao_controller=autenticacao,
         contrato_controller=contrato_controller,
         evidencia_repositorio=evidencia_repo,
-    )
+    ))
 
     # 1. Contagem inicial vazia
     assert fachada.contar_entidades() == 0
