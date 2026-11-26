@@ -1,5 +1,5 @@
-"""Issue #119: o relatório em HTML diz o mesmo que o PDF — mesmos rótulos e
-números, da mesma fonte (EstatisticasAcessos)."""
+"""O relatório em HTML diz o mesmo que o PDF — mesmos rótulos e números, da
+mesma fonte (EstatisticasAcessos)."""
 from datetime import datetime
 from html.parser import HTMLParser
 

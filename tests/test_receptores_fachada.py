@@ -1,4 +1,4 @@
-"""Testes do agrupamento dos receptores da fachada (Issue #25, C4)."""
+"""Testes do agrupamento dos receptores da fachada."""
 from dataclasses import FrozenInstanceError
 from unittest.mock import MagicMock
 

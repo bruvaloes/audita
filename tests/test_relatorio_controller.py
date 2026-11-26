@@ -1,6 +1,5 @@
 """RF 15: só o Gestor gera o relatório de acessos, e a permissão é conferida
-no controller (RN15.1, C3). O controller escolhe o formato pela extensão
-(Issue #119)."""
+no controller (RN15.1, C3). O controller escolhe o formato pela extensão."""
 from unittest.mock import MagicMock
 
 import pytest

@@ -4,7 +4,7 @@ from controle.relatorio_controller import RelatorioController
 
 class ListarFormatosRelatorioComando(Comando[list[str]]):
     """Formatos em que o relatório de acessos pode ser gerado; o primeiro é
-    o padrão (Issue #119).
+    o padrão.
 
     Só lista os nomes dos formatos, sem dado nenhum, e por isso não confere
     permissão: quem gera o relatório continua sendo conferido ao gerar.

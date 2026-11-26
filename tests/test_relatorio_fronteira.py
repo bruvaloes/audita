@@ -1,6 +1,6 @@
 """RF 15 pelo painel: o Gestor gera o relatório de acessos e vê onde o
 arquivo foi salvo (RN15.6); os outros perfis não veem a opção (C3). O Gestor
-escolhe o formato antes de gerar (Issue #119)."""
+escolhe o formato antes de gerar."""
 from dataclasses import replace
 from unittest.mock import MagicMock
 

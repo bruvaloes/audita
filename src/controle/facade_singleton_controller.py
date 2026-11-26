@@ -59,7 +59,7 @@ class FacadeSingletonController:
     Concentra os controladores de negócio (UsuarioController, AutenticacaoController,
     ContratoController e RelatorioController), provendo um ponto único de entrada para a camada de
     fronteira e garantindo uma única instância ativa. Os controladores ficam
-    internos: quem tem a fachada só a usa pelos seus métodos (Issue #120).
+    internos: quem tem a fachada só a usa pelos seus métodos.
     É o cliente do padrão
     Command: cada método só monta o comando da operação e o entrega ao
     executor, sem regra de negócio própria.
@@ -251,13 +251,13 @@ class FacadeSingletonController:
         self, solicitante: Usuario | None, formato: str | None = None
     ) -> Path:
         """Gera o relatório de estatísticas de acesso no formato pedido (ou
-        no padrão) e devolve onde o arquivo foi salvo (RF 15, Issue #119)."""
+        no padrão) e devolve onde o arquivo foi salvo."""
         return self._executor.executar(GerarRelatorioAcessosComando(
             self._relatorio_controller, solicitante, formato))
 
     def listar_formatos_relatorio_acessos(self) -> list[str]:
         """Formatos disponíveis do relatório de acessos; o primeiro é o
-        padrão (Issue #119)."""
+        padrão."""
         return self._executor.executar(
             ListarFormatosRelatorioComando(self._relatorio_controller))
 

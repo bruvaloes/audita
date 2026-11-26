@@ -75,7 +75,7 @@ def montar_relatorio_controller(
 ) -> RelatorioController:
     """Os formatos do relatório de acessos são escolhidos aqui, e o primeiro
     é o padrão; outro formato é outra subclasse de RelatorioAcessos (Template
-    Method, Issue #119)."""
+    Method)."""
     return RelatorioController(
         [RelatorioAcessosPdf(acessos), RelatorioAcessosHtml(acessos)],
         controle_acesso)

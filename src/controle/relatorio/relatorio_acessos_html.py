@@ -18,7 +18,7 @@ ESTILO = (
 
 
 class RelatorioAcessosHtml(RelatorioAcessos):
-    """Formato HTML do relatório de acessos (RF 15, Issue #119).
+    """Formato HTML do relatório de acessos.
 
     Segunda subclasse do Template Method: só define a extensão e a
     formatação; coletar, calcular e salvar vêm da classe abstrata. Traz as

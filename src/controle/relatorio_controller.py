@@ -13,7 +13,7 @@ class RelatorioController:
 
     Recebe os formatos do relatório de acessos já montados, sem conhecer
     nenhum deles: cada um é identificado pela própria extensão, e acrescentar
-    um formato é uma mudança só na composição, em `main.py` (Issue #119).
+    um formato é uma mudança só na composição, em `main.py`.
     """
 
     def __init__(self, relatorios_acessos: Sequence[RelatorioAcessos],

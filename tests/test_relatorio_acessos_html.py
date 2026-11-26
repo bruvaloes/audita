@@ -1,5 +1,5 @@
-"""RF 15: relatório de acessos em HTML, com datas no padrão brasileiro
-(NF006 de Adequação). Segundo formato do Template Method (Issue #119)."""
+"""Relatório de acessos em HTML, com datas no padrão brasileiro. Segundo
+formato do Template Method."""
 import re
 from datetime import datetime
 from html.parser import HTMLParser

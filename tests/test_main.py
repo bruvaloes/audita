@@ -1,6 +1,6 @@
 """O programa encerra com uma mensagem, e não com traceback, quando o
 terminal fecha a entrada (Ctrl+D) ou o usuário interrompe (Ctrl+C). A
-composição oferece os dois formatos do relatório (Issue #119)."""
+composição oferece os dois formatos do relatório."""
 import os
 import subprocess
 import sys
